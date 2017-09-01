@@ -56,6 +56,9 @@ func HandleConnection(bytes []byte, addr net.Addr) {
 		//TODO: fix rest
 	case "STORE":
 		fmt.Println("storing value")
+		kademlia := Kademlia{}
+		kademlia.Store(message.Data)
+		fmt.Println("Did it store?") 
 	default:
 		fmt.Println("Wrong syntax in message, ignoring it...")
 	}
