@@ -83,20 +83,20 @@ func (network *Network) SendStoreMessage(data []byte) {
 	// TODO
 }
 
-func ConnectAndWrite(addr string, message []byte) {
+func ConnectAndWrite(addr string, message []byte) error {
 	addrLocal := CreateAddr("localhost", 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
 	fmt.Println("Listening on", udpConn.LocalAddr().String())
 	if err != nil {
-		// handle error
-		fmt.Println(err)
+		return err
 	}
 	defer udpConn.Close()
 	_, err2 := udpConn.WriteTo(message, addrRemote)
 	if err2 != nil {
-		fmt.Println(err2)
+		return err2
 	} else {
 		fmt.Println("message written...")
+		return nil
 	}
 }
