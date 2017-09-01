@@ -1,32 +1,30 @@
 package d7024e
 
-
 import (
 	"encoding/json"
 	"fmt"
 )
 
-
-const RPC_ID_LENGTH = 20 //Bytes 
+const RPC_ID_LENGTH = 20 //Bytes
 const PING = "PING"
 const STORE = "STORE"
 const FIND_NODE = "FIND_NODE"
 const FIND_VALUE = "FIND_VALUE"
 
 type Message struct {
-	msgType string
-	sender KademliaID
-	data []byte
+	MsgType string
+	Sender  KademliaID
+	Data    []byte
 }
 
 type FindNodeMessage struct {
 	RPC_ID KademliaID
-	nodeID KademliaID
+	NodeID KademliaID
 }
 
 type FindValueMessage struct {
-	RPC_ID KademliaID
-	valueID KademliaID
+	RPC_ID  KademliaID
+	ValueID KademliaID
 }
 
 type PingMessage struct {
@@ -35,73 +33,70 @@ type PingMessage struct {
 
 type StoreMessage struct {
 	RPC_ID KademliaID
-	key KademliaID
-	data []byte
+	Key    KademliaID
+	Data   []byte
 }
 
 func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
 	var msg = Message{}
-	msg.msgType = FIND_VALUE
-	msg.sender = *sender
+	msg.MsgType = FIND_VALUE
+	msg.Sender = *sender
 
 	var findValue = FindValueMessage{*NewRandomKademliaID(), *valueID}
 	data, error := json.Marshal(findValue)
-	
-	if( error != nil ) {
+
+	if error != nil {
 		fmt.Println("Error when creating find value message")
 	}
-	
-	msg.data = data
+
+	msg.Data = data
 	return msg
 }
 
-
 func NewFindNodeMessage(sender *KademliaID, nodeID *KademliaID) Message {
 	var msg = Message{}
-	msg.msgType = FIND_NODE
-	msg.sender = *sender
-	
+	msg.MsgType = FIND_NODE
+	msg.Sender = *sender
+
 	var findNode = FindNodeMessage{*NewRandomKademliaID(), *nodeID}
 	data, error := json.Marshal(findNode)
-	
-	if( error != nil ) {
+
+	if error != nil {
 		fmt.Println("Error when creating find node message")
 	}
-	
-	msg.data = data
+
+	msg.Data = data
 	return msg
 }
 
 func NewPingMessage(sender *KademliaID) Message {
 	var msg = Message{}
-	msg.msgType = PING
-	msg.sender = *sender
-	
+	msg.MsgType = PING
+	msg.Sender = *sender
+
 	var ping = PingMessage{*NewRandomKademliaID()}
 	data, error := json.Marshal(ping)
-	
-	if( error != nil ) {
+
+	if error != nil {
 		fmt.Println("Error when creating ping message")
 	}
-	
-	msg.data = data
+
+	msg.Data = data
 	return msg
 }
 
 func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Message {
 	var msg = Message{}
-	msg.msgType = STORE
-	msg.sender = *sender
+	msg.MsgType = STORE
+	msg.Sender = *sender
 
 	var store = StoreMessage{*NewRandomKademliaID(), *key, *storeData}
 	data, error := json.Marshal(store)
-	
-	if( error != nil ) {
+
+	if error != nil {
 		fmt.Println("Error when creating store message")
 	}
-	
-	msg.data = data
+
+	msg.Data = data
 	return msg
 }
-
-
