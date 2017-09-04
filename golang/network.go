@@ -39,10 +39,11 @@ func Listen(ip string, port int) {
 }
 
 func HandleConnection(bytes []byte, addr net.Addr) {
-	message := Message{}
-	err := json.Unmarshal(bytes, &message)
-	fmt.Println(err)
-	fmt.Println(string(bytes))
+	var message Message
+	//fmt.Println("bytes : ", bytes)
+	err := json.Unmarshal(bytes, &message) // <- Should it be nil?
+	fmt.Println("err : ", err)
+	//fmt.Println("String bytes : ", string(bytes))
 	network := Network{}
 	contact := NewContact(&message.Sender, addr.String())
 	switch message.MsgType {
@@ -55,10 +56,11 @@ func HandleConnection(bytes []byte, addr net.Addr) {
 		fmt.Println("looking up value")
 		//TODO: fix rest
 	case "STORE":
-		fmt.Println("storing value")
+		fmt.Println("storing data")
 		kademlia := Kademlia{}
 		kademlia.Store(message.Data)
-		fmt.Println("Did it store?") 
+		fmt.Println("List : ", kademlia.GetList())
+		
 	default:
 		fmt.Println("Wrong syntax in message, ignoring it...")
 	}
@@ -83,7 +85,9 @@ func (network *Network) SendFindDataMessage(hash string) {
 }
 
 func (network *Network) SendStoreMessage(data []byte) {
-	// TODO
+	//Nearest neighbor -> connect to each neighbor
+	//ConnectAndWrite("dwad",data)
+	
 }
 
 func ConnectAndWrite(addr string, message []byte) {
