@@ -3,7 +3,7 @@ package d7024e
 import ("fmt"
 	"encoding/json")
 
-
+var Items []string
 
 type Kademlia struct {
 }
@@ -15,7 +15,6 @@ func (kademlia *Kademlia) LookupContact(target *Contact) {
 func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO
 }
-var Items []string
 
 func (kademlia *Kademlia) Store(data []byte) {
 	var m Message
