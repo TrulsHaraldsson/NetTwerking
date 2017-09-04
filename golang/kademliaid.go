@@ -27,7 +27,7 @@ func NewKademliaID(data string) *KademliaID {
  * enough to create different seeds for all threads.
  */
 func NewRandomKademliaID() *KademliaID {
-	var r = rand.New(rand.NewSource(time.Now().Unix()))
+	var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = uint8(r.Intn(256))
