@@ -30,7 +30,7 @@ func NewRandomKademliaID() *KademliaID {
 	var r = rand.New(rand.NewSource(time.Now().Unix()))
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
-		newKademliaID[i] = uint8(r.Intn(245))
+		newKademliaID[i] = uint8(r.Intn(256))
 	}
 	return &newKademliaID
 }
