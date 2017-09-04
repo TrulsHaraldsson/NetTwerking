@@ -3,7 +3,9 @@ package d7024e
 import (
 	"encoding/hex"
 	"math/rand"
+	"time"
 )
+
 
 const IDLength = 20
 
@@ -20,10 +22,15 @@ func NewKademliaID(data string) *KademliaID {
 	return &newKademliaID
 }
 
+/*
+ * Creates a new random-object with a seed based on current time. Hopefully this will be 
+ * enough to create different seeds for all threads.
+ */
 func NewRandomKademliaID() *KademliaID {
+	var r = rand.New(rand.NewSource(time.Now().Unix()))
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
-		newKademliaID[i] = uint8(rand.Intn(256))
+		newKademliaID[i] = uint8(r.Intn(245))
 	}
 	return &newKademliaID
 }
