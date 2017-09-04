@@ -23,7 +23,8 @@ func TestListen(t *testing.T) {
 	data := []byte("hello world!")
 	m4 := NewStoreMessage(kID, NewRandomKademliaID(), &data)
 	m4Json, _ := json.Marshal(m4)
+	
 	ConnectAndWrite("localhost:8000", m4Json)
 
-	ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
+	//ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
 }
