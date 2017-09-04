@@ -25,7 +25,7 @@ func Listen(ip string, port int) {
 		n, addrClient, err := udpConn.ReadFrom(b)
 		b = b[:n]
 		fmt.Println(addrClient)
-		fmt.Println("received bytes1: ", b)
+		//fmt.Println("received bytes1: ", b)
 		if err != nil {
 			// handle error
 			fmt.Println("Error when reading from socket...\nBetter luck next time.")
@@ -40,10 +40,8 @@ func Listen(ip string, port int) {
 
 func HandleConnection(bytes []byte, addr net.Addr) {
 	var message Message
-	//fmt.Println("bytes : ", bytes)
-	err := json.Unmarshal(bytes, &message) // <- Should it be nil?
+	err := json.Unmarshal(bytes, &message)
 	fmt.Println("err : ", err)
-	//fmt.Println("String bytes : ", string(bytes))
 	network := Network{}
 	contact := NewContact(&message.Sender, addr.String())
 	switch message.MsgType {
@@ -59,12 +57,26 @@ func HandleConnection(bytes []byte, addr net.Addr) {
 		fmt.Println("storing data")
 		kademlia := Kademlia{}
 		kademlia.Store(message.Data)
-		fmt.Println("List : ", kademlia.GetList())
+		//fmt.Println("Message.Data : ", message.Data)
+		//fmt.Println("string(Message.Data) : ", string(message.Data))
+		
+		var storemessage StoreMessage
+		err2 := json.Unmarshal(message.Data, &storemessage)
+		if err2 != nil{
+			panic(err2)
+		}
+		
+		//fmt.Println("Ack RPC_ID: ", storemessage.RPC_ID)		
+		ack := NewAckMessage(&storemessage.RPC_ID)
+		newAck, _ := json.Marshal(ack)
+		ConnectAndWrite(addr.String(), newAck)
+		fmt.Println("Sent acknowledge message back!")		
+		
 		
 	default:
 		fmt.Println("Wrong syntax in message, ignoring it...")
 	}
-	fmt.Println("received bytes2: ", bytes)
+	//fmt.Println("received bytes2: ", bytes)
 	fmt.Println("handling connection done.")
 }
 
@@ -85,25 +97,23 @@ func (network *Network) SendFindDataMessage(hash string) {
 }
 
 func (network *Network) SendStoreMessage(data []byte) {
-	//Nearest neighbor -> connect to each neighbor
-	//ConnectAndWrite("dwad",data)
-	
+		
 }
 
-func ConnectAndWrite(addr string, message []byte) {
+func ConnectAndWrite(addr string, message []byte) error {
 	addrLocal := CreateAddr("localhost", 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
 	fmt.Println("Listening on", udpConn.LocalAddr().String())
 	if err != nil {
-		// handle error
-		fmt.Println(err)
+		return err
 	}
 	defer udpConn.Close()
 	_, err2 := udpConn.WriteTo(message, addrRemote)
 	if err2 != nil {
-		fmt.Println(err2)
+		return err2
 	} else {
 		fmt.Println("message written...")
+		return nil
 	}
 }

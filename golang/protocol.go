@@ -10,6 +10,7 @@ const PING = "PING"
 const STORE = "STORE"
 const FIND_NODE = "FIND_NODE"
 const FIND_VALUE = "FIND_VALUE"
+//const STOREACK = "ACKNOWLEDGE"
 
 type Message struct {
 	MsgType string
@@ -35,6 +36,11 @@ type StoreMessage struct {
 	RPC_ID KademliaID
 	Key    KademliaID
 	Data   []byte
+}
+
+type AckMessage struct{
+	RPC_ID KademliaID
+	Data []byte
 }
 
 func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
@@ -89,14 +95,21 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	var msg = Message{}
 	msg.MsgType = STORE
 	msg.Sender = *sender
-
+	
 	var store = StoreMessage{*NewRandomKademliaID(), *key, *storeData}
 	data, error := json.Marshal(store)
-
 	if error != nil {
 		fmt.Println("Error when creating store message")
 	}
 
 	msg.Data = data
 	return msg
+}
+
+func NewAckMessage(rpc *KademliaID) AckMessage {
+	var ack = AckMessage{}
+	ack.RPC_ID = *rpc
+	ack.Data = []byte("")
+	
+	return ack
 }
