@@ -1,10 +1,10 @@
 package d7024e
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 )
-
 
 const RPC_ID_LENGTH = 20 //Bytes
 const PING = "PING"
@@ -19,7 +19,7 @@ const FIND_VALUE_ACK = "FIND_VALUE_ACK"
 type Message struct {
 	MsgType string
 	Sender  KademliaID
-	RPC_ID KademliaID
+	RPC_ID  KademliaID
 	Data    []byte
 }
 
@@ -31,23 +31,37 @@ type FindValueMessage struct {
 	ValueID KademliaID
 }
 
-type PingMessage struct {}
+type PingMessage struct{}
 
 type StoreMessage struct {
-	Key    KademliaID
-	Data   []byte
+	Key  KademliaID
+	Data []byte
 }
 
 type AckStoreMessage struct{}
 
 type AckPingMessage struct{}
 
-type AckFindNodeMessage struct{
+type AckFindNodeMessage struct {
 	Nodes []Contact
 }
 
-type AckFindValueMessage struct{
+type AckFindValueMessage struct {
 	Value []byte
+}
+
+func (m1 Message) Equal(m2 Message) bool {
+	if m1.MsgType != m2.MsgType {
+		return false
+	} else if m1.Sender != m2.Sender {
+		return false
+	} else if m1.RPC_ID != m2.RPC_ID {
+		return false
+	} else if !bytes.Equal(m1.Data, m2.Data) {
+		return false
+	} else {
+		return true
+	}
 }
 
 func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
@@ -106,7 +120,7 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	msg.MsgType = STORE
 	msg.Sender = *sender
 	msg.RPC_ID = *NewRandomKademliaID()
-	
+
 	var store = StoreMessage{*key, *storeData}
 	data, error := json.Marshal(store)
 	if error != nil {
@@ -133,7 +147,7 @@ func NewStoreAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message {
 	return msg
 }
 
-func NewPingAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message{
+func NewPingAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = PING_ACK
 	msg.Sender = *sender
@@ -149,7 +163,7 @@ func NewPingAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message{
 	return msg
 }
 
-func NewFindNodeAckMessage(sender *KademliaID, RPC_ID *KademliaID, nodes *[]Contact) Message{
+func NewFindNodeAckMessage(sender *KademliaID, RPC_ID *KademliaID, nodes *[]Contact) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_NODE_ACK
 	msg.Sender = *sender
@@ -179,4 +193,4 @@ func NewFindValueAckMessage(sender *KademliaID, RPC_ID *KademliaID, value *[]byt
 
 	msg.Data = data
 	return msg
-}	
+}
