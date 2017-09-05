@@ -41,4 +41,3 @@ func TestKademliaStore(t *testing.T){
 	fmt.Println("List : ", kademlia.GetList())	
 }
 
-	

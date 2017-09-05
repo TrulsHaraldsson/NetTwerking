@@ -5,65 +5,58 @@ import (
 	"fmt"
 )
 
+
 const RPC_ID_LENGTH = 20 //Bytes
 const PING = "PING"
 const STORE = "STORE"
 const FIND_NODE = "FIND_NODE"
 const FIND_VALUE = "FIND_VALUE"
+const PING_ACK = "PING_ACK"
+const STORE_ACK = "STORE_ACK"
+const FIND_NODE_ACK = "FIND_NODE_ACK"
+const FIND_VALUE_ACK = "FIND_VALUE_ACK"
 
 type Message struct {
 	MsgType string
 	Sender  KademliaID
+	RPC_ID KademliaID
 	Data    []byte
 }
 
 type FindNodeMessage struct {
-	RPC_ID KademliaID
 	NodeID KademliaID
 }
 
 type FindValueMessage struct {
-	RPC_ID  KademliaID
 	ValueID KademliaID
 }
 
-type PingMessage struct {
-	RPC_ID KademliaID
-}
+type PingMessage struct {}
 
 type StoreMessage struct {
-	RPC_ID KademliaID
 	Key    KademliaID
 	Data   []byte
 }
 
-type AckStoreMessage struct{
-	RPC_ID KademliaID
-	Data []byte
-}
+type AckStoreMessage struct{}
 
-type AckPingMessage struct{
-	RPC_ID KademliaID	
-}
+type AckPingMessage struct{}
 
 type AckFindNodeMessage struct{
-	RPC_ID KademliaID
-	Type string
-	Nodes []byte
+	Nodes []Contact
 }
 
 type AckFindValueMessage struct{
-	RPC_ID KademliaID
-	Type string
-	Values []byte
+	Value []byte
 }
 
 func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_VALUE
 	msg.Sender = *sender
+	msg.RPC_ID = *NewRandomKademliaID()
 
-	var findValue = FindValueMessage{*NewRandomKademliaID(), *valueID}
+	var findValue = FindValueMessage{*valueID}
 	data, error := json.Marshal(findValue)
 
 	if error != nil {
@@ -78,8 +71,9 @@ func NewFindNodeMessage(sender *KademliaID, nodeID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_NODE
 	msg.Sender = *sender
+	msg.RPC_ID = *NewRandomKademliaID()
 
-	var findNode = FindNodeMessage{*NewRandomKademliaID(), *nodeID}
+	var findNode = FindNodeMessage{*nodeID}
 	data, error := json.Marshal(findNode)
 
 	if error != nil {
@@ -94,8 +88,9 @@ func NewPingMessage(sender *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = PING
 	msg.Sender = *sender
+	msg.RPC_ID = *NewRandomKademliaID()
 
-	var ping = PingMessage{*NewRandomKademliaID()}
+	var ping = PingMessage{}
 	data, error := json.Marshal(ping)
 
 	if error != nil {
@@ -110,8 +105,9 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	var msg = Message{}
 	msg.MsgType = STORE
 	msg.Sender = *sender
+	msg.RPC_ID = *NewRandomKademliaID()
 	
-	var store = StoreMessage{*NewRandomKademliaID(), *key, *storeData}
+	var store = StoreMessage{*key, *storeData}
 	data, error := json.Marshal(store)
 	if error != nil {
 		fmt.Println("Error when creating store message")
@@ -121,35 +117,66 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	return msg
 }
 
-func NewStoreAckMessage(rpc *KademliaID) AckStoreMessage {
+func NewStoreAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message {
+	var msg = Message{}
+	msg.MsgType = STORE_ACK
+	msg.Sender = *sender
+	msg.RPC_ID = *RPC_ID
+
 	var ack = AckStoreMessage{}
-	ack.RPC_ID = *rpc
-	ack.Data = []byte("")
-	
-	return ack
+	data, error := json.Marshal(ack)
+	if error != nil {
+		fmt.Println("Error when creating store ack message")
+	}
+
+	msg.Data = data
+	return msg
 }
 
-func NewPingAckMessage(rpc *KademliaID) AckPingMessage{
+func NewPingAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message{
+	var msg = Message{}
+	msg.MsgType = PING_ACK
+	msg.Sender = *sender
+	msg.RPC_ID = *RPC_ID
+
 	var ack = AckPingMessage{}
-	ack.RPC_ID = *rpc
-	
-	return ack
+	data, error := json.Marshal(ack)
+	if error != nil {
+		fmt.Println("Error when creating ping ack message")
+	}
+
+	msg.Data = data
+	return msg
 }
 
-func NewFindNodeAckMessage(rpc *KademliaID, nodes *[]byte) AckFindNodeMessage{
-	var ack = AckFindNodeMessage{}
-	ack.RPC_ID = *rpc
-	ack.Type = FIND_NODE
-	ack.Nodes = *nodes
-	
-	return ack
+func NewFindNodeAckMessage(sender *KademliaID, RPC_ID *KademliaID, nodes *[]Contact) Message{
+	var msg = Message{}
+	msg.MsgType = FIND_NODE_ACK
+	msg.Sender = *sender
+	msg.RPC_ID = *RPC_ID
+
+	var ack = AckFindNodeMessage{*nodes}
+	data, error := json.Marshal(ack)
+	if error != nil {
+		fmt.Println("Error when creating find node ack message")
+	}
+
+	msg.Data = data
+	return msg
 }
 
-func NewFindValueAckMessage(rpc *KademliaID, values *[]byte) AckFindValueMessage{
-	var ack = AckFindValueMessage{}
-	ack.RPC_ID = *rpc
-	ack.Type = FIND_VALUE
-	ack.Values = *values
-	
-	return ack
+func NewFindValueAckMessage(sender *KademliaID, RPC_ID *KademliaID, value *[]byte) Message {
+	var msg = Message{}
+	msg.MsgType = FIND_VALUE_ACK
+	msg.Sender = *sender
+	msg.RPC_ID = *RPC_ID
+
+	var ack = AckFindValueMessage{*value}
+	data, error := json.Marshal(ack)
+	if error != nil {
+		fmt.Println("Error when creating find value ack message")
+	}
+
+	msg.Data = data
+	return msg
 }	
