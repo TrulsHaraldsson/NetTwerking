@@ -10,7 +10,6 @@ const PING = "PING"
 const STORE = "STORE"
 const FIND_NODE = "FIND_NODE"
 const FIND_VALUE = "FIND_VALUE"
-//const STOREACK = "ACKNOWLEDGE"
 
 type Message struct {
 	MsgType string
@@ -38,9 +37,25 @@ type StoreMessage struct {
 	Data   []byte
 }
 
-type AckMessage struct{
+type AckStoreMessage struct{
 	RPC_ID KademliaID
 	Data []byte
+}
+
+type AckPingMessage struct{
+	RPC_ID KademliaID	
+}
+
+type AckFindNodeMessage struct{
+	RPC_ID KademliaID
+	Type string
+	Nodes []byte
+}
+
+type AckFindValueMessage struct{
+	RPC_ID KademliaID
+	Type string
+	Values []byte
 }
 
 func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
@@ -106,10 +121,35 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	return msg
 }
 
-func NewAckMessage(rpc *KademliaID) AckMessage {
-	var ack = AckMessage{}
+func NewStoreAckMessage(rpc *KademliaID) AckStoreMessage {
+	var ack = AckStoreMessage{}
 	ack.RPC_ID = *rpc
 	ack.Data = []byte("")
 	
 	return ack
 }
+
+func NewPingAckMessage(rpc *KademliaID) AckPingMessage{
+	var ack = AckPingMessage{}
+	ack.RPC_ID = *rpc
+	
+	return ack
+}
+
+func NewFindNodeAckMessage(rpc *KademliaID, nodes *[]byte) AckFindNodeMessage{
+	var ack = AckFindNodeMessage{}
+	ack.RPC_ID = *rpc
+	ack.Type = FIND_NODE
+	ack.Nodes = *nodes
+	
+	return ack
+}
+
+func NewFindValueAckMessage(rpc *KademliaID, values *[]byte) AckFindValueMessage{
+	var ack = AckFindValueMessage{}
+	ack.RPC_ID = *rpc
+	ack.Type = FIND_VALUE
+	ack.Values = *values
+	
+	return ack
+}	
