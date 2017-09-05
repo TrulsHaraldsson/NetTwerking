@@ -51,7 +51,7 @@ func TestKademliaIDEquals(t *testing.T) {
 	var sID2 = "0000000000000000000000000000000000000000"
 	var kID1 = NewKademliaID(sID1)
 	var kID2 = NewKademliaID(sID2)
-	if kID1.Equals(kID2) {
+	if !kID1.Equals(kID2) {
 		t.Error("Expected following IDs to be equal \nID1 = ", sID1, "\nID2 = ", sID2)
 	}	
 }

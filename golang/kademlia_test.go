@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func TestKademliaLookupContact(t *testing.T) {
+func TestKademliaNodeLookupContact(t *testing.T) {
 	_, rt := CreateTestRT()
 
 	contactsCorrect := []Contact{}
@@ -31,7 +31,7 @@ func TestKademliaLookupContact(t *testing.T) {
 	}
 }
 
-func TestKademliaStore(t *testing.T){
+func TestKademliaNodeStore(t *testing.T){
 	data := []byte("hello world!")
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()
@@ -41,3 +41,26 @@ func TestKademliaStore(t *testing.T){
 	fmt.Println("List : ", kademlia.GetList())	
 }
 
+func TestKademliaNodeLookupData(t *testing.T){
+	data := []byte("hello world!")
+	kademlia := Kademlia{}
+	kID := NewRandomKademliaID()
+	message := NewStoreMessage(kID, NewRandomKademliaID(),&data)
+	fmt.Println("Message : ", message)
+	kademlia.Store(message.Data)
+	fmt.Println("List : ", kademlia.GetList())	
+	
+	kademlia.LookupData(string(data))
+}
+
+func TestKademliaNodeLookupDataFail(t *testing.T){
+	data := []byte("hello world!")
+	kademlia := Kademlia{}
+	kID := NewRandomKademliaID()
+	message := NewStoreMessage(kID, NewRandomKademliaID(),&data)
+	fmt.Println("Message : ", message)
+	kademlia.Store(message.Data)
+	fmt.Println("List : ", kademlia.GetList())	
+	searchFail := "Hello"
+	kademlia.LookupData(searchFail)
+}

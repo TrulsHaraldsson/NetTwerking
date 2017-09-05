@@ -19,6 +19,22 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 
 func (kademlia *Kademlia) LookupData(hash string) {
 	// TODO
+	var foundData string
+	found := false
+	
+	for _, v := range Items{
+		if v == hash {
+			foundData = v
+			found = true
+		}
+	}
+	
+	if found == true {
+		fmt.Println("Found value : ", foundData)
+	}else{
+		// CHECK OUT NODES 
+		fmt.Println("No value found")
+	}
 }
 
 func (kademlia *Kademlia) Store(data []byte) {
@@ -29,7 +45,6 @@ func (kademlia *Kademlia) Store(data []byte) {
 	}
 	Items = append(Items, string(m.Data))
 	fmt.Println("Store func complete")
-	fmt.Println("LIST : ", Items)
 	return
 }
 
