@@ -1,15 +1,20 @@
 package d7024e
 
-import ("fmt"
-	"encoding/json")
+import (
+	"encoding/json"
+	"fmt"
+)
 
 var Items []string
 
 type Kademlia struct {
+	RT *RoutingTable
+	K  int
 }
 
-func (kademlia *Kademlia) LookupContact(target *Contact) {
-	// TODO
+func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
+	contacts := kademlia.RT.FindClosestContacts(target.ID, kademlia.K)
+	return contacts
 }
 
 func (kademlia *Kademlia) LookupData(hash string) {
@@ -19,15 +24,15 @@ func (kademlia *Kademlia) LookupData(hash string) {
 func (kademlia *Kademlia) Store(data []byte) {
 	var m Message
 	err := json.Unmarshal(data, &m)
-	if err != nil{
+	if err != nil {
 		fmt.Println("Error when unmarshalling", err)
-	}	
+	}
 	Items = append(Items, string(m.Data))
 	fmt.Println("Store func complete")
 
-	return 
+	return
 }
 
-func (kademlia *Kademlia) GetList() []string{
+func (kademlia *Kademlia) GetList() []string {
 	return Items
 }
