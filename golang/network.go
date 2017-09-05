@@ -53,9 +53,13 @@ func (network Network) HandleConnection(bytes []byte, addr net.Addr) {
 		network.SendPingMessage(&contact)
 	case FIND_NODE:
 		fmt.Println("looking up node")
-		contacts := network.kademlia.LookupContact(target)
-		returnMessage := Message{MsgType: "FIND_NODE", RPC_ID: message.RPC_ID, Sender: network.kademlia.ID}
-		ConnectAndWrite(addr.String(), message)
+		data := FindNodeMessage{}
+		json.Unmarshal(message.Data, data)
+		target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
+		contacts := network.kademlia.LookupContact(&target)
+		returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
+		rMsgJson, _ := json.Marshal(returnMessage)
+		ConnectAndWrite(addr.String(), rMsgJson)
 	case FIND_VALUE:
 		fmt.Println("looking up value")
 		//TODO: fix rest
@@ -70,9 +74,8 @@ func (network Network) HandleConnection(bytes []byte, addr net.Addr) {
 		if err2 != nil {
 			panic(err2)
 		}
-
 		//fmt.Println("Ack RPC_ID: ", storemessage.RPC_ID)
-		ack := NewAckMessage(&storemessage.RPC_ID)
+		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 		newAck, _ := json.Marshal(ack)
 		ConnectAndWrite(addr.String(), newAck)
 		fmt.Println("Sent acknowledge message back!")
@@ -131,7 +134,7 @@ func (network *Network) SendMessage(addr string, message Message) (Message, erro
 
 func (network *Network) ReadAnswer(udpConn net.PacketConn) (Message, error) {
 	b := make([]byte, MESSAGE_SIZE)
-	n, addrClient, err := udpConn.ReadFrom(b)
+	n, _, err := udpConn.ReadFrom(b)
 	b = b[:n]
 	msg := Message{}
 	if err != nil {
