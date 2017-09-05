@@ -1,9 +1,44 @@
 package d7024e
 
+/*
+see coverage : go test -cover -tags test
+*/
+
 import (
 	"encoding/json"
 	"testing"
+	"fmt"
+	"math/rand"
 )
+
+//go test -run MultipleChannels etc
+
+
+func spawn() chan int{	
+	fmt.Println("Creating channels")
+	ch := make(chan int,2)
+	go func(){
+		ch <- rand.Intn(100)
+	}()
+	return ch
+}
+
+func TestMultipleChannels(t *testing.T){
+	fmt.Println("Testing Channels")
+
+	ch1 := spawn()
+	ch2 := spawn()
+	
+	for i := 0; i < 2; i++{
+		select {
+			case n := <- ch1: 
+				fmt.Printf("ch1 : %d\n", n)
+				
+			case n := <- ch2:
+				fmt.Printf("ch2 : %d\n", n)
+		}
+	}
+}
 
 func TestListen(t *testing.T) {
 	go Listen("localhost", 8000)
@@ -37,7 +72,7 @@ func TestListen(t *testing.T) {
 	if err4 != nil {
 		panic(err4)
 	}
-
+	
 	err5 := ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
 	if err5 != nil {
 		panic(err5)
