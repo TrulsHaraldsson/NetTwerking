@@ -4,7 +4,6 @@ import (
 	"testing"
 )
 
-
 func TestKademliaIDUniqness(t *testing.T) {
 	var kID1 = NewRandomKademliaID()
 	var kID2 = NewRandomKademliaID()
@@ -24,7 +23,7 @@ func TestKademliaIDLength(t *testing.T) {
 func TestKademliaIDByString(t *testing.T) {
 	var sID1 = "ffffffffffffffffffffffffffffffffffffffff"
 	var kID1 = NewKademliaID(sID1)
-	
+
 	if kID1.String() != "ffffffffffffffffffffffffffffffffffffffff" {
 		t.Error(kID1.String())
 	}
@@ -53,7 +52,7 @@ func TestKademliaIDEquals(t *testing.T) {
 	var kID2 = NewKademliaID(sID2)
 	if !kID1.Equals(kID2) {
 		t.Error("Expected following IDs to be equal \nID1 = ", sID1, "\nID2 = ", sID2)
-	}	
+	}
 }
 
 func TestKademliaIDCalcDistance(t *testing.T) {
@@ -63,7 +62,7 @@ func TestKademliaIDCalcDistance(t *testing.T) {
 	var kID1 = NewKademliaID(sID1)
 	var kID2 = NewKademliaID(sID2)
 	var distance = kID1.CalcDistance(kID2)
-	
+
 	if *distance != *NewKademliaID(expected) {
 		t.Error("Expected distance to be", expected, ", got", distance)
 	}
