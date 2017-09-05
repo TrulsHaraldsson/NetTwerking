@@ -1,11 +1,11 @@
 package d7024e
 
 import (
-	"fmt"
 	"testing"
+	"fmt"
 )
 
-func TestLookupContact(t *testing.T) {
+func TestKademliaLookupContact(t *testing.T) {
 	_, rt := CreateTestRT()
 
 	contactsCorrect := []Contact{}
@@ -29,42 +29,15 @@ func TestLookupContact(t *testing.T) {
 			t.Error("Too many contacts returned")
 		}
 	}
-
 }
 
-func spawnCh() chan string{	
-	fmt.Println("Creating channels")
-	ch := make(chan string,2)
-	go func(){
-		ch <- "hello"
-	}()
-	return ch
+func TestKademliaStore(t *testing.T){
+	data := []byte("hello world!")
+	kademlia := Kademlia{}
+	kID := NewRandomKademliaID()
+	message := NewStoreMessage(kID, NewRandomKademliaID(),&data)
+	fmt.Println("Message : ", message)
+	kademlia.Store(message.Data)
+	fmt.Println("List : ", kademlia.GetList())	
 }
 
-func TestStoreItems(t *testing.T){
-	fmt.Println("Testing multiple stores")
-
-	ch1 := spawnCh()
-	ch2 := spawnCh()
-	
-	for i := 0; i < 2; i++{
-		select {
-			case n := <- ch1: 
-				fmt.Printf("ch1 : %s\n", n)
-				data := []byte(n)
-				
-				var kademlia Kademlia
-				kademlia.Store(data)
-				kademlia.GetList()		
-				
-				
-			case n := <- ch2:
-				fmt.Printf("ch2 : %s\n", n)
-				data := []byte(n)
-				
-				var kademlia Kademlia
-				kademlia.Store(data)
-				kademlia.GetList()
-		}
-	}
-}

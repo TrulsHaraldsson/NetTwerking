@@ -29,7 +29,7 @@ func (kademlia *Kademlia) Store(data []byte) {
 	}
 	Items = append(Items, string(m.Data))
 	fmt.Println("Store func complete")
-
+	fmt.Println("LIST : ", Items)
 	return
 }
 

@@ -1,11 +1,44 @@
 package d7024e
 
+/*
+see coverage : go test -cover -tags test
+*/
+
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 )
+
+//go test -run MultipleChannels etc
+
+func spawn() chan int {
+	fmt.Println("Creating channels")
+	ch := make(chan int, 2)
+	go func() {
+		ch <- rand.Intn(100)
+	}()
+	return ch
+}
+
+func TestMultipleChannels(t *testing.T) {
+	fmt.Println("Testing Channels")
+
+	ch1 := spawn()
+	ch2 := spawn()
+
+	for i := 0; i < 2; i++ {
+		select {
+		case n := <-ch1:
+			fmt.Printf("ch1 : %d\n", n)
+
+		case n := <-ch2:
+			fmt.Printf("ch2 : %d\n", n)
+		}
+	}
+}
 
 func TestListen(t *testing.T) {
 	network := Network{alpha: 3, kademlia: Kademlia{}}

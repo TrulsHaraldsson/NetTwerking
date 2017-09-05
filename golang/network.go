@@ -67,11 +67,10 @@ func (network Network) HandleConnection(bytes []byte, addr net.Addr) {
 		//TODO: fix rest
 	case STORE:
 		fmt.Println("storing data")
-		network.kademlia.Store(message.Data)
-		//fmt.Println("Message.Data : ", message.Data)
-		//fmt.Println("string(Message.Data) : ", string(message.Data))
-
-		var storemessage StoreMessage
+		kademlia := Kademlia{}
+		kademlia.Store(message.Data)
+		fmt.Println("List update : ", kademlia.GetList())
+		storemessage := StoreMessage{}
 		err2 := json.Unmarshal(message.Data, &storemessage)
 		if err2 != nil {
 			panic(err2)
