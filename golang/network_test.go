@@ -41,7 +41,8 @@ func TestMultipleChannels(t *testing.T) {
 }
 
 func TestListen(t *testing.T) {
-	network := Network{alpha: 3, kademlia: Kademlia{}}
+	_, rt := CreateTestRT()
+	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
 	go network.Listen("localhost", 8000)
 	kID := NewRandomKademliaID()
 	m1 := NewFindValueMessage(kID, NewRandomKademliaID())

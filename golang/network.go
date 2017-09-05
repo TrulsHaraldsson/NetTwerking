@@ -53,15 +53,15 @@ func (network Network) HandleConnection(bytes []byte, addr net.Addr) {
 		network.SendPingMessage(&contact)
 	case FIND_NODE:
 		fmt.Println("looking up node")
-		/*
-			data := FindNodeMessage{}
-			json.Unmarshal(message.Data, data)
-			target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
-			contacts := network.kademlia.LookupContact(&target)
-			returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
-			rMsgJson, _ := json.Marshal(returnMessage)
-			ConnectAndWrite(addr.String(), rMsgJson)
-		*/
+
+		data := FindNodeMessage{}
+		json.Unmarshal(message.Data, data)
+		target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
+		contacts := network.kademlia.LookupContact(&target)
+		returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
+		rMsgJson, _ := json.Marshal(returnMessage)
+		ConnectAndWrite(addr.String(), rMsgJson)
+
 	case FIND_VALUE:
 		fmt.Println("looking up value")
 		//TODO: fix rest
