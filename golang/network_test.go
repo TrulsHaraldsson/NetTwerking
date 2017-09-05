@@ -32,6 +32,7 @@ func TestListen(t *testing.T) {
 	data := []byte("hello world!")
 	m4 := NewStoreMessage(kID, NewRandomKademliaID(), &data)
 	m4Json, _ := json.Marshal(m4)
+
 	err4 := ConnectAndWrite("localhost:8000", m4Json)
 	if err4 != nil {
 		panic(err4)

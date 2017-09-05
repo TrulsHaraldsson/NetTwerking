@@ -37,6 +37,27 @@ type StoreMessage struct {
 	Data   []byte
 }
 
+type AckStoreMessage struct{
+	RPC_ID KademliaID
+	Data []byte
+}
+
+type AckPingMessage struct{
+	RPC_ID KademliaID	
+}
+
+type AckFindNodeMessage struct{
+	RPC_ID KademliaID
+	Type string
+	Nodes []byte
+}
+
+type AckFindValueMessage struct{
+	RPC_ID KademliaID
+	Type string
+	Values []byte
+}
+
 func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_VALUE
@@ -89,10 +110,9 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	var msg = Message{}
 	msg.MsgType = STORE
 	msg.Sender = *sender
-
+	
 	var store = StoreMessage{*NewRandomKademliaID(), *key, *storeData}
 	data, error := json.Marshal(store)
-
 	if error != nil {
 		fmt.Println("Error when creating store message")
 	}
@@ -100,3 +120,36 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	msg.Data = data
 	return msg
 }
+
+func NewStoreAckMessage(rpc *KademliaID) AckStoreMessage {
+	var ack = AckStoreMessage{}
+	ack.RPC_ID = *rpc
+	ack.Data = []byte("")
+	
+	return ack
+}
+
+func NewPingAckMessage(rpc *KademliaID) AckPingMessage{
+	var ack = AckPingMessage{}
+	ack.RPC_ID = *rpc
+	
+	return ack
+}
+
+func NewFindNodeAckMessage(rpc *KademliaID, nodes *[]byte) AckFindNodeMessage{
+	var ack = AckFindNodeMessage{}
+	ack.RPC_ID = *rpc
+	ack.Type = FIND_NODE
+	ack.Nodes = *nodes
+	
+	return ack
+}
+
+func NewFindValueAckMessage(rpc *KademliaID, values *[]byte) AckFindValueMessage{
+	var ack = AckFindValueMessage{}
+	ack.RPC_ID = *rpc
+	ack.Type = FIND_VALUE
+	ack.Values = *values
+	
+	return ack
+}	
