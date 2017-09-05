@@ -2,11 +2,14 @@ package d7024e
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 )
 
 func TestListen(t *testing.T) {
-	go Listen("localhost", 8000)
+	network := Network{alpha: 3, kademlia: Kademlia{}}
+	go network.Listen("localhost", 8000)
 	kID := NewRandomKademliaID()
 	m1 := NewFindValueMessage(kID, NewRandomKademliaID())
 	m1Json, _ := json.Marshal(m1)
@@ -24,6 +27,7 @@ func TestListen(t *testing.T) {
 
 	m3 := NewFindNodeMessage(kID, NewRandomKademliaID())
 	m3Json, _ := json.Marshal(m3)
+	fmt.Println(string(m3Json))
 	err3 := ConnectAndWrite("localhost:8000", m3Json)
 	if err3 != nil {
 		panic(err3)
@@ -42,4 +46,5 @@ func TestListen(t *testing.T) {
 	if err5 != nil {
 		panic(err5)
 	}
+	time.Sleep(200 * time.Millisecond)
 }
