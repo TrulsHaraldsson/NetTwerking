@@ -67,7 +67,7 @@ func HandleConnection(bytes []byte, addr net.Addr) {
 		}
 		
 		//fmt.Println("Ack RPC_ID: ", storemessage.RPC_ID)		
-		ack := NewAckMessage(&storemessage.RPC_ID)
+		ack := NewStoreAckMessage(&storemessage.RPC_ID)
 		newAck, _ := json.Marshal(ack)
 		ConnectAndWrite(addr.String(), newAck)
 		fmt.Println("Sent acknowledge message back!")		
