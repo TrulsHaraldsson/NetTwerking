@@ -3,8 +3,6 @@ package d7024e
 import (
 	"fmt"
 	"testing"
-	"fmt"
-	"encoding/json"
 )
 
 func TestLookupContact(t *testing.T) {
