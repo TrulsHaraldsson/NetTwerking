@@ -58,7 +58,9 @@ func main() {
 				rport = rport[:len(rport)-1]
 				rp, _ := strconv.Atoi(rport)
 				msg := d7024e.NewPingMessage(kID)
-				network.SendMessage(d7024e.CreateAddr("127.0.0.1", rp), msg)
+				response, _ := d7024e.SendMessage(
+					d7024e.CreateAddr("127.0.0.1", rp), msg)
+				fmt.Println(response)
 			default:
 				fmt.Println("Wrong syntax in message, ignoring it...")
 			}
