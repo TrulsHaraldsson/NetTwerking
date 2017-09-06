@@ -49,13 +49,11 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 		fmt.Println("storing data") //TODO: Put in function like for FIND_NODE above
 		kademlia := Kademlia{}
 		kademlia.Store(message.Data)
-		fmt.Println("List update : ", kademlia.GetList())
 		storemessage := StoreMessage{}
 		err2 := json.Unmarshal(message.Data, &storemessage)
 		if err2 != nil {
 			panic(err2)
 		}
-		//fmt.Println("Ack RPC_ID: ", storemessage.RPC_ID)
 		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 		newAck, _ := json.Marshal(ack)
 		ConnectAndWrite(addr.String(), newAck)
