@@ -25,9 +25,6 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 
 func (kademlia *Kademlia) LookupData(hash *KademliaID){
 	// TODO
-	fmt.Println("Hash search for : ", hash)
-	fmt.Println("Hash search for *: ", *hash)
-	fmt.Println("Hash type : ", reflect.TypeOf(hash))
 	found := false
 	
 	for _, v := range Information{
@@ -41,20 +38,28 @@ func (kademlia *Kademlia) LookupData(hash *KademliaID){
 		return
 	}else{
 		fmt.Println("Failed search for item, keep searching.\n")
-		/*
-		ch := make(chan []byte, 3)
-		contacts := kademlia.RT.FindClosestContacts(target.ID, kademlia.K)
-		
-		for i := range ch {
-			go func(){
-				
-			}()
-		}*/
+		//contacts := kademlia.RT.FindClosestContacts(target.ID, kademlia.K)
 		return
 	}
 }	
 
-func (kademlia *Kademlia) Store(data []byte) {
+func receiveAddress () string {
+	addr := "www.google.com"
+	fmt.Println("Address : ", addr)
+	return addr
+}
+
+func (kademlia *Kademlia) createChannels(){
+	ch := make(chan []byte)
+	//Go func
+	go func(){
+		addr := receiveAddress()
+		ch <- []byte(addr)
+	}()
+	fmt.Println("Channel value : ", ch)
+}
+
+func (kademlia *Kademlia) Store(data []byte){
 	var m StoreMessage
 	err := json.Unmarshal(data, &m)
 	if err != nil {
@@ -62,10 +67,9 @@ func (kademlia *Kademlia) Store(data []byte) {
 	}
 	item := Item{string(m.Data), m.Key}
 	Information = append(Information, item)	
-	fmt.Println("Store func complete.\n")
-	return
+	return 
 }
-
+		
 func (kademlia *Kademlia) getInformation() []Item {
 	return Information
 }

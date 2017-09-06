@@ -39,7 +39,7 @@ func TestKademliaNodeStore(t *testing.T){
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()
 	storemessage := NewStoreMessage(kID, NewRandomKademliaID(),&data)
-	kademlia.Store(storemessage.Data)
+	kademlia.Store(storemessage.Data) 
 }
 
 func TestKademliaNodeLookupData(t *testing.T){
@@ -86,3 +86,10 @@ func TestKademliaNodeRemove(t *testing.T){
 	fmt.Println("sender : ", m.Sender)	
 	kademlia.removeInformation(m.Sender)
 }*/	
+
+
+func TestKademliaNodeCreateChannel(t *testing.T){
+	fmt.Println("Testing to create channels.")
+	kademlia := Kademlia{}
+	kademlia.createChannels()
+}
