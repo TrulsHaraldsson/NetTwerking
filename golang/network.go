@@ -14,6 +14,10 @@ type Network struct {
 	kademlia Kademlia
 }
 
+func NewNetwork(alpha int, kademlia Kademlia) Network{
+	return Network{alpha, kademlia}
+}
+
 func (network Network) Listen(ip string, port int) {
 	addrServer := CreateAddr(ip, port)
 	udpConn, err := net.ListenPacket("udp", addrServer)
