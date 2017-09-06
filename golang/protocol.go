@@ -50,6 +50,45 @@ type AckFindValueMessage struct {
 	Value []byte
 }
 
+func MarshallMessage(msg Message) ([]byte, error) {
+	msgJson, err := json.Marshal(msg)
+	return msgJson, err
+}
+
+func UnmarshallMessage(data []byte) (Message, interface{}, error) {
+	m := Message{}
+
+	err1 := json.Unmarshal(data, &m)
+	if err1 != nil {
+		return m, m, err1
+	}
+	switch m.MsgType {
+	case FIND_NODE:
+		mData := FindNodeMessage{}
+		err2 := json.Unmarshal(m.Data, &mData)
+		return m, mData, err2
+	case FIND_NODE_ACK:
+		mData := AckFindNodeMessage{}
+		err2 := json.Unmarshal(m.Data, &mData)
+		return m, mData, err2
+	case FIND_VALUE:
+		mData := FindValueMessage{}
+		err2 := json.Unmarshal(m.Data, &mData)
+		return m, mData, err2
+	case FIND_VALUE_ACK:
+		mData := AckFindValueMessage{}
+		err2 := json.Unmarshal(m.Data, &mData)
+		return m, mData, err2
+	case STORE:
+		mData := StoreMessage{}
+		err2 := json.Unmarshal(m.Data, &mData)
+		return m, mData, err2
+	default:
+		return m, nil, err1
+	}
+
+}
+
 func (m1 Message) Equal(m2 Message) bool {
 	if m1.MsgType != m2.MsgType {
 		return false
