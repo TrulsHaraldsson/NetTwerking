@@ -1,7 +1,6 @@
 package d7024e
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
@@ -14,6 +13,10 @@ type Network struct {
 	kademlia Kademlia
 }
 
+/*
+* Starts a UDP socket listening on port and ip specified.
+* When a package is received it will start a new thread handling it.
+ */
 func (network Network) Listen(ip string, port int) {
 	addrServer := CreateAddr(ip, port)
 	udpConn, err := net.ListenPacket("udp", addrServer)
@@ -24,38 +27,45 @@ func (network Network) Listen(ip string, port int) {
 	}
 	defer udpConn.Close()
 	for {
-		msg, addrClient, err := ReadAnswer(udpConn)
+		b, addrClient, err := ReadAnswer(udpConn)
 		if err != nil {
 			// handle error
 			fmt.Println("Error when reading from socket...", err)
 		} else {
-			go network.HandleConnection(msg, addrClient)
-			fmt.Println("Starting new thread to handle connection...")
+			m, mData, err2 := UnmarshallMessage(b)
+			if err2 != nil {
+				fmt.Println("Error when unmarshalling message...", err2)
+			} else {
+				go network.HandleConnection(m, mData, addrClient)
+				fmt.Println("Starting new thread to handle connection...")
+			}
 		}
 
 	}
 }
 
-func (network Network) HandleConnection(message Message, addr net.Addr) {
+/*
+* Function to handle an incoming package. Assuming package is a serialized struct of type "Message".
+* Depending on the message type, different functions are run.
+* Also gives a answer back to the caller.
+ */
+func (network Network) HandleConnection(message Message, mData interface{}, addr net.Addr) {
 	switch message.MsgType {
 	case PING:
 		fmt.Println("ping")
 	case FIND_NODE:
-		network.OnFindNodeMessageReceived(&message, addr)
+		network.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
 	case FIND_VALUE:
 		fmt.Println("looking up value")
 		//TODO: fix rest
 	case STORE:
-		fmt.Println("storing data") //TODO: Put in function like for FIND_NODE above
-		kademlia := Kademlia{}
-		kademlia.Store(message.Data)
-		storemessage := StoreMessage{}
-		err2 := json.Unmarshal(message.Data, &storemessage)
-		if err2 != nil {
-			panic(err2)
-		}
+		//TODO: Put in function like for FIND_NODE above
+		fmt.Println("storing data")
+		//storeMessage := mData.(StoreMessage) //TODO: Send this instead of message.Data below, need to alter kademlia.store to take a correct parameters
+		network.kademlia.Store(message.Data)
+
 		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
-		newAck, _ := json.Marshal(ack)
+		newAck, _ := MarshallMessage(ack)
 		ConnectAndWrite(addr.String(), newAck)
 		fmt.Println("Sent acknowledge message back!")
 
@@ -64,18 +74,22 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 	}
 }
 
+/*
+* Creates a string address
+ */
 func CreateAddr(ip string, port int) string {
 	return ip + ":" + strconv.Itoa(port)
 }
 
-func (network Network) OnFindNodeMessageReceived(message *Message, addr net.Addr) {
+/*
+* When the message received is a FindNodeMessage, this
+ */
+func (network Network) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
 	fmt.Println("looking up node")
-	data := FindNodeMessage{}
-	json.Unmarshal(message.Data, data)
 	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 	contacts := network.kademlia.LookupContact(&target)
 	returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
-	rMsgJson, _ := json.Marshal(returnMessage)
+	rMsgJson, _ := MarshallMessage(returnMessage)
 	ConnectAndWrite(addr.String(), rMsgJson)
 
 }
@@ -96,8 +110,31 @@ func (network *Network) SendStoreMessage(data []byte) {
 
 }
 
-func SendMessage(addr string, message Message) (Message, error) {
-	var returnMsg Message
+/*
+* Sends a message of type "Message" to address specified.
+* Waits for a response and unmarshalls it as a Message and the MessageData type.
+* Returns both Message and MessageData
+ */
+func SendMessage(addr string, message Message) (Message, interface{}, error) {
+	msgJson, err := MarshallMessage(message)
+	if err != nil {
+		return Message{}, nil, err
+	}
+	b, err2 := SendData(addr, msgJson)
+	if err2 != nil {
+		return Message{}, nil, err2
+	}
+	returnMsg, msgData, err3 := UnmarshallMessage(b)
+	return returnMsg, msgData, err3
+}
+
+/*
+* Sends data to address specified.
+* Waits for a response and returns it
+* TODO: Don't wait forever...
+ */
+func SendData(addr string, data []byte) ([]byte, error) {
+	var returnMsg []byte
 	addrLocal := CreateAddr("localhost", 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
@@ -106,11 +143,7 @@ func SendMessage(addr string, message Message) (Message, error) {
 		return returnMsg, err
 	}
 	defer udpConn.Close()
-	msgJson, errJson := json.Marshal(message)
-	if errJson != nil {
-		return returnMsg, errJson
-	}
-	_, err2 := udpConn.WriteTo(msgJson, addrRemote)
+	_, err2 := udpConn.WriteTo(data, addrRemote)
 	if err2 != nil {
 		return returnMsg, err2
 	}
@@ -121,21 +154,24 @@ func SendMessage(addr string, message Message) (Message, error) {
 	return returnMsg, nil
 }
 
-func ReadAnswer(udpConn net.PacketConn) (Message, net.Addr, error) {
+/*
+* Reads from the PacketConnection specified,
+* returns whats read as a byte array and the adress from where it came.
+ */
+func ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
 	b := make([]byte, MESSAGE_SIZE)
 	n, addr, err := udpConn.ReadFrom(b)
 	b = b[:n]
-	msg := Message{}
 	if err != nil {
-		return msg, addr, err
+		return b, addr, err
 	}
-	err2 := json.Unmarshal(b, &msg)
-	if err2 != nil {
-		return msg, addr, err2
-	}
-	return msg, addr, nil
+	return b, addr, nil
 }
 
+/*
+* Connects to addr and writes the message.
+* Does not wait for a response.
+ */
 func ConnectAndWrite(addr string, message []byte) error {
 	addrLocal := CreateAddr("localhost", 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)

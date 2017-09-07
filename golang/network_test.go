@@ -87,7 +87,7 @@ func TestNetworkSendMessage(t *testing.T) {
 	go EchoServer(7999)
 	time.Sleep(100 * time.Millisecond) //To assure server is up before sending data
 	msg := NewPingMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
-	returnMsg, err := SendMessage("localhost:7999", msg)
+	returnMsg, _, err := SendMessage("localhost:7999", msg)
 	if err != nil {
 		t.Error(err)
 	}
