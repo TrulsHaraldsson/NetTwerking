@@ -52,7 +52,6 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 		if err2 != nil{
 			fmt.Println("Error : ", err2)
 		}
-		
 		kademlia := Kademlia{}
 		if kademlia.LookupData(&valuemessage.ValueID) == false{
 			// call closest neighbors if they have value
@@ -64,6 +63,11 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 		//TODO: fix rest
 	case STORE:
 		fmt.Println("storing data") //TODO: Put in function like for FIND_NODE above
+		protocol := Protocol{}
+		sm := protocol.UnmarshallMessage(message)
+		kademlia := Kademlia{}
+		kademlia.Store(sm)
+		/*
 		kademlia := Kademlia{}
 		kademlia.Store(message.Data)
 		storemessage := StoreMessage{}
@@ -71,6 +75,7 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 		if err2 != nil {
 			fmt.Println("Error : ", err2)
 		}
+		*/
 		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 		newAck, _ := json.Marshal(ack)
 		ConnectAndWrite(addr.String(), newAck)
