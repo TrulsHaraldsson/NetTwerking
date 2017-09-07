@@ -55,6 +55,10 @@ func MarshallMessage(msg Message) ([]byte, error) {
 	return msgJson, err
 }
 
+/*
+* Assumes data is a Message Struct.
+* returns the message and messageData unmarshalled too.
+ */
 func UnmarshallMessage(data []byte) (Message, interface{}, error) {
 	m := Message{}
 
@@ -89,6 +93,9 @@ func UnmarshallMessage(data []byte) (Message, interface{}, error) {
 
 }
 
+/*
+* returns true if the messages are equal.
+ */
 func (m1 Message) Equal(m2 Message) bool {
 	if m1.MsgType != m2.MsgType {
 		return false

@@ -7,9 +7,9 @@ import (
 
 var Information []Item
 
-type Item struct{
+type Item struct {
 	Value string
-	Key KademliaID
+	Key   KademliaID
 }
 
 type Kademlia struct {
@@ -17,6 +17,9 @@ type Kademlia struct {
 	K  int
 }
 
+/*
+* Returns the kademlia.K closest contacts to target.
+ */
 func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 	contacts := kademlia.RT.FindClosestContacts(target.ID, kademlia.K)
 	return contacts
@@ -24,30 +27,30 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 
 func (kademlia *Kademlia) LookupData(hash *KademliaID) bool {
 	// TODO
-	found := false	
-	for _, v := range Information{
-		if v.Key == *hash{
+	found := false
+	for _, v := range Information {
+		if v.Key == *hash {
 			found = true
 		}
 	}
-	if found == true{
+	if found == true {
 		return true
-	}else{
+	} else {
 		return false
 	}
-}	
+}
 
-func (kademlia *Kademlia) Store(data []byte){
+func (kademlia *Kademlia) Store(data []byte) {
 	var m StoreMessage
 	err := json.Unmarshal(data, &m)
 	if err != nil {
 		fmt.Println("Error when unmarshalling", err)
 	}
 	item := Item{string(m.Data), m.Key}
-	Information = append(Information, item)	
-	return 
+	Information = append(Information, item)
+	return
 }
-		
+
 func (kademlia *Kademlia) getInformation() []Item {
 	return Information
 }
