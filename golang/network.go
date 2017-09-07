@@ -1,6 +1,7 @@
 package d7024e
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
@@ -11,6 +12,10 @@ const MESSAGE_SIZE = 1024
 type Network struct {
 	alpha    int
 	kademlia Kademlia
+}
+
+func NewNetwork(alpha int, kademlia Kademlia) Network {
+	return Network{alpha, kademlia}
 }
 
 /*
@@ -56,14 +61,26 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 	case FIND_NODE:
 		network.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
 	case FIND_VALUE:
-		fmt.Println("looking up value")
+		valuemessage := FindValueMessage{}
+		err2 := json.Unmarshal(message.Data, &valuemessage)
+		if err2 != nil {
+			fmt.Println("Error : ", err2)
+		}
+
+		kademlia := Kademlia{}
+		if kademlia.LookupData(&valuemessage.ValueID) == false {
+			// call closest neighbors if they have value
+			fmt.Println("Sending lookup in 3 separate neighbor nodes if they have value")
+		} else {
+			//ack new find received message back to sender.
+			fmt.Println("Sending ack back to sender!")
+		}
 		//TODO: fix rest
 	case STORE:
 		//TODO: Put in function like for FIND_NODE above
 		fmt.Println("storing data")
 		//storeMessage := mData.(StoreMessage) //TODO: Send this instead of message.Data below, need to alter kademlia.store to take a correct parameters
 		network.kademlia.Store(message.Data)
-
 		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 		newAck, _ := MarshallMessage(ack)
 		ConnectAndWrite(addr.String(), newAck)
