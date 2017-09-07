@@ -3,7 +3,6 @@ package d7024e
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 var Information []Item
@@ -23,41 +22,20 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 	return contacts
 }
 
-func (kademlia *Kademlia) LookupData(hash *KademliaID){
+func (kademlia *Kademlia) LookupData(hash *KademliaID) bool {
 	// TODO
-	found := false
-	
+	found := false	
 	for _, v := range Information{
 		if v.Key == *hash{
-			fmt.Println("Found item", v.Key)
 			found = true
 		}
 	}
 	if found == true{
-		fmt.Println("Successful search for item, returning.\n")
-		return
+		return true
 	}else{
-		fmt.Println("Failed search for item, keep searching.\n")
-		//contacts := kademlia.RT.FindClosestContacts(target.ID, kademlia.K)
-		return
+		return false
 	}
 }	
-
-func receiveAddress () string {
-	addr := "www.google.com"
-	fmt.Println("Address : ", addr)
-	return addr
-}
-
-func (kademlia *Kademlia) createChannels(){
-	ch := make(chan []byte)
-	//Go func
-	go func(){
-		addr := receiveAddress()
-		ch <- []byte(addr)
-	}()
-	fmt.Println("Channel value : ", ch)
-}
 
 func (kademlia *Kademlia) Store(data []byte){
 	var m StoreMessage
@@ -73,18 +51,3 @@ func (kademlia *Kademlia) Store(data []byte){
 func (kademlia *Kademlia) getInformation() []Item {
 	return Information
 }
-/*
-func (kademlia *Kademlia) removeInformation(hash KademliaID){
-	found := false	
-	for i, v := range Information{
-		if v.Key == hash {
-			Information = append(Information[:i],Information[i + 1:]...)
-			found = true
-		}
-	}
-	if found == true {
-		fmt.Println("Item Deleted!\n", Information)
-	}else{
-		fmt.Println("No value found")
-	}
-}*/

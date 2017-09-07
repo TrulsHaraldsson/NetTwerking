@@ -3,8 +3,6 @@ package d7024e
 import (
 	"testing"
 	"fmt"
-	"reflect"
-	//"encoding/json"
 )
 
 func TestKademliaNodeLookupContact(t *testing.T) {
@@ -22,7 +20,8 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	contacts := kademlia.LookupContact(&contactsCorrect[0])
 	fmt.Println(contacts)
 	for i, contact := range contacts {
-		fmt.Println(string(i))
+		fmt.Println(" i : ", i , "contact : ", contact)
+		
 		if !contact.ID.Equals(contactsCorrect[i].ID) {
 			t.Error("Wrong order in contacts")
 			fmt.Println(contact.ID, contactsCorrect[i].ID)
@@ -49,47 +48,20 @@ func TestKademliaNodeLookupData(t *testing.T){
 	kID := NewRandomKademliaID()
 	storemessage := NewStoreMessage(kID, NewRandomKademliaID(),&data)
 	kademlia.Store(storemessage.Data)
-	fmt.Println("kID : ", kID)
-	fmt.Println("Type of kID : ", reflect.TypeOf(kID))
-	kademlia.LookupData(kID)
+	if kademlia.LookupData(kID) == true {
+		fmt.Println("Successful lookup!\n")
+	}else{
+		fmt.Println("Lookup failure!\n")		
+	}
 }
 
 func TestKademliaNodeLookupDataFail(t *testing.T){
-	fmt.Println("Fail testing lookup data.\n")
-	data := []byte("World peace!")
+	fmt.Println("Fail testing lookup data.")
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()
-	fmt.Println("kID : ", kID)
-	fmt.Println("Type of kID : ", reflect.TypeOf(kID))
-	kID2 := NewRandomKademliaID()
-	storemessage := NewStoreMessage(kID, NewRandomKademliaID(),&data)
-	kademlia.Store(storemessage.Data)
-	fmt.Println("kID2 : ", kID2)
-	fmt.Println("Type of kID2 : ", reflect.TypeOf(kID2))
-	kademlia.LookupData(kID2)
-}
-/*
-func TestKademliaNodeRemove(t *testing.T){
-	fmt.Println("Testing to remove list item from Information list.")
-	data := []byte("Remove Info")
-	kademlia := Kademlia{}
-	kID := NewRandomKademliaID()
-	fmt.Println("kID :: ", kID)
-	storemessage := NewStoreMessage(kID, NewRandomKademliaID(),&data)
-	kademlia.Store(storemessage.Data)
-	
-	var m Message
-	err := json.Unmarshal(storemessage.Data, &m)
-	if err != nil {
-		fmt.Println("Error when test unmarshalling", err)
+	if kademlia.LookupData(kID) == true {
+		fmt.Println("Lookup find item, not good should fail!\n")
+	}else{
+		fmt.Println("Lookup successfully failed!\n")		
 	}
-	fmt.Println("sender : ", m.Sender)	
-	kademlia.removeInformation(m.Sender)
-}*/	
-
-
-func TestKademliaNodeCreateChannel(t *testing.T){
-	fmt.Println("Testing to create channels.")
-	kademlia := Kademlia{}
-	kademlia.createChannels()
 }

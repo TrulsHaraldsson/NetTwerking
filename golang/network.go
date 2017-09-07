@@ -47,7 +47,20 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 	case FIND_NODE:
 		network.OnFindNodeMessageReceived(&message, addr)
 	case FIND_VALUE:
-		fmt.Println("looking up value")
+		valuemessage := FindValueMessage{}
+		err2 := json.Unmarshal(message.Data, &valuemessage)
+		if err2 != nil{
+			fmt.Println("Error : ", err2)
+		}
+		
+		kademlia := Kademlia{}
+		if kademlia.LookupData(&valuemessage.ValueID) == false{
+			// call closest neighbors if they have value
+			fmt.Println("Sending lookup in 3 separate neighbor nodes if they have value")
+		}else{
+			//ack new find received message back to sender.
+			fmt.Println("Sending ack back to sender!")
+		}	
 		//TODO: fix rest
 	case STORE:
 		fmt.Println("storing data") //TODO: Put in function like for FIND_NODE above
@@ -56,7 +69,7 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 		storemessage := StoreMessage{}
 		err2 := json.Unmarshal(message.Data, &storemessage)
 		if err2 != nil {
-			panic(err2)
+			fmt.Println("Error : ", err2)
 		}
 		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 		newAck, _ := json.Marshal(ack)
