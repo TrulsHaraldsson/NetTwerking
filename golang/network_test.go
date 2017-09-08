@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func TestListen(t *testing.T) {
+func TestNetworkListen(t *testing.T) {
 	_, rt := CreateTestRT()
 	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
 	go network.Listen("localhost", 8000)

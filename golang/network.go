@@ -40,34 +40,46 @@ func (network Network) Listen(ip string, port int) {
 	}
 }
 
+/*
+	Cases : 
+		PING: Receiving a PING message checks if this node is online or offline.
+		
+		FIND_NODE: 
+		
+		FIND_VALUE: Checks if a certain valueID exist in Kademlia.Information list, if it does not however, 
+			then the node must ask other nodes if they have the value stored. But if it does have it, just make an ack with it.
+		
+		STORE: Given data of form StoreMessage (will change to Message), an item will be created of type Item and placed in 
+			a list called Information in Kademlia.
+
+*/
 func (network Network) HandleConnection(message Message, addr net.Addr) {
 	switch message.MsgType {
 	case PING:
 		fmt.Println("ping")
 	case FIND_NODE:
+		fmt.Println("Searching for node.")
 		network.OnFindNodeMessageReceived(&message, addr)
 	case FIND_VALUE:
+		fmt.Println("Searching for value.")
 		valuemessage := FindValueMessage{}
 		err2 := json.Unmarshal(message.Data, &valuemessage)
 		if err2 != nil{
 			fmt.Println("Error : ", err2)
 		}
 		kademlia := Kademlia{}
-		if kademlia.LookupData(&valuemessage.ValueID) == false{
+		item := kademlia.LookupData(&valuemessage.ValueID)
+		if item.Value != "" {
+			fmt.Println("Item : ", item)
+			//ack new find received message back to sender.
+			fmt.Println("Sending FIND_VALUE acknowledge back to sender!")
+		}else{
 			// call closest neighbors if they have value
 			fmt.Println("Sending lookup in 3 separate neighbor nodes if they have value")
-		}else{
-			//ack new find received message back to sender.
-			fmt.Println("Sending ack back to sender!")
-		}	
+		}
 		//TODO: fix rest
 	case STORE:
-		fmt.Println("storing data") //TODO: Put in function like for FIND_NODE above
-		protocol := Protocol{}
-		sm := protocol.UnmarshallMessage(message)
-		kademlia := Kademlia{}
-		kademlia.Store(sm)
-		/*
+		fmt.Println("Storing.") //TODO: Put in function like for FIND_NODE above
 		kademlia := Kademlia{}
 		kademlia.Store(message.Data)
 		storemessage := StoreMessage{}
@@ -75,11 +87,10 @@ func (network Network) HandleConnection(message Message, addr net.Addr) {
 		if err2 != nil {
 			fmt.Println("Error : ", err2)
 		}
-		*/
 		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 		newAck, _ := json.Marshal(ack)
 		ConnectAndWrite(addr.String(), newAck)
-		fmt.Println("Sent acknowledge message back!")
+		fmt.Println("Sending STORE acknowledge message back!")
 
 	default:
 		fmt.Println("Wrong syntax in message, ignoring it...")

@@ -1,5 +1,7 @@
 package d7024e
 
+// According to : (go test -cover -tags KademliaNode) gives 89.6% test coverage atm.
+
 import (
 	"testing"
 	"fmt"
@@ -48,20 +50,12 @@ func TestKademliaNodeLookupData(t *testing.T){
 	kID := NewRandomKademliaID()
 	storemessage := NewStoreMessage(kID, NewRandomKademliaID(),&data)
 	kademlia.Store(storemessage.Data)
-	if kademlia.LookupData(kID) == true {
-		fmt.Println("Successful lookup!\n")
-	}else{
-		fmt.Println("Lookup failure!\n")		
-	}
+	fmt.Println("Returned Item : ", kademlia.LookupData(kID))
 }
 
 func TestKademliaNodeLookupDataFail(t *testing.T){
 	fmt.Println("Fail testing lookup data.")
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()
-	if kademlia.LookupData(kID) == true {
-		fmt.Println("Lookup find item, not good should fail!\n")
-	}else{
-		fmt.Println("Lookup successfully failed!\n")		
-	}
+	fmt.Println("Returned Item : ", kademlia.LookupData(kID))
 }
