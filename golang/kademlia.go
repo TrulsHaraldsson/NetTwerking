@@ -1,8 +1,8 @@
 package d7024e
 
 import (
-	"encoding/json"
-	"fmt"
+	//"encoding/json"
+	//"fmt"
 )
 
 var Information []Item
@@ -44,12 +44,7 @@ Stores an item of type Item in a list called Information.
 
 TODO : Chaning such that unmarshalling is done by func call.
 */
-func (kademlia *Kademlia) Store(data []byte) {
-	var m StoreMessage
-	err := json.Unmarshal(data, &m)
-	if err != nil {
-		fmt.Println("Error when unmarshalling", err)
-	}
+func (kademlia *Kademlia) Store(m StoreMessage) {
 	item := Item{string(m.Data), m.Key}
 	Information = append(Information, item)
 	return

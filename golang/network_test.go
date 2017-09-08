@@ -25,7 +25,7 @@ func TestNetworkListen(t *testing.T) {
 	if err1 != nil {
 		t.Error(err1)
 	}
-
+/*
 	m2 := NewPingMessage(kID)
 	m2Json, _ := json.Marshal(m2)
 	err2 := ConnectAndWrite("localhost:8000", m2Json)
@@ -39,7 +39,7 @@ func TestNetworkListen(t *testing.T) {
 	if err3 != nil {
 		t.Error(err3)
 	}
-
+*/
 	data := []byte("hello world!")
 	m4 := NewStoreMessage(kID, NewRandomKademliaID(), &data)
 	m4Json, _ := json.Marshal(m4)
@@ -48,12 +48,13 @@ func TestNetworkListen(t *testing.T) {
 	if err4 != nil {
 		t.Error(err4)
 	}
-
+	
+/*
 	err5 := ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
 	if err5 != nil {
 		t.Error(err5)
 	}
-	time.Sleep(400 * time.Millisecond) // To assure server receving data before shutdown.
+*/	time.Sleep(400 * time.Millisecond) // To assure server receving data before shutdown.
 }
 
 func TestNetworkSendMessage(t *testing.T) {

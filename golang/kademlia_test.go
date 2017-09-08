@@ -5,7 +5,9 @@ package d7024e
 import (
 	"testing"
 	"fmt"
+	"encoding/json"
 )
+
 
 func TestKademliaNodeLookupContact(t *testing.T) {
 	_, rt := CreateTestRT()
@@ -39,17 +41,21 @@ func TestKademliaNodeStore(t *testing.T){
 	data := []byte("hello world!")
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()
-	storemessage := NewStoreMessage(kID, NewRandomKademliaID(),&data)
-	kademlia.Store(storemessage.Data) 
+	message := NewStoreMessage(kID, NewRandomKademliaID(),&data)
+	storeMessage := StoreMessage{}
+	json.Unmarshal(message.Data, &storeMessage)
+	kademlia.Store(storeMessage) 
 }
 
 func TestKademliaNodeLookupData(t *testing.T){
-	fmt.Println("Testing lookup data.")
-	data := []byte("World peace!")
+	fmt.Println("Testing store data.")
+	data := []byte("hello world!")
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()
-	storemessage := NewStoreMessage(kID, NewRandomKademliaID(),&data)
-	kademlia.Store(storemessage.Data)
+	message := NewStoreMessage(kID, NewRandomKademliaID(),&data)
+	storeMessage := StoreMessage{}
+	json.Unmarshal(message.Data, &storeMessage)
+	kademlia.Store(storeMessage) 
 	fmt.Println("Returned Item : ", kademlia.LookupData(kID))
 }
 

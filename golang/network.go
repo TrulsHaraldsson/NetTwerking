@@ -1,7 +1,6 @@
 package d7024e
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"strconv"
@@ -62,13 +61,8 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 		network.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
 	case FIND_VALUE:
 		fmt.Println("Searching for value.")
-		valuemessage := FindValueMessage{}
-		err2 := json.Unmarshal(message.Data, &valuemessage)
-		if err2 != nil {
-			fmt.Println("Error : ", err2)
-		}
-		kademlia := Kademlia{}
-		item := kademlia.LookupData(&valuemessage.ValueID)
+		valueMessage := mData.(FindValueMessage)
+		item := network.kademlia.LookupData(&valueMessage.ValueID)
 		if item.Value != "" {
 			fmt.Println("Item : ", item)
 			//ack new find received message back to sender.
@@ -79,16 +73,9 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 		}
 		//TODO: fix rest
 	case STORE:
-		fmt.Println("Storing.") //TODO: Put in function like for FIND_NODE above
-		kademlia := Kademlia{}
-		kademlia.Store(message.Data)
-		storemessage := StoreMessage{}
-		err2 := json.Unmarshal(message.Data, &storemessage)
-		if err2 != nil {
-			fmt.Println("Error : ", err2)
-		}
-		//storeMessage := mData.(StoreMessage) //TODO: Send this instead of message.Data below, need to alter kademlia.store to take a correct parameters
-		network.kademlia.Store(message.Data)
+		fmt.Println("Storing.") //TODO: Put in function like for FIND_NODE above	
+		storeMessage := mData.(StoreMessage) //TODO: Send this instead of message.Data below, need to alter kademlia.store to take a correct parameters
+		network.kademlia.Store(storeMessage)
 		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 		newAck, _ := MarshallMessage(ack)
 		ConnectAndWrite(addr.String(), newAck)
