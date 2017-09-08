@@ -27,7 +27,7 @@ func TestProtocolMarshall(t *testing.T) {
 		t.Error(err3)
 	}
 	msgData4 := NewKademliaID("fffffffffffffffffffffffffffffffffffffff0")
-	msg4 := NewFindNodeMessage(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), msgData4)
+	msg4 := NewFindValueMessage(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), msgData4)
 	err4 := marshallTestHelper(msg4, FindNodeMessage{*msgData4})
 	if err4 != nil {
 		t.Error(err4)
