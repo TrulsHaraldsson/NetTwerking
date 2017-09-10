@@ -48,7 +48,7 @@ func TestKademliaNodeStore(t *testing.T){
 }
 
 func TestKademliaNodeLookupData(t *testing.T){
-	fmt.Println("Testing store data.")
+	fmt.Println("Testing to lookup data.")
 	data := []byte("hello world!")
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()

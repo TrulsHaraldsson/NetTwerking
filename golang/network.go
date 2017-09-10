@@ -20,7 +20,7 @@ func NewNetwork(alpha int, kademlia Kademlia) Network {
 /*
 * Starts a UDP socket listening on port and ip specified.
 * When a package is received it will start a new thread handling it.
- */
+*/
 func (network Network) Listen(ip string, port int) {
 	addrServer := CreateAddr(ip, port)
 	udpConn, err := net.ListenPacket("udp", addrServer)
@@ -55,31 +55,17 @@ func (network Network) Listen(ip string, port int) {
 func (network Network) HandleConnection(message Message, mData interface{}, addr net.Addr) {
 	switch message.MsgType {
 	case PING:
-		fmt.Println("ping")
+		fmt.Println("Ping.")
 	case FIND_NODE:
 		fmt.Println("Searching for node.")
 		network.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
 	case FIND_VALUE:
 		fmt.Println("Searching for value.")
-		valueMessage := mData.(FindValueMessage)
-		item := network.kademlia.LookupData(&valueMessage.ValueID)
-		if item.Value != "" {
-			fmt.Println("Item : ", item)
-			//ack new find received message back to sender.
-			fmt.Println("Sending FIND_VALUE acknowledge back to sender!")
-		}else{
-			// call closest neighbors if they have value
-			fmt.Println("Sending lookup in 3 separate neighbor nodes if they have value")
-		}
+		network.OnFindValueMessageReceived(&message, mData.(FindValueMessage), addr)
 		//TODO: fix rest
 	case STORE:
-		fmt.Println("Storing.") //TODO: Put in function like for FIND_NODE above	
-		storeMessage := mData.(StoreMessage) //TODO: Send this instead of message.Data below, need to alter kademlia.store to take a correct parameters
-		network.kademlia.Store(storeMessage)
-		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
-		newAck, _ := MarshallMessage(ack)
-		ConnectAndWrite(addr.String(), newAck)
-		fmt.Println("Sending STORE acknowledge message back!")
+		fmt.Println("Storing node info.")	
+		network.OnStoreMessageReceived(&message, mData.(StoreMessage), addr)
 
 	default:
 		fmt.Println("Wrong syntax in message, ignoring it...")
@@ -94,16 +80,39 @@ func CreateAddr(ip string, port int) string {
 }
 
 /*
-* When the message received is a FindNodeMessage, this
- */
+FIND_NODE message received over network, sent to kademlia LookupData.
+*/
+func (network Network) OnFindValueMessageReceived(message *Message, data FindValueMessage, addr net.Addr){
+	item := network.kademlia.LookupData(&data.ValueID)
+	if item.Value != "" {
+		fmt.Println("Item : ", item)
+		fmt.Println("Sending FIND_VALUE acknowledge back to sender!")
+	}else{
+		fmt.Println("Sending lookup in 3 separate neighbor nodes if they have value")
+	}
+}
+
+/*
+STORE message received over network. Sent to kademlia Store.
+*/
+func (network Network) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
+		network.kademlia.Store(data)
+		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
+		newAck, _ := MarshallMessage(ack)
+		ConnectAndWrite(addr.String(), newAck)
+		fmt.Println("Sending STORE acknowledge message back!")
+}
+
+/*
+FIND_VALUE message received over network, sent to kademlia LookupContact.
+*/
 func (network Network) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
-	fmt.Println("looking up node")
 	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 	contacts := network.kademlia.LookupContact(&target)
 	returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
 	ConnectAndWrite(addr.String(), rMsgJson)
-
+	fmt.Println("Sending back FIND_NODE acknowledge!")
 }
 
 func (network *Network) SendPingMessage(contact *Contact) {

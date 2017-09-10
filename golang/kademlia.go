@@ -1,8 +1,6 @@
 package d7024e
 
 import (
-	//"encoding/json"
-	//"fmt"
 )
 
 var Information []Item
@@ -19,7 +17,7 @@ type Kademlia struct {
 
 /*
 * Returns the kademlia.K closest contacts to target.
- */
+*/
 func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 	contacts := kademlia.RT.FindClosestContacts(target.ID, kademlia.K)
 	return contacts
@@ -41,8 +39,6 @@ func (kademlia *Kademlia) LookupData(hash *KademliaID) Item {
 
 /*
 Stores an item of type Item in a list called Information.
-
-TODO : Chaning such that unmarshalling is done by func call.
 */
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	item := Item{string(m.Data), m.Key}
