@@ -48,13 +48,13 @@ func TestNetworkListen(t *testing.T) {
 	if err4 != nil {
 		t.Error(err4)
 	}
-	
-/*
-	err5 := ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
-	if err5 != nil {
-		t.Error(err5)
-	}
-*/	time.Sleep(400 * time.Millisecond) // To assure server receving data before shutdown.
+
+	/*
+		err5 := ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
+		if err5 != nil {
+			t.Error(err5)
+		}
+	*/time.Sleep(400 * time.Millisecond) // To assure server receving data before shutdown.
 }
 
 func TestNetworkSendMessage(t *testing.T) {
@@ -68,6 +68,27 @@ func TestNetworkSendMessage(t *testing.T) {
 
 	if !msg.Equal(returnMsg) {
 		t.Error("Message sent is not Equal to Received.", msg, returnMsg)
+	}
+}
+
+func TestNetworkSendFindContactMessage(t *testing.T) {
+	contacts, rt := CreateTestRT2()
+	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	go network.Listen("localhost", 8002)
+
+	time.Sleep(50 * time.Millisecond)
+
+	_, rt2 := CreateTestRT()
+	network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
+
+	contact := network2.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000000"))
+	if !contact.Equals(contacts[0]) {
+		t.Error("contacts are not equal", contact, contacts[0])
+	}
+	contact2 := network2.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
+	emptyContact := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
+	if !contact2.Equals(emptyContact) {
+		t.Error("Other contact than default found, when not supposed to...", contact2)
 	}
 }
 
