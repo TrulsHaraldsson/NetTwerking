@@ -82,7 +82,7 @@ func CreateAddr(ip string, port int) string {
 }
 
 func (network *Network) OnPingMessageReceived(message *Message, addr net.Addr) {
-	msgJson := NewPingAckMessage(NewRandomKademliaID(), &message.RPC_ID) //TODO: Fix real sender id
+	msgJson := NewPingAckMessage(network.kademlia.RT.me.ID, &message.RPC_ID)
 	WriteMessage(addr.String(), msgJson)
 }
 
@@ -115,7 +115,7 @@ FIND_VALUE message received over network, sent to kademlia LookupContact.
 func (network Network) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
 	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 	contacts := network.kademlia.LookupContact(&target)
-	returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
+	returnMessage := NewFindNodeAckMessage(network.kademlia.RT.me.ID, &message.RPC_ID, &contacts)
 	WriteMessage(addr.String(), returnMessage)
 	fmt.Println("Sending back FIND_NODE acknowledge!")
 }
@@ -124,7 +124,7 @@ func (network Network) OnFindNodeMessageReceived(message *Message, data FindNode
 * Sends a ping to given address
  */
 func (network *Network) SendPingMessage(addr string) (Message, error) {
-	msg := NewPingMessage(NewRandomKademliaID()) //TODO: Fix real sender id
+	msg := NewPingMessage(network.kademlia.RT.me.ID)
 	response, _, err := SendMessage(addr, msg)
 	if err != nil {
 		return Message{}, err
@@ -140,8 +140,10 @@ func (network *Network) SendPingMessage(addr string) (Message, error) {
 /*
 * Sends out a maximum of network.kademlia.K RPC's to find the node in the network with id = kademliaID.
 * Returns the contact if it is found(Can be nil, if not found).
+* TODO: Check first if node is found locally
 * TODO: Add functionality for processing if no node closer is found.
 * TODO: Dont check same node multiple times.
+* TODO: Dont Crash if less than alpha contacts in routingtable
 * TODO: Setup a network to test more of its functionality
  */
 func (network *Network) SendFindContactMessage(kademliaID *KademliaID) Contact {
