@@ -1,6 +1,7 @@
 package d7024e
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -56,6 +57,7 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 	switch message.MsgType {
 	case PING:
 		fmt.Println("Ping.")
+		network.OnPingMessageReceived(&message, addr)
 	case FIND_NODE:
 		fmt.Println("Searching for node.")
 		network.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
@@ -77,6 +79,11 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
  */
 func CreateAddr(ip string, port int) string {
 	return ip + ":" + strconv.Itoa(port)
+}
+
+func (network *Network) OnPingMessageReceived(message *Message, addr net.Addr) {
+	msgJson := NewPingAckMessage(NewRandomKademliaID(), &message.RPC_ID) //TODO: Fix real sender id
+	WriteMessage(addr.String(), msgJson)
 }
 
 /*
@@ -113,8 +120,21 @@ func (network Network) OnFindNodeMessageReceived(message *Message, data FindNode
 	fmt.Println("Sending back FIND_NODE acknowledge!")
 }
 
-func (network *Network) SendPingMessage(contact *Contact) {
-	// TODO
+/*
+* Sends a ping to given address
+ */
+func (network *Network) SendPingMessage(addr string) (Message, error) {
+	msg := NewPingMessage(NewRandomKademliaID()) //TODO: Fix real sender id
+	response, _, err := SendMessage(addr, msg)
+	if err != nil {
+		return Message{}, err
+	}
+	if msg.RPC_ID == response.RPC_ID {
+		return response, nil
+	} else {
+		return Message{}, errors.New("Wrong RPC_ID returned, it is not from the server, sent to...")
+	}
+
 }
 
 /*

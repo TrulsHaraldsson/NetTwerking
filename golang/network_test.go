@@ -92,6 +92,25 @@ func TestNetworkSendFindContactMessage(t *testing.T) {
 	}
 }
 
+func TestNetworkSendPingMessage(t *testing.T) {
+	_, rt := CreateTestRT2()
+	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	go network.Listen("localhost", 8003)
+
+	time.Sleep(50 * time.Millisecond)
+
+	_, rt2 := CreateTestRT()
+	network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
+
+	msg, err := network2.SendPingMessage("localhost:8003")
+	if err != nil {
+		t.Error(err)
+	}
+	if msg.MsgType != PING_ACK {
+		t.Error("Did not receive an ack for the ping message...")
+	}
+}
+
 func EchoServer(port int) {
 	addrServer := CreateAddr("localhost", port)
 	udpConn, err := net.ListenPacket("udp", addrServer)
