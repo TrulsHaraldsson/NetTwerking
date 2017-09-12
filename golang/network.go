@@ -98,8 +98,7 @@ STORE message received over network. Sent to kademlia Store.
 func (network Network) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
 	network.kademlia.Store(data)
 	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
-	newAck, _ := MarshallMessage(ack)
-	ConnectAndWrite(addr.String(), newAck)
+	WriteMessage(addr.String(), ack)
 	fmt.Println("Sending STORE acknowledge message back!")
 }
 
@@ -110,8 +109,7 @@ func (network Network) OnFindNodeMessageReceived(message *Message, data FindNode
 	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 	contacts := network.kademlia.LookupContact(&target)
 	returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
-	rMsgJson, _ := MarshallMessage(returnMessage)
-	ConnectAndWrite(addr.String(), rMsgJson)
+	WriteMessage(addr.String(), returnMessage)
 	fmt.Println("Sending back FIND_NODE acknowledge!")
 }
 
@@ -226,6 +224,18 @@ func ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
 		return b, addr, err
 	}
 	return b, addr, nil
+}
+
+/*
+* Writes a message of type Message to addr, does not wait for response.
+ */
+func WriteMessage(addr string, message Message) error {
+	msgJson, err := MarshallMessage(message)
+	if err != nil {
+		return err
+	}
+	err2 := ConnectAndWrite(addr, msgJson)
+	return err2
 }
 
 /*
