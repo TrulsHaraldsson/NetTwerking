@@ -91,6 +91,46 @@ func TestNetworkSendMessage(t *testing.T) {
 	}
 }
 
+func TestNetworkSendFindContactMessage(t *testing.T) {
+	contacts, rt := CreateTestRT2()
+	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	go network.Listen("localhost", 8002)
+
+	time.Sleep(50 * time.Millisecond)
+
+	_, rt2 := CreateTestRT()
+	network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
+
+	contact := network2.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000000"))
+	if !contact.Equals(contacts[0]) {
+		t.Error("contacts are not equal", contact, contacts[0])
+	}
+	contact2 := network2.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
+	emptyContact := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
+	if !contact2.Equals(emptyContact) {
+		t.Error("Other contact than default found, when not supposed to...", contact2)
+	}
+}
+
+func TestNetworkSendPingMessage(t *testing.T) {
+	_, rt := CreateTestRT2()
+	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	go network.Listen("localhost", 8003)
+
+	time.Sleep(50 * time.Millisecond)
+
+	_, rt2 := CreateTestRT()
+	network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
+
+	msg, err := network2.SendPingMessage("localhost:8003")
+	if err != nil {
+		t.Error(err)
+	}
+	if msg.MsgType != PING_ACK {
+		t.Error("Did not receive an ack for the ping message...")
+	}
+}
+
 func EchoServer(port int) {
 	addrServer := CreateAddr("localhost", port)
 	udpConn, err := net.ListenPacket("udp", addrServer)

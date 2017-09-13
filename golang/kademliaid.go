@@ -11,6 +11,10 @@ const IDLength = 20
 
 type KademliaID [IDLength]byte
 
+/*
+ * Reads a string and returns a KademliaID. The function assumes that the string
+ * resembles a hexdecimal number.
+ */
 func NewKademliaID(data string) *KademliaID {
 	decoded, _ := hex.DecodeString(data)
 
@@ -27,7 +31,8 @@ func NewKademliaID(data string) *KademliaID {
  * enough to create different seeds for all threads.
  */
 func NewRandomKademliaID() *KademliaID {
-	var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+	var t = time.Now().UnixNano()
+	var r = rand.New(rand.NewSource(t))
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = uint8(r.Intn(256))
@@ -35,6 +40,9 @@ func NewRandomKademliaID() *KademliaID {
 	return &newKademliaID
 }
 
+/*
+ * Check if the calling KademliaID is less than the given KademliaID 
+ */ 
 func (kademliaID KademliaID) Less(otherKademliaID *KademliaID) bool {
 	for i := 0; i < IDLength; i++ {
 		if kademliaID[i] != otherKademliaID[i] {
@@ -44,6 +52,9 @@ func (kademliaID KademliaID) Less(otherKademliaID *KademliaID) bool {
 	return false
 }
 
+/*
+ * Returns true if the two KademliaIDs are identical
+ */
 func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 	for i := 0; i < IDLength; i++ {
 		if kademliaID[i] != otherKademliaID[i] {
@@ -53,6 +64,10 @@ func (kademliaID KademliaID) Equals(otherKademliaID *KademliaID) bool {
 	return true
 }
 
+/*
+ * Calculates the XOR distance between two KademliaIDs. The result will be a new
+ * KademliaID.
+ */
 func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 	result := KademliaID{}
 	for i := 0; i < IDLength; i++ {
@@ -61,6 +76,9 @@ func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 	return &result
 }
 
+/*
+ * Returns a string representation of the KademliaID
+ */
 func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
 }

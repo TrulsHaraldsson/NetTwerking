@@ -1,6 +1,7 @@
 package d7024e
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -23,7 +24,7 @@ func NewNetwork(alpha int, kademlia Kademlia) Network {
 /*
 * Starts a UDP socket listening on port and ip specified.
 * When a package is received it will start a new thread handling it.
-*/
+ */
 func (network Network) Listen(ip string, port int) {
 	addrServer := CreateAddr(ip, port)
 	udpConn, err := net.ListenPacket("udp", addrServer)
@@ -59,6 +60,7 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 	switch message.MsgType {
 	case PING:
 		fmt.Println("Ping.")
+		network.OnPingMessageReceived(&message, addr)
 	case FIND_NODE:
 		fmt.Println("Searching for node.")
 		network.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
@@ -67,7 +69,7 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 		network.OnFindValueMessageReceived(&message, mData.(FindValueMessage), addr)
 		//TODO: fix rest
 	case STORE:
-		fmt.Println("Storing node info.")	
+		fmt.Println("Storing node info.")
 		network.OnStoreMessageReceived(&message, mData.(StoreMessage), addr)
 
 	default:
@@ -82,29 +84,32 @@ func CreateAddr(ip string, port int) string {
 	return ip + ":" + strconv.Itoa(port)
 }
 
+func (network *Network) OnPingMessageReceived(message *Message, addr net.Addr) {
+	msgJson := NewPingAckMessage(network.kademlia.RT.me.ID, &message.RPC_ID)
+	WriteMessage(addr.String(), msgJson)
+}
+
 /*
 FIND_NODE message received over network, sent to kademlia LookupData.
 */
-func (network Network) OnFindValueMessageReceived(message *Message, data FindValueMessage, addr net.Addr){
+func (network Network) OnFindValueMessageReceived(message *Message, data FindValueMessage, addr net.Addr) {
 	item := network.kademlia.LookupData(&data.ValueID)
-	if item.Value != "" {
-		ackItem, _ := json.Marshal(item)		
-		ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackItem)
-		newAck, _ := MarshallMessage(ack)
-		fmt.Println("Sending FIND_VALUE acknowledge back to sender ", addr.String() ," with item : ", string(newAck))
-		ConnectAndWrite(addr.String(), newAck)
-	}
+	ackItem, _ := json.Marshal(item)		
+	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackItem)
+	newAck, _ := MarshallMessage(ack)
+	fmt.Println("Sending FIND_VALUE acknowledge back to sender ", addr.String() ," with item : ", string(newAck))
+	ConnectAndWrite(addr.String(), newAck)
 }
 
 /*
 STORE message received over network. Sent to kademlia Store.
 */
 func (network Network) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
-		network.kademlia.Store(data)
-		ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
-		newAck, _ := MarshallMessage(ack)
-		fmt.Println("Sending STORE acknowledge back to ", addr.String(), " with ", newAck)
-		ConnectAndWrite(addr.String(), newAck)
+	network.kademlia.Store(data)
+	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
+	newAck, _ := MarshallMessage(ack)
+	fmt.Println("Sending STORE acknowledge back to ", addr.String(), " with ", newAck)
+	ConnectAndWrite(addr.String(), newAck)
 }
 
 /*
@@ -119,12 +124,66 @@ func (network Network) OnFindNodeMessageReceived(message *Message, data FindNode
 	ConnectAndWrite(addr.String(), rMsgJson)
 }
 
-func (network *Network) SendPingMessage(contact *Contact) {
-	// TODO
+/*
+* Sends a ping to given address
+ */
+func (network *Network) SendPingMessage(addr string) (Message, error) {
+	msg := NewPingMessage(network.kademlia.RT.me.ID)
+	response, _, err := SendMessage(addr, msg)
+	if err != nil {
+		return Message{}, err
+	}
+	if msg.RPC_ID == response.RPC_ID {
+		return response, nil
+	} else {
+		return Message{}, errors.New("Wrong RPC_ID returned, it is not from the server, sent to...")
+	}
+
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
-	// TODO
+/*
+* Sends out a maximum of network.kademlia.K RPC's to find the node in the network with id = kademliaID.
+* Returns the contact if it is found(Can be nil, if not found).
+* TODO: Check first if node is found locally
+* TODO: Add functionality for processing if no node closer is found.
+* TODO: Dont check same node multiple times.
+* TODO: Dont Crash if less than alpha contacts in routingtable
+* TODO: Setup a network to test more of its functionality
+ */
+func (network *Network) SendFindContactMessage(kademliaID *KademliaID) Contact {
+	senderID := NewKademliaID("1111111100000000000000000000000000000000")
+	targetID := kademliaID
+	target := NewContact(targetID, "DummyAdress")
+	closestContacts := network.kademlia.LookupContact(&target)
+	message := NewFindNodeMessage(senderID, targetID)
+	counter := 0
+	ch := make(chan Contact)
+	for i := 0; i < network.alpha; i++ {
+		go network.FindContactHelper(closestContacts[i].Address, message, &counter, targetID, ch)
+	}
+	contact := <-ch
+	return contact
+}
+
+func (network *Network) FindContactHelper(addr string, message Message, counter *int, targetID *KademliaID, ch chan Contact) {
+	if *counter >= network.kademlia.K {
+		ch <- NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
+		return
+	} else {
+		_, response, _ := SendMessage(addr, message) //TODO: dont ignore error
+		ackMessage := response.(AckFindNodeMessage)
+		closestContact := ackMessage.Nodes[0]
+		if closestContact.ID.Equals(targetID) {
+			ch <- closestContact
+			*counter += network.kademlia.K
+			return
+		}
+		*counter += 1
+		for i := 0; i < network.alpha; i++ {
+			go network.FindContactHelper(ackMessage.Nodes[i].Address, message, counter, targetID, ch)
+		}
+	}
+
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
@@ -262,6 +321,18 @@ func ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
 		return b, addr, err
 	}
 	return b, addr, nil
+}
+
+/*
+* Writes a message of type Message to addr, does not wait for response.
+ */
+func WriteMessage(addr string, message Message) error {
+	msgJson, err := MarshallMessage(message)
+	if err != nil {
+		return err
+	}
+	err2 := ConnectAndWrite(addr, msgJson)
+	return err2
 }
 
 /*

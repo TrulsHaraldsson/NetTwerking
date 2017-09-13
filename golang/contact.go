@@ -15,6 +15,14 @@ func NewContact(id *KademliaID, address string) Contact {
 	return Contact{id, address, nil}
 }
 
+func (contact *Contact) Equals(otherContact Contact) bool {
+	if contact.ID.Equals(otherContact.ID) && contact.Address == otherContact.Address {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (contact *Contact) CalcDistance(target *KademliaID) {
 	contact.distance = contact.ID.CalcDistance(target)
 }
