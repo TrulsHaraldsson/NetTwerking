@@ -248,7 +248,7 @@ func (network *Network) FindValueHelper (addr string, message Message, counter *
 }
 
 /*
-Sends a message over the network to the closest neighbor in the routing table and waits for response
+Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
 from neighbor OnStoreMessageReceived func.
 */
 func (network *Network) SendStoreMessage(target *KademliaID, data []byte) []byte {
@@ -274,12 +274,16 @@ func (network *Network) StoreHelper(addr string, message Message, counter *int, 
 		ch <- data
 		return
 	}else{
+		//TEST //
+		//newStoreAckMessgeReturned := Message{STORE_ACK, message.Sender, *NewRandomKademliaID(), []byte("")}
+		//rMsg := newStoreAckMessgeReturned
+		// END TEST //
+
 		rMsg, _, err := SendMessage(addr, message) //NewStoreAckMessage - AckStoreMessage - err
 		if err != nil{
 			fmt.Println("Response failure, did not complete sending store!")
 			return
 		}
-		//ack := rData.(AckStoreMessage)
 		if rMsg.Sender.Equals(&message.Sender){
 			fmt.Println("Message sent and received correctly, returning.")
 			ch <- []byte("stored") //Don't know exactly what should be returned as the AckStoreMessage struct is empty.
