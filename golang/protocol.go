@@ -87,6 +87,10 @@ func UnmarshallMessage(data []byte) (Message, interface{}, error) {
 		mData := StoreMessage{}
 		err2 := json.Unmarshal(m.Data, &mData)
 		return m, mData, err2
+	case STORE_ACK:
+		mData := AckStoreMessage{}
+		err2 := json.Unmarshal(m.Data, &mData)
+		return m, mData, err2
 	default:
 		return m, nil, err1
 	}

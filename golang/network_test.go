@@ -44,7 +44,7 @@ func TestNetworkListen(t *testing.T) {
 	if err1 != nil {
 		t.Error(err1)
 	}
-	
+
 	m2 := NewPingMessage(kID)
 	m2Json, _ := json.Marshal(m2)
 	err2 := ConnectAndWrite("localhost:8000", m2Json)
