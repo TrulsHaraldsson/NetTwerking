@@ -236,7 +236,6 @@ func NewFindValueAckMessage(sender *KademliaID, RPC_ID *KademliaID, value *[]byt
 	if error != nil {
 		fmt.Println("Error when creating find value ack message")
 	}
-
 	msg.Data = data
 	return msg
 }
