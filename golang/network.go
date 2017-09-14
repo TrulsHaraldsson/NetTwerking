@@ -24,7 +24,7 @@ func NewNetwork(alpha int, kademlia Kademlia) Network {
 /*
 * if connectTo is "none", it will not connect to another node
  */
-func StartNode(port int, connectTo string) {
+func StartNode(port int, connectTo string) Network {
 	me := NewContact(NewRandomKademliaID(), "localhost:"+string(port))
 	rt := NewRoutingTable(me)
 	network := NewNetwork(3, Kademlia{RT: rt, K: 20})
@@ -33,6 +33,7 @@ func StartNode(port int, connectTo string) {
 	if connectTo != "none" {
 		SendMessage(connectTo, message)
 	}
+	return network
 
 }
 
