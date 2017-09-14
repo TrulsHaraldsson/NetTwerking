@@ -208,7 +208,7 @@ func (network *Network) SendFindDataMessage(hash string) {
 * Request to find a value over the network.
 */
 func (network *Network) SendFindValueMessage(me *KademliaID) Item{
-	closest := network.kademlia.RT.FindClosestContacts(me , 3)
+	closest := network.kademlia.RT.FindClosestContacts(me , network.alpha)
 	ch := make(chan Item)
 	counter := 0
 
@@ -232,7 +232,7 @@ func (network *Network) FindValueHelper (addr string, message Message, counter *
 
 	}else{
 		_, response, _ := SendMessage(addr, message)
-		ack := response.(AckFindValueMessage) //ack Type AckFindValueMessage
+		ack := response.(AckFindValueMessage)
 		item := Item{}
 		err := json.Unmarshal(ack.Value, &item)
 		if err != nil {
@@ -240,10 +240,11 @@ func (network *Network) FindValueHelper (addr string, message Message, counter *
 		}
 		if item.Key.Equals(&message.Sender){
 			ch <- item
+			*counter += network.kademlia.K
 			return
 		}else{
 			*counter += 1
-			for i := 0; i < network.alpha; i++ {
+			for i := 0; i < network.alpha ; i++ {
 				go network.FindValueHelper(addr, message, counter, ch)
 			}
 		}
@@ -254,9 +255,8 @@ func (network *Network) FindValueHelper (addr string, message Message, counter *
 Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
 from neighbor OnStoreMessageReceived func.
 */
-func (network *Network) SendStoreMessage(target *KademliaID, data []byte) []byte {
-	//fmt.Println("Testing to send a STORE message")
-	closest := network.kademlia.RT.FindClosestContacts(target, network.alpha)
+func (network *Network) SendStoreMessage(me *KademliaID, data []byte) []byte {
+	closest := network.kademlia.RT.FindClosestContacts(me, network.alpha)
 	ch := make(chan []byte)
 	counter := 0
 
@@ -274,7 +274,7 @@ func (network *Network) SendStoreMessage(target *KademliaID, data []byte) []byte
 * Helper function for store where a []byte object is received in the response.
 */
 func (network *Network) StoreHelper(addr string, message Message, counter *int, ch chan []byte){
-	if *counter >= network.alpha{
+	if *counter >= network.kademlia.K{
 		data := []byte("")
 		ch <- data
 		return
@@ -285,6 +285,7 @@ func (network *Network) StoreHelper(addr string, message Message, counter *int, 
 		}
 		if rMsg.Sender.Equals(&message.Sender){
 			ch <- []byte("stored")
+			*counter += network.kademlia.K
 			return
 		} else {
 			*counter += 1
