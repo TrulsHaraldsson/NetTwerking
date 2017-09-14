@@ -12,25 +12,6 @@ import (
 	"time"
 )
 
-func TestNetworkListenToSendFindValue(t *testing.T) {
-	_, rt := CreateTestRT()
-	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
-	kID := NewRandomKademliaID()
-	network.SendFindValueMessage(kID)
-}
-
-
-func TestNetworkListenToSendStore(t *testing.T) {
-	_, rt := CreateTestRT()
-	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
-
-	kID := NewRandomKademliaID()
-	data := []byte("hello world!")
-	m4 := NewStoreMessage(kID, NewRandomKademliaID(), &data)
-	m4Json, _ := json.Marshal(m4)
-	network.SendStoreMessage(kID, m4Json)
-}
-
 func TestNetworkListen(t *testing.T) {
 	_, rt := CreateTestRT()
 	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
@@ -88,6 +69,41 @@ func TestNetworkSendMessage(t *testing.T) {
 		t.Error("Message sent is not Equal to Received.", msg, returnMsg)
 	}else{
 		fmt.Println("Everything went expected, received correct message ", msg ," and returnMsg ", returnMsg)
+	}
+}
+
+func TestNetworkSendFindValueMessage(t *testing.T) {
+	_, rt := CreateTestRT3()
+	k := Kademlia{RT: rt, K: 20}
+	kID := NewKademliaID("FFFFFFFF00000000000000000000000000000000")
+	data := []byte("LookThisUp")
+	storeMessage := StoreMessage{*kID, data}
+	k.Store(storeMessage)
+
+	network := Network{alpha: 3, kademlia: k}
+	go network.Listen("localhost", 8007)
+
+	item := network.SendFindValueMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
+
+	if string(data) != item.Value{
+		t.Error("Couldn't find the stored value.", item)
+	}else{
+		fmt.Println("Item returned : ", item, "\n String : ", item.Value ,"\n Key : ", item.Key)
+	}
+}
+
+func TestNetworkSendStoreMessage(t *testing.T){
+	_, rt := CreateTestRT4()
+	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	go network.Listen("localhost", 8009)
+
+	time.Sleep(50 * time.Millisecond)
+
+	contact := network.SendStoreMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), []byte("Testing to store"))
+	if string(contact) != "stored"{
+		t.Error("Store message was not successful.", contact)
+	}else{
+		fmt.Println("Successful store!", string(contact))
 	}
 }
 
