@@ -18,7 +18,7 @@ const FIND_VALUE_ACK = "FIND_VALUE_ACK"
 
 type Message struct {
 	MsgType string
-	Sender  KademliaID
+	Sender  Contact
 	RPC_ID  KademliaID
 	Data    []byte
 }
@@ -103,7 +103,7 @@ func UnmarshallMessage(data []byte) (Message, interface{}, error) {
 func (m1 Message) Equal(m2 Message) bool {
 	if m1.MsgType != m2.MsgType {
 		return false
-	} else if m1.Sender != m2.Sender {
+	} else if !m1.Sender.Equals(m2.Sender) {
 		return false
 	} else if m1.RPC_ID != m2.RPC_ID {
 		return false
@@ -114,7 +114,7 @@ func (m1 Message) Equal(m2 Message) bool {
 	}
 }
 
-func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
+func NewFindValueMessage(sender *Contact, valueID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_VALUE
 	msg.Sender = *sender
@@ -131,7 +131,7 @@ func NewFindValueMessage(sender *KademliaID, valueID *KademliaID) Message {
 	return msg
 }
 
-func NewFindNodeMessage(sender *KademliaID, nodeID *KademliaID) Message {
+func NewFindNodeMessage(sender *Contact, nodeID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_NODE
 	msg.Sender = *sender
@@ -148,7 +148,7 @@ func NewFindNodeMessage(sender *KademliaID, nodeID *KademliaID) Message {
 	return msg
 }
 
-func NewPingMessage(sender *KademliaID) Message {
+func NewPingMessage(sender *Contact) Message {
 	var msg = Message{}
 	msg.MsgType = PING
 	msg.Sender = *sender
@@ -165,7 +165,7 @@ func NewPingMessage(sender *KademliaID) Message {
 	return msg
 }
 
-func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Message {
+func NewStoreMessage(sender *Contact, key *KademliaID, storeData *[]byte) Message {
 	var msg = Message{}
 	msg.MsgType = STORE
 	msg.Sender = *sender
@@ -181,7 +181,7 @@ func NewStoreMessage(sender *KademliaID, key *KademliaID, storeData *[]byte) Mes
 	return msg
 }
 
-func NewStoreAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message {
+func NewStoreAckMessage(sender *Contact, RPC_ID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = STORE_ACK
 	msg.Sender = *sender
@@ -197,7 +197,7 @@ func NewStoreAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message {
 	return msg
 }
 
-func NewPingAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message {
+func NewPingAckMessage(sender *Contact, RPC_ID *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = PING_ACK
 	msg.Sender = *sender
@@ -213,7 +213,7 @@ func NewPingAckMessage(sender *KademliaID, RPC_ID *KademliaID) Message {
 	return msg
 }
 
-func NewFindNodeAckMessage(sender *KademliaID, RPC_ID *KademliaID, nodes *[]Contact) Message {
+func NewFindNodeAckMessage(sender *Contact, RPC_ID *KademliaID, nodes *[]Contact) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_NODE_ACK
 	msg.Sender = *sender
@@ -229,7 +229,7 @@ func NewFindNodeAckMessage(sender *KademliaID, RPC_ID *KademliaID, nodes *[]Cont
 	return msg
 }
 
-func NewFindValueAckMessage(sender *KademliaID, RPC_ID *KademliaID, value *[]byte) Message {
+func NewFindValueAckMessage(sender *Contact, RPC_ID *KademliaID, value *[]byte) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_VALUE_ACK
 	msg.Sender = *sender

@@ -3,11 +3,10 @@ package d7024e
 // According to : (go test -cover -tags KademliaNode) gives 89.6% test coverage atm.
 
 import (
-	"testing"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"testing"
 )
-
 
 func TestKademliaNodeLookupContact(t *testing.T) {
 	_, rt := CreateTestRT()
@@ -24,8 +23,8 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	contacts := kademlia.LookupContact(&contactsCorrect[0])
 	fmt.Println(contacts)
 	for i, contact := range contacts {
-		fmt.Println(" i : ", i , "contact : ", contact)
-		
+		fmt.Println(" i : ", i, "contact : ", contact)
+
 		if !contact.ID.Equals(contactsCorrect[i].ID) {
 			t.Error("Wrong order in contacts")
 			fmt.Println(contact.ID, contactsCorrect[i].ID)
@@ -36,30 +35,30 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	}
 }
 
-func TestKademliaNodeStore(t *testing.T){
+func TestKademliaNodeStore(t *testing.T) {
 	fmt.Println("Testing store data.")
 	data := []byte("hello world!")
 	kademlia := Kademlia{}
-	kID := NewRandomKademliaID()
-	message := NewStoreMessage(kID, NewRandomKademliaID(),&data)
+	kID := NewContact(NewRandomKademliaID(), "adress")
+	message := NewStoreMessage(&kID, NewRandomKademliaID(), &data)
 	storeMessage := StoreMessage{}
 	json.Unmarshal(message.Data, &storeMessage)
-	kademlia.Store(storeMessage) 
+	kademlia.Store(storeMessage)
 }
 
-func TestKademliaNodeLookupData(t *testing.T){
+func TestKademliaNodeLookupData(t *testing.T) {
 	fmt.Println("Testing to lookup data.")
 	data := []byte("hello world!")
 	kademlia := Kademlia{}
-	kID := NewRandomKademliaID()
-	message := NewStoreMessage(kID, NewRandomKademliaID(),&data)
+	kID := NewContact(NewRandomKademliaID(), "adress")
+	message := NewStoreMessage(&kID, NewRandomKademliaID(), &data)
 	storeMessage := StoreMessage{}
 	json.Unmarshal(message.Data, &storeMessage)
-	kademlia.Store(storeMessage) 
-	fmt.Println("Returned Item : ", kademlia.LookupData(kID))
+	kademlia.Store(storeMessage)
+	fmt.Println("Returned Item : ", kademlia.LookupData(kID.ID))
 }
 
-func TestKademliaNodeLookupDataFail(t *testing.T){
+func TestKademliaNodeLookupDataFail(t *testing.T) {
 	fmt.Println("Fail testing lookup data.")
 	kademlia := Kademlia{}
 	kID := NewRandomKademliaID()

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"flag"
 	"bufio"
-	"strconv"
+	"flag"
+	"fmt"
 	"os"
+	"strconv"
 	"time"
+
 	"../golang"
 )
 
@@ -17,19 +18,20 @@ func main() {
 	address := flag.String("addr", "127.0.0.1", "IP-address of this node")
 	port := flag.Int("port", 65000, "Port this node will listen to")
 	interactive := flag.Bool("interactive", false, "Manual Control")
-	
+
 	flag.Parse()
 
 	if *interactive == true {
 		fmt.Println("Booting up an interactive node")
-	}else {
+	} else {
 		fmt.Println("Booting up a non-interactive node")
 	}
-	
-	fmt.Println("IP:",*address)
-	fmt.Println("PORT:",*port)
-	
+
+	fmt.Println("IP:", *address)
+	fmt.Println("PORT:", *port)
+
 	kID := d7024e.NewRandomKademliaID()
+	c := d7024e.NewContact(kID, "localhost:port")
 	fmt.Println("Node ID:", kID)
 
 	contact := d7024e.NewContact(kID, d7024e.CreateAddr(*address, *port))
@@ -37,7 +39,7 @@ func main() {
 	kademlia := d7024e.Kademlia{rt, 20}
 	network := d7024e.NewNetwork(3, kademlia)
 	go network.Listen(*address, *port)
-	
+
 	time.Sleep(1 * time.Second)
 
 	reader := bufio.NewReader(os.Stdin)
@@ -49,7 +51,7 @@ func main() {
 		input = input[:len(input)-1]
 		for {
 			if input == "QUIT" {
-				break;
+				break
 			}
 			switch input {
 			case d7024e.PING:
@@ -57,7 +59,7 @@ func main() {
 				rport, _ := reader.ReadString('\n')
 				rport = rport[:len(rport)-1]
 				rp, _ := strconv.Atoi(rport)
-				msg := d7024e.NewPingMessage(kID)
+				msg := d7024e.NewPingMessage(&c)
 				response, _, _ := d7024e.SendMessage(
 					d7024e.CreateAddr("127.0.0.1", rp), msg)
 				fmt.Println(response)
@@ -67,10 +69,9 @@ func main() {
 			input, _ = reader.ReadString('\n')
 			input = input[:len(input)-1]
 		}
-	}else {
+	} else {
 		fmt.Println("Press enter to quit")
 		_, _ = reader.ReadString('\n')
 	}
 
 }
-

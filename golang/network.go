@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"time"
 	//"strings"
 	"encoding/json"
 	//"reflect"
@@ -25,14 +26,22 @@ func NewNetwork(alpha int, kademlia Kademlia) Network {
 * if connectTo is "none", it will not connect to another node
 * Currently only sends a ping to connectTo, because on testing we only want it to puplish itself to one node.
  */
-func StartNode(port int, connectTo string) Network {
-	me := NewContact(NewRandomKademliaID(), "localhost:"+string(port))
+func StartNode(port int, connectTo string, kID string) Network {
+	var kademliaID *KademliaID
+	if kID != "none" {
+		kademliaID = NewKademliaID(kID)
+	} else {
+		kademliaID = NewRandomKademliaID()
+	}
+	me := NewContact(kademliaID, "localhost:"+strconv.Itoa(port))
 	rt := NewRoutingTable(me)
 	network := NewNetwork(3, Kademlia{RT: rt, K: 20})
 	go network.Listen("localhost", port)
-	message := NewPingMessage(network.kademlia.RT.me.ID)
 	if connectTo != "none" {
-		SendMessage(connectTo, message)
+		_, err := network.SendPingMessage(connectTo)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return network
 
@@ -91,7 +100,9 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 
 	default:
 		fmt.Println("Wrong syntax in message, ignoring it...")
+		return
 	}
+	network.kademlia.RT.AddContact(message.Sender)
 }
 
 /*
@@ -102,7 +113,7 @@ func CreateAddr(ip string, port int) string {
 }
 
 func (network *Network) OnPingMessageReceived(message *Message, addr net.Addr) {
-	msgJson := NewPingAckMessage(network.kademlia.RT.me.ID, &message.RPC_ID)
+	msgJson := NewPingAckMessage(&network.kademlia.RT.me, &message.RPC_ID)
 	WriteMessage(addr.String(), msgJson)
 }
 
@@ -135,7 +146,7 @@ FIND_VALUE message received over network, sent to kademlia LookupContact.
 func (network Network) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
 	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 	contacts := network.kademlia.LookupContact(&target)
-	returnMessage := NewFindNodeAckMessage(NewRandomKademliaID(), &message.RPC_ID, &contacts) //TODO: Fix real sender id
+	returnMessage := NewFindNodeAckMessage(&network.kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
 	fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
 	ConnectAndWrite(addr.String(), rMsgJson)
@@ -145,11 +156,12 @@ func (network Network) OnFindNodeMessageReceived(message *Message, data FindNode
 * Sends a ping to given address
  */
 func (network *Network) SendPingMessage(addr string) (Message, error) {
-	msg := NewPingMessage(network.kademlia.RT.me.ID)
+	msg := NewPingMessage(&network.kademlia.RT.me)
 	response, _, err := SendMessage(addr, msg)
 	if err != nil {
 		return Message{}, err
 	}
+	network.kademlia.RT.AddContact(response.Sender)
 	if msg.RPC_ID == response.RPC_ID {
 		return response, nil
 	} else {
@@ -164,15 +176,15 @@ func (network *Network) SendPingMessage(addr string) (Message, error) {
 * TODO: Check first if node is found locally
 * TODO: Add functionality for processing if no node closer is found.
 * TODO: Dont check same node multiple times.
-* TODO: Dont Crash if less than alpha contacts in routingtable
 * TODO: Setup a network to test more of its functionality
  */
 func (network *Network) SendFindContactMessage(kademliaID *KademliaID) Contact {
-	senderID := NewKademliaID("1111111100000000000000000000000000000000")
 	targetID := kademliaID
 	target := NewContact(targetID, "DummyAdress")
 	closestContacts := network.kademlia.LookupContact(&target)
-	message := NewFindNodeMessage(senderID, targetID)
+	fmt.Println("How many contacts in rt1", len(closestContacts))
+	fmt.Println("Closest contact1", closestContacts[0])
+	message := NewFindNodeMessage(&network.kademlia.RT.me, targetID)
 	counter := 0
 	ch := make(chan Contact)
 	for i := 0; i < network.alpha && i < len(closestContacts); i++ {
@@ -187,16 +199,25 @@ func (network *Network) FindContactHelper(addr string, message Message, counter 
 		ch <- NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
 		return
 	} else {
-		_, response, _ := SendMessage(addr, message) //TODO: dont ignore error
+		rMessage, response, err := SendMessage(addr, message) //TODO: dont ignore error
+		if err != nil {
+			return
+		}
+		network.kademlia.RT.AddContact(rMessage.Sender)
 		ackMessage := response.(AckFindNodeMessage)
 		closestContact := ackMessage.Nodes[0]
+
+		fmt.Println("How many contacts in rt", len(ackMessage.Nodes))
+		fmt.Println("Closest contact", closestContact)
 		if closestContact.ID.Equals(targetID) {
+			fmt.Println("Found Contact!!!", closestContact)
 			ch <- closestContact
 			*counter += network.kademlia.K
 			return
 		} else {
 			*counter += 1
 			for i := 0; i < network.alpha && i < len(ackMessage.Nodes); i++ {
+				fmt.Println("Sending to", ackMessage.Nodes[i])
 				go network.FindContactHelper(ackMessage.Nodes[i].Address, message, counter, targetID, ch)
 			}
 		}
@@ -218,9 +239,9 @@ func (network *Network) SendFindValueMessage(target *KademliaID) Item {
 	for i := 0; i < network.alpha; i++ {
 		fmt.Println("Contact [", i, "], : ", closest[i])
 		me := network.kademlia.RT.me
-		message := NewFindValueMessage(me.ID, closest[i].ID)
+		message := NewFindValueMessage(&me, closest[i].ID)
 		go network.FindValueHelper(closest[i].Address, message, &counter, ch) // This is correct.
-		//go network.FindValueHelper(me.ID, closest[i].Address, message, &counter, ch) // For static testing.
+		//go network.FindValueHelper(me, closest[i].Address, message, &counter, ch) // For static testing.
 	}
 	item := <-ch
 	return item
@@ -244,7 +265,7 @@ func (network *Network) FindValueHelper(addr string, message Message, counter *i
 		if err != nil {
 			return
 		}
-		if item.Key.Equals(&message.Sender) {
+		if item.Key.Equals(message.Sender.ID) {
 			ch <- item
 			return
 			//This is correct end.
@@ -285,7 +306,7 @@ func (network *Network) SendStoreMessage(target *KademliaID, data []byte) []byte
 	for i := range closest {
 		fmt.Println("Contact [", i, "], : ", "\n Address : ", closest[i].Address, "\n ID : ", closest[i].ID, "\n Distance : ", closest[i].distance, "\n")
 		me := network.kademlia.RT.me
-		message := NewStoreMessage(closest[i].ID, me.ID, &data)
+		message := NewStoreMessage(&closest[i], me.ID, &data)
 		go network.StoreHelper(closest[i].Address, message, &counter, ch)
 	}
 	outData := <-ch
@@ -309,7 +330,7 @@ func (network *Network) StoreHelper(addr string, message Message, counter *int, 
 			fmt.Println("Response failure, did not complete sending store!")
 			return
 		}
-		if rMsg.Sender.Equals(&message.Sender) {
+		if rMsg.Sender.ID.Equals(message.Sender.ID) {
 			fmt.Println("Message sent and received correctly, returning.")
 			ch <- []byte("stored") //Don't know exactly what should be returned as the AckStoreMessage struct is empty.
 			return
@@ -343,13 +364,13 @@ func SendMessage(addr string, message Message) (Message, interface{}, error) {
 /*
 * Sends data to address specified.
 * Waits for a response and returns it
-* TODO: Don't wait forever...
  */
 func SendData(addr string, data []byte) ([]byte, error) {
 	var returnMsg []byte
 	addrLocal := CreateAddr("localhost", 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
+	udpConn.SetDeadline(time.Now().Add(3 * time.Second)) // Waits for 3 seconds
 	fmt.Println("Listening on", udpConn.LocalAddr().String())
 	if err != nil {
 		return returnMsg, err
