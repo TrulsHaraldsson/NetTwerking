@@ -250,8 +250,15 @@ func (network *Network) FindValueHelper(addr string, message Message, counter *i
 			/*		if me.Equals(&message.Sender){
 					item := Item{"Found me!", *me}
 					ch <- item
-					fmt.Println("Item found, yay!")
 					return
+					//This is correct end.
+
+					//For static testing.
+					/*		if me.Equals(&message.Sender){
+							item := Item{"Found me!", *me}
+							ch <- item
+							fmt.Println("Item found, yay!")
+							return
 			*/ //For static testing end.
 		} else {
 			*counter += 1
@@ -263,20 +270,52 @@ func (network *Network) FindValueHelper(addr string, message Message, counter *i
 }
 
 /*
-Sends a message over the network to the closest neighbor in the routing table and waits for response
+Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
 from neighbor OnStoreMessageReceived func.
 */
-func (network *Network) SendStoreMessage(target *KademliaID, data []byte) {
+func (network *Network) SendStoreMessage(target *KademliaID, data []byte) []byte {
 	fmt.Println("Testing to send a STORE message")
-	closest := network.kademlia.RT.FindClosestContacts(target, 1)
+	closest := network.kademlia.RT.FindClosestContacts(target, network.alpha)
+	ch := make(chan []byte)
+	counter := 0
+
 	for i := range closest {
 		fmt.Println("Contact [", i, "], : ", "\n Address : ", closest[i].Address, "\n ID : ", closest[i].ID, "\n Distance : ", closest[i].distance, "\n")
+		me := network.kademlia.RT.me
+		message := NewStoreMessage(closest[i].ID, me.ID, &data)
+		go network.StoreHelper(closest[i].Address, message, &counter, ch)
 	}
-	me := network.kademlia.RT.me
-	createMessage := NewStoreMessage(closest[0].ID, me.ID, &data)
-	_, _, err := SendMessage(closest[0].Address, createMessage)
-	if err != nil {
-		fmt.Println("Response is not correct!")
+	outData := <-ch
+	return outData
+}
+
+func (network *Network) StoreHelper(addr string, message Message, counter *int, ch chan []byte) {
+	if *counter >= network.alpha {
+		fmt.Println("Counter too large, returning empty data.")
+		data := []byte("")
+		ch <- data
+		return
+	} else {
+		//TEST //
+		//newStoreAckMessgeReturned := Message{STORE_ACK, message.Sender, *NewRandomKademliaID(), []byte("")}
+		//rMsg := newStoreAckMessgeReturned
+		// END TEST //
+
+		rMsg, _, err := SendMessage(addr, message) //NewStoreAckMessage - AckStoreMessage - err
+		if err != nil {
+			fmt.Println("Response failure, did not complete sending store!")
+			return
+		}
+		if rMsg.Sender.Equals(&message.Sender) {
+			fmt.Println("Message sent and received correctly, returning.")
+			ch <- []byte("stored") //Don't know exactly what should be returned as the AckStoreMessage struct is empty.
+			return
+		} else {
+			*counter += 1
+			for i := 0; i < network.alpha; i++ {
+				go network.StoreHelper(addr, message, counter, ch)
+			}
+		}
 	}
 }
 
