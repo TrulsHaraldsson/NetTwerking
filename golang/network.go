@@ -23,6 +23,7 @@ func NewNetwork(alpha int, kademlia Kademlia) Network {
 
 /*
 * if connectTo is "none", it will not connect to another node
+* Currently only sends a ping to connectTo, because on testing we only want it to puplish itself to one node.
  */
 func StartNode(port int, connectTo string) Network {
 	me := NewContact(NewRandomKademliaID(), "localhost:"+string(port))
@@ -174,7 +175,7 @@ func (network *Network) SendFindContactMessage(kademliaID *KademliaID) Contact {
 	message := NewFindNodeMessage(senderID, targetID)
 	counter := 0
 	ch := make(chan Contact)
-	for i := 0; i < network.alpha; i++ {
+	for i := 0; i < network.alpha && i < len(closestContacts); i++ {
 		go network.FindContactHelper(closestContacts[i].Address, message, &counter, targetID, ch)
 	}
 	contact := <-ch
@@ -193,10 +194,11 @@ func (network *Network) FindContactHelper(addr string, message Message, counter 
 			ch <- closestContact
 			*counter += network.kademlia.K
 			return
-		}
-		*counter += 1
-		for i := 0; i < network.alpha; i++ {
-			go network.FindContactHelper(ackMessage.Nodes[i].Address, message, counter, targetID, ch)
+		} else {
+			*counter += 1
+			for i := 0; i < network.alpha && i < len(ackMessage.Nodes); i++ {
+				go network.FindContactHelper(ackMessage.Nodes[i].Address, message, counter, targetID, ch)
+			}
 		}
 	}
 
