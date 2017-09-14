@@ -1,14 +1,12 @@
 package d7024e
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 	"strconv"
 	"time"
-	//"strings"
-	"encoding/json"
-	//"reflect"
 )
 
 const MESSAGE_SIZE = 1024
@@ -93,7 +91,6 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 	case FIND_VALUE:
 		fmt.Println("Searching for value.")
 		network.OnFindValueMessageReceived(&message, mData.(FindValueMessage), addr)
-		//TODO: fix rest
 	case STORE:
 		fmt.Println("Storing node info.")
 		network.OnStoreMessageReceived(&message, mData.(StoreMessage), addr)
@@ -125,7 +122,7 @@ func (network Network) OnFindValueMessageReceived(message *Message, data FindVal
 	ackItem, _ := json.Marshal(item)
 	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackItem)
 	newAck, _ := MarshallMessage(ack)
-	fmt.Println("Sending FIND_VALUE acknowledge back to sender ", addr.String(), " with item : ", string(newAck))
+
 	ConnectAndWrite(addr.String(), newAck)
 }
 
@@ -136,7 +133,7 @@ func (network Network) OnStoreMessageReceived(message *Message, data StoreMessag
 	network.kademlia.Store(data)
 	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 	newAck, _ := MarshallMessage(ack)
-	fmt.Println("Sending STORE acknowledge back to ", addr.String(), " with ", newAck)
+	//fmt.Println("Sending STORE acknowledge back to ", addr.String(), " with ", newAck)
 	ConnectAndWrite(addr.String(), newAck)
 }
 
@@ -148,7 +145,7 @@ func (network Network) OnFindNodeMessageReceived(message *Message, data FindNode
 	contacts := network.kademlia.LookupContact(&target)
 	returnMessage := NewFindNodeAckMessage(&network.kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
-	fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
+	//fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
 	ConnectAndWrite(addr.String(), rMsgJson)
 }
 
@@ -167,7 +164,6 @@ func (network *Network) SendPingMessage(addr string) (Message, error) {
 	} else {
 		return Message{}, errors.New("Wrong RPC_ID returned, it is not from the server, sent to...")
 	}
-
 }
 
 /*
@@ -222,7 +218,6 @@ func (network *Network) FindContactHelper(addr string, message Message, counter 
 			}
 		}
 	}
-
 }
 
 func (network *Network) SendFindDataMessage(hash string) {
@@ -230,14 +225,15 @@ func (network *Network) SendFindDataMessage(hash string) {
 	//This is SendFindValueMessage.
 }
 
-func (network *Network) SendFindValueMessage(target *KademliaID) Item {
-	fmt.Println("Testing to send a FIND_VALUE message")
-	closest := network.kademlia.RT.FindClosestContacts(target, 3)
+/*
+* Request to find a value over the network.
+ */
+func (network *Network) SendFindValueMessage(me *KademliaID) Item {
+	closest := network.kademlia.RT.FindClosestContacts(me, network.alpha)
 	ch := make(chan Item)
 	counter := 0
 
 	for i := 0; i < network.alpha; i++ {
-		fmt.Println("Contact [", i, "], : ", closest[i])
 		me := network.kademlia.RT.me
 		message := NewFindValueMessage(&me, closest[i].ID)
 		go network.FindValueHelper(closest[i].Address, message, &counter, ch) // This is correct.
@@ -247,19 +243,18 @@ func (network *Network) SendFindValueMessage(target *KademliaID) Item {
 	return item
 }
 
+/*
+* A helper function for SendFindValueMessage to retreive an item.
+ */
 func (network *Network) FindValueHelper(addr string, message Message, counter *int, ch chan Item) { //This is correct.
-	//func (network *Network) FindValueHelper (me *KademliaID, addr string, message Message, counter *int, ch chan Item) { // For static testing.
-	fmt.Println("Using FindValueHelper!\n")
 	if *counter >= network.kademlia.K {
 		item := Item{}
-		fmt.Println("Item should be nothing : ", item.Value, " , ", item.Key)
 		ch <- item
 		return
 
 	} else {
-		//This is correct.
 		_, response, _ := SendMessage(addr, message)
-		ack := response.(AckFindValueMessage) //ack Type AckFindValueMessage
+		ack := response.(AckFindValueMessage)
 		item := Item{}
 		err := json.Unmarshal(ack.Value, &item)
 		if err != nil {
@@ -267,23 +262,8 @@ func (network *Network) FindValueHelper(addr string, message Message, counter *i
 		}
 		if item.Key.Equals(message.Sender.ID) {
 			ch <- item
+			*counter += network.kademlia.K
 			return
-			//This is correct end.
-
-			//For static testing.
-			/*		if me.Equals(&message.Sender){
-					item := Item{"Found me!", *me}
-					ch <- item
-					return
-					//This is correct end.
-
-					//For static testing.
-					/*		if me.Equals(&message.Sender){
-							item := Item{"Found me!", *me}
-							ch <- item
-							fmt.Println("Item found, yay!")
-							return
-			*/ //For static testing end.
 		} else {
 			*counter += 1
 			for i := 0; i < network.alpha; i++ {
@@ -297,14 +277,13 @@ func (network *Network) FindValueHelper(addr string, message Message, counter *i
 Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
 from neighbor OnStoreMessageReceived func.
 */
-func (network *Network) SendStoreMessage(target *KademliaID, data []byte) []byte {
-	fmt.Println("Testing to send a STORE message")
-	closest := network.kademlia.RT.FindClosestContacts(target, network.alpha)
+func (network *Network) SendStoreMessage(me *KademliaID, data []byte) []byte {
+	closest := network.kademlia.RT.FindClosestContacts(me, network.alpha)
 	ch := make(chan []byte)
 	counter := 0
 
 	for i := range closest {
-		fmt.Println("Contact [", i, "], : ", "\n Address : ", closest[i].Address, "\n ID : ", closest[i].ID, "\n Distance : ", closest[i].distance, "\n")
+		//fmt.Println("Contact [", i ,"], : ", "\n Address : ",closest[i].Address ,"\n ID : ",closest[i].ID, "\n Distance : ", closest[i].distance,"\n")
 		me := network.kademlia.RT.me
 		message := NewStoreMessage(&closest[i], me.ID, &data)
 		go network.StoreHelper(closest[i].Address, message, &counter, ch)
@@ -313,26 +292,22 @@ func (network *Network) SendStoreMessage(target *KademliaID, data []byte) []byte
 	return outData
 }
 
+/*
+* Helper function for store where a []byte object is received in the response.
+ */
 func (network *Network) StoreHelper(addr string, message Message, counter *int, ch chan []byte) {
-	if *counter >= network.alpha {
-		fmt.Println("Counter too large, returning empty data.")
+	if *counter >= network.kademlia.K {
 		data := []byte("")
 		ch <- data
 		return
 	} else {
-		//TEST //
-		//newStoreAckMessgeReturned := Message{STORE_ACK, message.Sender, *NewRandomKademliaID(), []byte("")}
-		//rMsg := newStoreAckMessgeReturned
-		// END TEST //
-
-		rMsg, _, err := SendMessage(addr, message) //NewStoreAckMessage - AckStoreMessage - err
+		rMsg, _, err := SendMessage(addr, message)
 		if err != nil {
-			fmt.Println("Response failure, did not complete sending store!")
 			return
 		}
 		if rMsg.Sender.ID.Equals(message.Sender.ID) {
-			fmt.Println("Message sent and received correctly, returning.")
-			ch <- []byte("stored") //Don't know exactly what should be returned as the AckStoreMessage struct is empty.
+			ch <- []byte("stored")
+			*counter += network.kademlia.K
 			return
 		} else {
 			*counter += 1
