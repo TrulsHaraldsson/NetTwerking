@@ -51,25 +51,6 @@ func (kademlia *Kademlia) Start(port int) {
 }
 
 /*
- * If connectTo is "none", it will not connect to another node
- * Currently only sends a ping to connectTo, because on testing we only want it to puplish itself to one node.
- */
-func StartNode(port int, connectTo string, kID string) Kademlia {
-	kademlia := NewKademlia(port, kID)
-	go kademlia.net.Listen("localhost", port)
-	if connectTo != "none" {
-		kademlia.Ping(connectTo)
-		/*msg := NewPingMessage(&me)
-		_, err := network.SendPingMessage(connectTo, &msg)
-		if err != nil {
-			panic(err)
-		}*/
-	}
-	return *kademlia
-
-}
-
-/*
  * Returns the kademlia.K closest contacts to target.
  */
 func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
