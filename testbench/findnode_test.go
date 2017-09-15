@@ -8,14 +8,31 @@ import (
 )
 
 func TestFindNode(t *testing.T) {
-	d7024e.StartNode(8100, "none", "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
-	time.Sleep(10 * time.Millisecond)                                                          //B
-	n1 := d7024e.StartNode(8101, "localhost:8100", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA") //A
-	d7024e.StartNode(8102, "localhost:8100", "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")       //C
+	// Node B
+	B := d7024e.NewKademlia(8100, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+	B.Start(8100)
 	time.Sleep(10 * time.Millisecond)
-	d7024e.StartNode(8103, "localhost:8102", "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD") //D
-	fmt.Println("All nodes connected", n1)
-	contact := n1.SendFindContactMessage(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
+
+	// Node A
+	A := d7024e.NewKademlia(8101, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+	A.Start(8101)
+	A.Ping("localhost:8100")
+	time.Sleep(10 * time.Millisecond)
+
+	// Node C
+	C := d7024e.NewKademlia(8102, "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+	C.Start(8102)
+	C.Ping("localhost:8100")
+	time.Sleep(10 * time.Millisecond)
+
+	// NODE D
+	D := d7024e.NewKademlia(8103, "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+	D.Start(8103)
+	D.Ping("localhost:8102")
+	time.Sleep(10 * time.Millisecond)
+
+	fmt.Println("All nodes connected", A)
+	contact := A.SendFindContactMessage(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
 
 	if !contact.ID.Equals(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")) {
 		t.Error("Not correct contact returned", contact)
