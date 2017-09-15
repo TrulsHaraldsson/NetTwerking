@@ -230,7 +230,7 @@ func (kademlia *Kademlia) StoreHelper(addr string, message Message, counter *int
  * Checks if a certain hash exist in storage, if it does the item is returned of type Item.
  */
 func (kademlia *Kademlia) LookupData(hash *KademliaID) Item {
-	newItem := Item{}	
+	newItem := Item{}
 	for _, v := range Information {
 		if v.Key == *hash {
 			newItem.Key = v.Key
@@ -299,6 +299,4 @@ func (kademlia *Kademlia) Ping(addr string) {
 	if error == nil { // No error	
 		kademlia.RT.AddContact(response.Sender)
 	}
-} 
-
-
+}
