@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
-
 	"../golang"
-	"time"
 )
 
 func TestFindNode(t *testing.T) {
