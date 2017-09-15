@@ -233,11 +233,11 @@ func (network *Network) SendFindValueMessage(me *KademliaID) Item {
 	ch := make(chan Item)
 	counter := 0
 
-	for i := 0; i < network.alpha; i++ {
+	for i := range closest {
+		fmt.Println("Closest [", i ,"] with ID : ", closest[i].ID)
 		me := network.kademlia.RT.me
-		message := NewFindValueMessage(&me, closest[i].ID)
-		go network.FindValueHelper(closest[i].Address, message, &counter, ch) // This is correct.
-		//go network.FindValueHelper(me, closest[i].Address, message, &counter, ch) // For static testing.
+		message := NewFindValueMessage(&me, me.ID) //Search for its own ID in the other nodes.
+		go network.FindValueHelper(closest[i].Address, message, &counter, ch)
 	}
 	item := <-ch
 	return item
@@ -265,8 +265,9 @@ func (network *Network) FindValueHelper(addr string, message Message, counter *i
 			*counter += network.kademlia.K
 			return
 		} else {
-			*counter += 1
 			for i := 0; i < network.alpha; i++ {
+				// Does the counter increase before or within the foor loop. This drastically decreases the amount of calls.
+				*counter += 1
 				go network.FindValueHelper(addr, message, counter, ch)
 			}
 		}
@@ -283,7 +284,6 @@ func (network *Network) SendStoreMessage(me *KademliaID, data []byte) []byte {
 	counter := 0
 
 	for i := range closest {
-		//fmt.Println("Contact [", i ,"], : ", "\n Address : ",closest[i].Address ,"\n ID : ",closest[i].ID, "\n Distance : ", closest[i].distance,"\n")
 		me := network.kademlia.RT.me
 		message := NewStoreMessage(&closest[i], me.ID, &data)
 		go network.StoreHelper(closest[i].Address, message, &counter, ch)
@@ -310,8 +310,9 @@ func (network *Network) StoreHelper(addr string, message Message, counter *int, 
 			*counter += network.kademlia.K
 			return
 		} else {
-			*counter += 1
 			for i := 0; i < network.alpha; i++ {
+				// Does the counter increase before or within the foor loop. This drastically decreases the amount of calls.
+				*counter += 1
 				go network.StoreHelper(addr, message, counter, ch)
 			}
 		}

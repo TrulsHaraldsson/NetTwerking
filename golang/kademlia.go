@@ -1,7 +1,6 @@
 package d7024e
 
-import (
-)
+import ()
 
 var Information []Item
 
@@ -27,7 +26,7 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
  Checks if a certain hash exist in storage, if it does the item is returned of type Item.
 */
 func (kademlia *Kademlia) LookupData(hash *KademliaID) Item {
-	newItem := Item{}	
+	newItem := Item{}
 	for _, v := range Information {
 		if v.Key == *hash {
 			newItem.Key = v.Key
