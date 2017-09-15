@@ -1,18 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 	"time"
-
 	"../golang"
 )
 
 func TestPing(t *testing.T) {
-	n1 := d7024e.StartNode(8200, "none", "none")
-	fmt.Println(n1)
+	// Node A
+	A := d7024e.NewKademlia(8200, "none")
+	A.Start(8200)
 	time.Sleep(10 * time.Millisecond)
-	n2 := d7024e.StartNode(8201, "localhost:8200", "none")
-	fmt.Println("Connected")
-	n2.Ping("localhost:8200")
+
+	// Node B
+	B := d7024e.NewKademlia(8201, "none")
+	B.Start(8201)
+	time.Sleep(10 * time.Millisecond)
+
+	A.Ping("localhost:8201")
 }
