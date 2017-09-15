@@ -265,9 +265,9 @@ func (network *Network) FindValueHelper(addr string, message Message, counter *i
 			*counter += network.kademlia.K
 			return
 		} else {
+			// Does the counter increase before or within the foor loop. This drastically decreases the amount of calls.
+			*counter += 1
 			for i := 0; i < network.alpha; i++ {
-				// Does the counter increase before or within the foor loop. This drastically decreases the amount of calls.
-				*counter += 1
 				go network.FindValueHelper(addr, message, counter, ch)
 			}
 		}
@@ -310,9 +310,9 @@ func (network *Network) StoreHelper(addr string, message Message, counter *int, 
 			*counter += network.kademlia.K
 			return
 		} else {
+			// Does the counter increase before or within the foor loop. This drastically decreases the amount of calls.
+			*counter += 1
 			for i := 0; i < network.alpha; i++ {
-				// Does the counter increase before or within the foor loop. This drastically decreases the amount of calls.
-				*counter += 1
 				go network.StoreHelper(addr, message, counter, ch)
 			}
 		}
