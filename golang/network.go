@@ -13,36 +13,11 @@ const MESSAGE_SIZE = 1024
 
 type Network struct {
 	alpha    int
-	kademlia Kademlia
+	kademlia *Kademlia
 }
 
-func NewNetwork(alpha int, kademlia Kademlia) Network {
-	return Network{alpha, kademlia}
-}
-
-/*
-* if connectTo is "none", it will not connect to another node
-* Currently only sends a ping to connectTo, because on testing we only want it to puplish itself to one node.
- */
-func StartNode(port int, connectTo string, kID string) Network {
-	var kademliaID *KademliaID
-	if kID != "none" {
-		kademliaID = NewKademliaID(kID)
-	} else {
-		kademliaID = NewRandomKademliaID()
-	}
-	me := NewContact(kademliaID, "localhost:"+strconv.Itoa(port))
-	rt := NewRoutingTable(me)
-	network := NewNetwork(3, Kademlia{RT: rt, K: 20})
-	go network.Listen("localhost", port)
-	if connectTo != "none" {
-		_, err := network.SendPingMessage(connectTo)
-		if err != nil {
-			panic(err)
-		}
-	}
-	return network
-
+func NewNetwork(alpha int) Network {
+	return Network{alpha, nil}
 }
 
 /*
@@ -110,55 +85,39 @@ func CreateAddr(ip string, port int) string {
 }
 
 func (network *Network) OnPingMessageReceived(message *Message, addr net.Addr) {
-	msgJson := NewPingAckMessage(&network.kademlia.RT.me, &message.RPC_ID)
-	WriteMessage(addr.String(), msgJson)
+	network.kademlia.OnPingMessageReceived(message, addr)
 }
 
 /*
 FIND_NODE message received over network, sent to kademlia LookupData.
 */
 func (network Network) OnFindValueMessageReceived(message *Message, data FindValueMessage, addr net.Addr) {
-	item := network.kademlia.LookupData(&data.ValueID)
-	ackItem, _ := json.Marshal(item)
-	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackItem)
-	newAck, _ := MarshallMessage(ack)
-
-	ConnectAndWrite(addr.String(), newAck)
+	network.kademlia.OnFindValueMessageReceived(message, data, addr)
 }
 
 /*
 STORE message received over network. Sent to kademlia Store.
 */
 func (network Network) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
-	network.kademlia.Store(data)
-	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
-	newAck, _ := MarshallMessage(ack)
-	//fmt.Println("Sending STORE acknowledge back to ", addr.String(), " with ", newAck)
-	ConnectAndWrite(addr.String(), newAck)
+	network.kademlia.OnStoreMessageReceived(message, data, addr)
 }
 
 /*
 FIND_VALUE message received over network, sent to kademlia LookupContact.
 */
 func (network Network) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
-	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
-	contacts := network.kademlia.LookupContact(&target)
-	returnMessage := NewFindNodeAckMessage(&network.kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
-	rMsgJson, _ := MarshallMessage(returnMessage)
-	//fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
-	ConnectAndWrite(addr.String(), rMsgJson)
+	network.kademlia.OnFindNodeMessageReceived(message, data, addr)
 }
 
 /*
-* Sends a ping to given address
+ * Sends a ping to given address
  */
-func (network *Network) SendPingMessage(addr string) (Message, error) {
-	msg := NewPingMessage(&network.kademlia.RT.me)
-	response, _, err := SendMessage(addr, msg)
+func (network *Network) SendPingMessage(addr string, msg *Message) (Message, error) {
+	//msg := NewPingMessage(&network.kademlia.RT.me)
+	response, _, err := SendMessage(addr, *msg)
 	if err != nil {
 		return Message{}, err
 	}
-	network.kademlia.RT.AddContact(response.Sender)
 	if msg.RPC_ID == response.RPC_ID {
 		return response, nil
 	} else {
@@ -175,7 +134,8 @@ func (network *Network) SendPingMessage(addr string) (Message, error) {
 * TODO: Setup a network to test more of its functionality
  */
 func (network *Network) SendFindContactMessage(kademliaID *KademliaID) Contact {
-	targetID := kademliaID
+	return network.kademlia.SendFindContactMessage(kademliaID)
+	/*targetID := kademliaID
 	target := NewContact(targetID, "DummyAdress")
 	closestContacts := network.kademlia.LookupContact(&target)
 	fmt.Println("How many contacts in rt1", len(closestContacts))
@@ -187,10 +147,12 @@ func (network *Network) SendFindContactMessage(kademliaID *KademliaID) Contact {
 		go network.FindContactHelper(closestContacts[i].Address, message, &counter, targetID, ch)
 	}
 	contact := <-ch
-	return contact
+	return contact*/
 }
 
-func (network *Network) FindContactHelper(addr string, message Message, counter *int, targetID *KademliaID, ch chan Contact) {
+/*
+func (network *Network) FindContactHelper(addr string, message Message, counter *int, 
+	targetID *KademliaID, ch chan Contact) {
 	if *counter >= network.kademlia.K {
 		ch <- NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
 		return
@@ -214,11 +176,12 @@ func (network *Network) FindContactHelper(addr string, message Message, counter 
 			*counter += 1
 			for i := 0; i < network.alpha && i < len(ackMessage.Nodes); i++ {
 				fmt.Println("Sending to", ackMessage.Nodes[i])
-				go network.FindContactHelper(ackMessage.Nodes[i].Address, message, counter, targetID, ch)
+				go network.FindContactHelper(ackMessage.Nodes[i].Address, 
+					message, counter, targetID, ch)
 			}
 		}
 	}
-}
+}*/
 
 func (network *Network) SendFindDataMessage(hash string) {
 	// TODO
@@ -319,9 +282,9 @@ func (network *Network) StoreHelper(addr string, message Message, counter *int, 
 }
 
 /*
-* Sends a message of type "Message" to address specified.
-* Waits for a response and unmarshalls it as a Message and the MessageData type.
-* Returns both Message and MessageData
+ * Sends a message of type "Message" to address specified.
+ * Waits for a response and unmarshalls it as a Message and the MessageData type.
+ * Returns both Message and MessageData
  */
 func SendMessage(addr string, message Message) (Message, interface{}, error) {
 	msgJson, err := MarshallMessage(message)

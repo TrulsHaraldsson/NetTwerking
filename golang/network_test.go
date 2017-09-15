@@ -12,9 +12,19 @@ import (
 	"time"
 )
 
+func initKademliaAndNetwork(rt *RoutingTable) (*Kademlia, *Network) {
+	network := NewNetwork(3)	
+	kademlia := Kademlia{rt, 20, &network}
+	network.kademlia = &kademlia
+	return &kademlia, &network
+}
+
 func TestNetworkListen(t *testing.T) {
 	_, rt := CreateTestRT()
-	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+
+	_, network := initKademliaAndNetwork(rt)
+
+	//network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
 	go network.Listen("localhost", 8000)
 
 	kID := NewContact(NewRandomKademliaID(), "adress")
@@ -74,13 +84,14 @@ func TestNetworkSendMessage(t *testing.T) {
 
 func TestNetworkSendFindValueMessage(t *testing.T) {
 	_, rt := CreateTestRT3()
-	k := Kademlia{RT: rt, K: 20}
+	kademlia, network := initKademliaAndNetwork(rt)
+	//k := Kademlia{RT: rt, K: 20}
 	kID := NewKademliaID("FFFFFFFF00000000000000000000000000000000")
 	data := []byte("LookThisUp")
 	storeMessage := StoreMessage{*kID, data}
-	k.Store(storeMessage)
+	kademlia.Store(storeMessage)
 
-	network := Network{alpha: 3, kademlia: k}
+	//network := Network{alpha: 3, kademlia: k}
 	go network.Listen("localhost", 8007)
 
 	item := network.SendFindValueMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
@@ -94,7 +105,8 @@ func TestNetworkSendFindValueMessage(t *testing.T) {
 
 func TestNetworkSendStoreMessage(t *testing.T) {
 	_, rt := CreateTestRT4()
-	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	_, network := initKademliaAndNetwork(rt)
+	//network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
 	go network.Listen("localhost", 8009)
 
 	time.Sleep(50 * time.Millisecond)
@@ -109,13 +121,15 @@ func TestNetworkSendStoreMessage(t *testing.T) {
 
 func TestNetworkSendFindContactMessage(t *testing.T) {
 	contacts, rt := CreateTestRT2()
-	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	_, network := initKademliaAndNetwork(rt)
+	//network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
 	go network.Listen("localhost", 8002)
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT()
-	network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
+	_, network2 := initKademliaAndNetwork(rt2)
+	//network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
 
 	contact := network2.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000000"))
 	if !contact.Equals(contacts[0]) {
@@ -130,15 +144,18 @@ func TestNetworkSendFindContactMessage(t *testing.T) {
 
 func TestNetworkSendPingMessage(t *testing.T) {
 	_, rt := CreateTestRT2()
-	network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
+	_, network := initKademliaAndNetwork(rt)
+	//network := Network{alpha: 3, kademlia: Kademlia{RT: rt, K: 20}}
 	go network.Listen("localhost", 8003)
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT()
-	network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
-
-	msg, err := network2.SendPingMessage("localhost:8003")
+	kademlia2, network2 := initKademliaAndNetwork(rt2)
+	//network2 := Network{alpha: 3, kademlia: Kademlia{RT: rt2, K: 20}}
+	
+	pingMsg := NewPingMessage(&kademlia2.RT.me)
+	msg, err := network2.SendPingMessage("localhost:8003", &pingMsg)
 	if err != nil {
 		t.Error(err)
 	}
