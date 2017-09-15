@@ -44,6 +44,13 @@ func NewKademlia(port int, kID string) *Kademlia {
 }
 
 /*
+ * Start listening to the given port
+ */
+func (kademlia *Kademlia) Start(port int) {
+	kademlia.net.Listen("localhost", port)
+}
+
+/*
  * If connectTo is "none", it will not connect to another node
  * Currently only sends a ping to connectTo, because on testing we only want it to puplish itself to one node.
  */
