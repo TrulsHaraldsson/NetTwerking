@@ -6,17 +6,16 @@ import (
   "../golang"
   "time"
 )
-/*
-Connection pattern : nodes {8401,8402,8403} all connect to 8400.
-*/
 
+/*
+Connection pattern : nodes B,C,D are connected with A.
+A requests a store on all nodes.
+*/
 func TestStoreOnce(t *testing.T){
-  //start := d7024e.StartNode(8400, "none", "2111111400000000000000000000000000000000")
   A := d7024e.NewKademlia(8400, "2111111400000000000000000000000000000000")
   A.Start(8400)
   time.Sleep(50 * time.Millisecond)
 
-  //d7024e.StartNode(8401, "localhost:8400", "2111111400000000000000000000000000000001")
   B := d7024e.NewKademlia(8401, "2111111400000000000000000000000000000001")
   B.Start(8401)
   B.Ping("localhost:8400")
@@ -41,6 +40,10 @@ func TestStoreOnce(t *testing.T){
   }
 }
 
+/*
+Connection pattern : nodes A and B are connected.
+A Sends multiple stores to B.
+*/
 func TestMultiStore(t *testing.T){
   A := d7024e.NewKademlia(8410, "2111111400000000000000000000000000000010")
   A.Start(8410)

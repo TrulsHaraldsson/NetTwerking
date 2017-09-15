@@ -7,6 +7,10 @@ import (
   "time"
 )
 
+/*
+Connection pattern : nodes B,C,D are connected with A.
+A request a store on node all other nodes and then searches for it.
+*/
 func TestFindValue(t *testing.T){
   A := d7024e.NewKademlia(8500, "5111111400000000000000000000000000000000")
   A.Start(8500)
