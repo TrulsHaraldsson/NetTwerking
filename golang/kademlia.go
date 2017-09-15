@@ -21,8 +21,8 @@ type Kademlia struct {
 }
 
 /*
- * Creates a new Kademlia instance. Initiate a routing table and 
- * links the kademlia instance to a network instance. 
+ * Creates a new Kademlia instance. Initiate a routing table and
+ * links the kademlia instance to a network instance.
  * NOTE: This function wont start listening.
  */
 func NewKademlia(port int, kID string) *Kademlia {
@@ -36,7 +36,7 @@ func NewKademlia(port int, kID string) *Kademlia {
 	rt := NewRoutingTable(me)
 
 	// These three rows link kademlia to network and vice versa
-	network := NewNetwork(3)	
+	network := NewNetwork(3)
 	kademlia := Kademlia{rt, 20, &network}
 	network.kademlia = &kademlia
 
@@ -101,7 +101,7 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) Contact
 	return contact
 }
 
-func (kademlia *Kademlia) FindContactHelper(addr string, message Message, counter *int, 
+func (kademlia *Kademlia) FindContactHelper(addr string, message Message, counter *int,
 	targetID *KademliaID, ch chan Contact) {
 	if *counter >= kademlia.K {
 		ch <- NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
@@ -126,7 +126,7 @@ func (kademlia *Kademlia) FindContactHelper(addr string, message Message, counte
 			*counter += 1
 			for i := 0; i < kademlia.net.alpha && i < len(ackMessage.Nodes); i++ {
 				fmt.Println("Sending to", ackMessage.Nodes[i])
-				go kademlia.FindContactHelper(ackMessage.Nodes[i].Address, 
+				go kademlia.FindContactHelper(ackMessage.Nodes[i].Address,
 					message, counter, targetID, ch)
 			}
 		}
@@ -143,9 +143,8 @@ func (kademlia *Kademlia) SendFindValueMessage(me *KademliaID) Item {
 
 	for i := 0; i < kademlia.net.alpha; i++ {
 		me := kademlia.RT.me
-		message := NewFindValueMessage(&me, closest[i].ID)
-		go kademlia.FindValueHelper(closest[i].Address, message, &counter, ch) // This is correct.
-		//go network.FindValueHelper(me, closest[i].Address, message, &counter, ch) // For static testing.
+		message := NewFindValueMessage(&me, me.ID)
+		go kademlia.FindValueHelper(closest[i].Address, message, &counter, ch)
 	}
 	item := <-ch
 	return item
@@ -259,7 +258,7 @@ func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr)
 
 /*
  * This method is called by the network module when a FIND_VALUE message is received.
- */ 
+ */
 func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, data FindValueMessage, addr net.Addr) {
 	item := kademlia.LookupData(&data.ValueID)
 	ackItem, _ := json.Marshal(item)
@@ -296,7 +295,7 @@ func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindN
 func (kademlia *Kademlia) Ping(addr string) {
 	pingMsg := NewPingMessage(&kademlia.RT.me)
 	response, error := kademlia.net.SendPingMessage(addr, &pingMsg)
-	if error == nil { // No error	
+	if error == nil { // No error
 		kademlia.RT.AddContact(response.Sender)
 	}
 }
