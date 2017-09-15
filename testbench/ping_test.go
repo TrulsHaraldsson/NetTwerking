@@ -14,8 +14,5 @@ func TestPing(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 	n2 := d7024e.StartNode(8201, "localhost:8200", "none")
 	fmt.Println("Connected")
-	msg, _ := n2.SendPingMessage("localhost:8200")
-	if msg.MsgType != d7024e.PING_ACK {
-		t.Error("Wrong message sent back", msg)
-	}
+	n2.Ping("localhost:8200")
 }

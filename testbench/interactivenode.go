@@ -34,11 +34,12 @@ func main() {
 	c := d7024e.NewContact(kID, "localhost:port")
 	fmt.Println("Node ID:", kID)
 
-	contact := d7024e.NewContact(kID, d7024e.CreateAddr(*address, *port))
-	rt := d7024e.NewRoutingTable(contact)
-	kademlia := d7024e.Kademlia{rt, 20}
-	network := d7024e.NewNetwork(3, kademlia)
-	go network.Listen(*address, *port)
+	kademlia := d7024e.NewKademlia(*port, "none")
+	//contact := d7024e.NewContact(kID, d7024e.CreateAddr(*address, *port))
+	//rt := d7024e.NewRoutingTable(contact)
+	//kademlia := d7024e.Kademlia{rt, 20}
+	//network := d7024e.NewNetwork(3, kademlia)
+	go kademlia.Start(*port)
 
 	time.Sleep(1 * time.Second)
 
