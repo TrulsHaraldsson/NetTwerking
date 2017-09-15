@@ -1,7 +1,6 @@
 package d7024e
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -154,7 +153,7 @@ Sends a message over the network to the alpha closest neighbors in the routing t
 from neighbor OnStoreMessageReceived func.
 */
 func (network *Network) SendStoreMessage(me *KademliaID, data []byte) []byte {
-	return network.kademlia.SendStoreMEssage(me, data)
+	return network.kademlia.SendStoreMessage(me, data)
 }
 
 /*
