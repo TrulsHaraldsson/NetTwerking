@@ -47,7 +47,7 @@ func NewKademlia(port int, kID string) *Kademlia {
  * Start listening to the given port
  */
 func (kademlia *Kademlia) Start(port int) {
-	kademlia.net.Listen("localhost", port)
+	go kademlia.net.Listen("localhost", port)
 }
 
 /*
@@ -143,7 +143,7 @@ func (kademlia *Kademlia) SendFindValueMessage(me *KademliaID) Item {
 
 	for i := 0; i < kademlia.net.alpha; i++ {
 		me := kademlia.RT.me
-		message := NewFindValueMessage(&me, closest[i].ID)
+		message := NewFindValueMessage(&me, me.ID)
 		go kademlia.FindValueHelper(closest[i].Address, message, &counter, ch) // This is correct.
 		//go network.FindValueHelper(me, closest[i].Address, message, &counter, ch) // For static testing.
 	}
