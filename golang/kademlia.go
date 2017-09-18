@@ -1,10 +1,11 @@
 package d7024e
 
 import (
-	"net"
 	"encoding/json"
-	"strconv"
 	"fmt"
+	"net"
+	"regexp"
+	"strconv"
 )
 
 var Information []Item
@@ -15,8 +16,8 @@ type Item struct {
 }
 
 type Kademlia struct {
-	RT *RoutingTable
-	K  int
+	RT  *RoutingTable
+	K   int
 	net *Network
 }
 
@@ -32,7 +33,7 @@ func NewKademlia(port int, kID string) *Kademlia {
 	} else {
 		kademliaID = NewRandomKademliaID()
 	}
-	me := NewContact(kademliaID, "localhost:"+strconv.Itoa(port))
+	me := NewContact(kademliaID, "localhost:"+strconv.Itoa(port)) //TODO: Should be real ip, not localhost, but works in local tests.
 	rt := NewRoutingTable(me)
 
 	// These three rows link kademlia to network and vice versa
@@ -46,7 +47,11 @@ func NewKademlia(port int, kID string) *Kademlia {
 /*
  * Start listening to the given port
  */
-func (kademlia *Kademlia) Start(port int) {
+func (kademlia *Kademlia) Start() {
+	port, err := strconv.Atoi(regexp.MustCompile(":").Split(kademlia.RT.me.Address, 2)[1]) //Take port and convert to int
+	if err != nil {
+		panic(err)
+	}
 	go kademlia.net.Listen("localhost", port)
 }
 
