@@ -100,28 +100,32 @@ func (network *Network) SendPingMessage(addr string, msg *Message) (Message, err
 }
 
 /*
-* Sends out a maximum of network.kademlia.K RPC's to find the node in the network with id = kademliaID.
-* Returns the contact if it is found(Can be nil, if not found).
-* TODO: Check first if node is found locally
-* TODO: Add functionality for processing if no node closer is found.
-* TODO: Dont check same node multiple times.
-* TODO: Setup a network to test more of its functionality
+* Not yet used...
  */
-func (network *Network) SendFindContactMessage(kademliaID *KademliaID) Contact {
-	return network.kademlia.SendFindContactMessage(kademliaID)
-}
-
-func (network *Network) SendFindDataMessage(hash string) {
-	// TODO
-	//This is SendFindValueMessage.
+func (network *Network) SendFindContactMessage(addr string, msg *Message) (Message, AckFindNodeMessage, error) {
+	response, rData, err := SendMessage(addr, *msg)
+	var responseData AckFindNodeMessage
+	if err != nil {
+		return Message{}, responseData, err
+	}
+	if msg.RPC_ID == response.RPC_ID {
+		if response.MsgType == FIND_NODE_ACK {
+			responseData = rData.(AckFindNodeMessage)
+			return response, responseData, nil
+		} else {
+			return Message{}, responseData, errors.New("Wrong message sent back, it is not a FindNodeAck...")
+		}
+	} else {
+		return Message{}, responseData, errors.New("Wrong RPC_ID returned, it is not from the server, sent to...")
+	}
 }
 
 /*
 * Request to find a value over the network.
  */
-func (network *Network) SendFindValueMessage(me *KademliaID) Item {
-	return network.kademlia.SendFindValueMessage(me)
-}
+//func (network *Network) SendFindValueMessage(me *KademliaID) Item {
+//	return network.kademlia.SendFindValueMessage(me)
+//}
 
 /*
 Sends a message over the network to the alpha closest neighbors in the routing table and waits for response

@@ -93,12 +93,11 @@ func (kademlia *Kademlia) FindContactHelper(addr string, message Message, counte
 		ch <- NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
 		return
 	} else {
-		rMessage, response, err := SendMessage(addr, message) //TODO: dont ignore error
+		rMessage, ackMessage, err := kademlia.net.SendFindContactMessage(addr, &message) //TODO: dont ignore error
 		if err != nil {
 			return
 		}
 		kademlia.RT.AddContact(rMessage.Sender)
-		ackMessage := response.(AckFindNodeMessage)
 		closestContact := ackMessage.Nodes[0]
 
 		fmt.Println("How many contacts in rt", len(ackMessage.Nodes))

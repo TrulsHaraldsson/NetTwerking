@@ -13,7 +13,7 @@ import (
 )
 
 func initKademliaAndNetwork(rt *RoutingTable) (*Kademlia, *Network) {
-	network := NewNetwork(3)	
+	network := NewNetwork(3)
 	kademlia := Kademlia{rt, 20, &network}
 	network.kademlia = &kademlia
 	return &kademlia, &network
@@ -25,6 +25,7 @@ func TestNetworkListen(t *testing.T) {
 	_, network := initKademliaAndNetwork(rt)
 
 	go network.Listen("localhost", 8000)
+	time.Sleep(50 * time.Millisecond)
 
 	kID := NewContact(NewRandomKademliaID(), "adress")
 	m1 := NewFindValueMessage(&kID, NewRandomKademliaID())
@@ -66,7 +67,7 @@ func TestNetworkListen(t *testing.T) {
 
 func TestNetworkSendMessage(t *testing.T) {
 	go EchoServer(7999)
-	time.Sleep(100 * time.Millisecond) //To assure server is up before sending data
+	time.Sleep(50 * time.Millisecond) //To assure server is up before sending data
 	c := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "adress")
 	msg := NewPingMessage(&c)
 	returnMsg, _, err := SendMessage("localhost:7999", msg)
@@ -91,7 +92,9 @@ func TestNetworkSendFindValueMessage(t *testing.T) {
 
 	go network.Listen("localhost", 8007)
 
-	item := network.SendFindValueMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
+	time.Sleep(50 * time.Millisecond)
+
+	item := network.kademlia.SendFindValueMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
 
 	if string(data) != item.Value {
 		t.Error("Couldn't find the stored value.", item)
@@ -125,11 +128,11 @@ func TestNetworkSendFindContactMessage(t *testing.T) {
 	_, rt2 := CreateTestRT()
 	_, network2 := initKademliaAndNetwork(rt2)
 
-	contact := network2.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000000"))
+	contact := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000000"))
 	if !contact.Equals(contacts[0]) {
 		t.Error("contacts are not equal", contact, contacts[0])
 	}
-	contact2 := network2.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
+	contact2 := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
 	emptyContact := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
 	if !contact2.Equals(emptyContact) {
 		t.Error("Other contact than default found, when not supposed to...", contact2)
@@ -145,7 +148,7 @@ func TestNetworkSendPingMessage(t *testing.T) {
 
 	_, rt2 := CreateTestRT()
 	kademlia2, network2 := initKademliaAndNetwork(rt2)
-	
+
 	pingMsg := NewPingMessage(&kademlia2.RT.me)
 	msg, err := network2.SendPingMessage("localhost:8003", &pingMsg)
 	if err != nil {
