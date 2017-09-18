@@ -58,16 +58,16 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 	switch message.MsgType {
 	case PING:
 		fmt.Println("Ping.")
-		network.OnPingMessageReceived(&message, addr)
+		network.kademlia.OnPingMessageReceived(&message, addr)
 	case FIND_NODE:
 		fmt.Println("Searching for node.")
-		network.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
+		network.kademlia.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
 	case FIND_VALUE:
 		fmt.Println("Searching for value.")
-		network.OnFindValueMessageReceived(&message, mData.(FindValueMessage), addr)
+		network.kademlia.OnFindValueMessageReceived(&message, mData.(FindValueMessage), addr)
 	case STORE:
 		fmt.Println("Storing node info.")
-		network.OnStoreMessageReceived(&message, mData.(StoreMessage), addr)
+		network.kademlia.OnStoreMessageReceived(&message, mData.(StoreMessage), addr)
 
 	default:
 		fmt.Println("Wrong syntax in message, ignoring it...")
@@ -81,31 +81,6 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
  */
 func CreateAddr(ip string, port int) string {
 	return ip + ":" + strconv.Itoa(port)
-}
-
-func (network *Network) OnPingMessageReceived(message *Message, addr net.Addr) {
-	network.kademlia.OnPingMessageReceived(message, addr)
-}
-
-/*
-FIND_NODE message received over network, sent to kademlia LookupData.
-*/
-func (network Network) OnFindValueMessageReceived(message *Message, data FindValueMessage, addr net.Addr) {
-	network.kademlia.OnFindValueMessageReceived(message, data, addr)
-}
-
-/*
-STORE message received over network. Sent to kademlia Store.
-*/
-func (network Network) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
-	network.kademlia.OnStoreMessageReceived(message, data, addr)
-}
-
-/*
-FIND_VALUE message received over network, sent to kademlia LookupContact.
-*/
-func (network Network) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
-	network.kademlia.OnFindNodeMessageReceived(message, data, addr)
 }
 
 /*
