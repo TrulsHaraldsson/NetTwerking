@@ -39,7 +39,7 @@ func main() {
 	//rt := d7024e.NewRoutingTable(contact)
 	//kademlia := d7024e.Kademlia{rt, 20}
 	//network := d7024e.NewNetwork(3, kademlia)
-	go kademlia.Start(*port)
+	go kademlia.Start()
 
 	time.Sleep(1 * time.Second)
 

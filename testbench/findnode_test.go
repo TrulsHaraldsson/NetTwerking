@@ -4,30 +4,31 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
 	"../golang"
 )
 
 func TestFindNode(t *testing.T) {
 	// Node B
 	B := d7024e.NewKademlia(8100, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
-	B.Start(8100)
+	B.Start()
 	time.Sleep(10 * time.Millisecond)
 
 	// Node A
 	A := d7024e.NewKademlia(8101, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-	A.Start(8101)
+	A.Start()
 	A.Ping("localhost:8100")
 	time.Sleep(10 * time.Millisecond)
 
 	// Node C
 	C := d7024e.NewKademlia(8102, "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-	C.Start(8102)
+	C.Start()
 	C.Ping("localhost:8100")
 	time.Sleep(10 * time.Millisecond)
 
 	// NODE D
 	D := d7024e.NewKademlia(8103, "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-	D.Start(8103)
+	D.Start()
 	D.Ping("localhost:8102")
 	time.Sleep(10 * time.Millisecond)
 
