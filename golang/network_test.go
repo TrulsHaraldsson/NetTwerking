@@ -110,7 +110,7 @@ func TestNetworkSendStoreMessage(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	contact := network.SendStoreMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), []byte("Testing to store"))
+	contact := network.kademlia.SendStoreMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), []byte("Testing to store"))
 	if string(contact) != "stored" {
 		t.Error("Store message was not successful.", contact)
 	} else {

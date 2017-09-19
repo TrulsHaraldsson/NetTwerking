@@ -2,7 +2,6 @@ package d7024e
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 	"regexp"
 	"strconv"
@@ -75,8 +74,6 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) Contact
 	targetID := kademliaID
 	target := NewContact(targetID, "DummyAdress")
 	closestContacts := kademlia.LookupContact(&target)
-	fmt.Println("How many contacts in rt1", len(closestContacts))
-	fmt.Println("Closest contact1", closestContacts[0])
 	message := NewFindNodeMessage(&kademlia.RT.me, targetID)
 	counter := 0
 	ch := make(chan Contact)
@@ -99,18 +96,13 @@ func (kademlia *Kademlia) FindContactHelper(addr string, message Message, counte
 		}
 		kademlia.RT.AddContact(rMessage.Sender)
 		closestContact := ackMessage.Nodes[0]
-
-		fmt.Println("How many contacts in rt", len(ackMessage.Nodes))
-		fmt.Println("Closest contact", closestContact)
 		if closestContact.ID.Equals(targetID) {
-			fmt.Println("Found Contact!!!", closestContact)
 			ch <- closestContact
 			*counter += kademlia.K
 			return
 		} else {
 			*counter += 1
 			for i := 0; i < kademlia.net.alpha && i < len(ackMessage.Nodes); i++ {
-				fmt.Println("Sending to", ackMessage.Nodes[i])
 				go kademlia.FindContactHelper(ackMessage.Nodes[i].Address,
 					message, counter, targetID, ch)
 			}
@@ -145,8 +137,7 @@ func (kademlia *Kademlia) FindValueHelper(addr string, message Message, counter 
 		return
 
 	} else {
-		_, response, _ := SendMessage(addr, message)
-		ack := response.(AckFindValueMessage)
+		_, ack, _ := kademlia.net.SendFindValueMessage(addr, &message)
 		item := Item{}
 		err := json.Unmarshal(ack.Value, &item)
 		if err != nil {
@@ -193,7 +184,7 @@ func (kademlia *Kademlia) StoreHelper(addr string, message Message, counter *int
 		ch <- data
 		return
 	} else {
-		rMsg, _, err := SendMessage(addr, message)
+		rMsg, err := kademlia.net.SendStoreMessage(addr, &message)
 		if err != nil {
 			return
 		}

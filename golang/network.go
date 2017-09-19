@@ -87,52 +87,49 @@ func CreateAddr(ip string, port int) string {
  * Sends a ping to given address
  */
 func (network *Network) SendPingMessage(addr string, msg *Message) (Message, error) {
-	//msg := NewPingMessage(&network.kademlia.RT.me)
-	response, _, err := SendMessage(addr, *msg)
-	if err != nil {
-		return Message{}, err
-	}
-	if msg.RPC_ID == response.RPC_ID {
-		return response, nil
-	} else {
-		return Message{}, errors.New("Wrong RPC_ID returned, it is not from the server, sent to...")
-	}
+	response, _, err := network.sendSpecificMessage(addr, msg, PING_ACK)
+	return response, err
 }
 
 /*
-* Not yet used...
+*
  */
 func (network *Network) SendFindContactMessage(addr string, msg *Message) (Message, AckFindNodeMessage, error) {
-	response, rData, err := SendMessage(addr, *msg)
-	var responseData AckFindNodeMessage
-	if err != nil {
-		return Message{}, responseData, err
-	}
-	if msg.RPC_ID == response.RPC_ID {
-		if response.MsgType == FIND_NODE_ACK {
-			responseData = rData.(AckFindNodeMessage)
-			return response, responseData, nil
-		} else {
-			return Message{}, responseData, errors.New("Wrong message sent back, it is not a FindNodeAck...")
-		}
-	} else {
-		return Message{}, responseData, errors.New("Wrong RPC_ID returned, it is not from the server, sent to...")
-	}
+	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_NODE_ACK)
+	return response, responseData.(AckFindNodeMessage), err
 }
 
 /*
 * Request to find a value over the network.
  */
-//func (network *Network) SendFindValueMessage(me *KademliaID) Item {
-//	return network.kademlia.SendFindValueMessage(me)
-//}
+func (network *Network) SendFindValueMessage(addr string, msg *Message) (Message, AckFindValueMessage, error) {
+	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_VALUE_ACK)
+	return response, responseData.(AckFindValueMessage), err
+}
 
 /*
 Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
 from neighbor OnStoreMessageReceived func.
 */
-func (network *Network) SendStoreMessage(me *KademliaID, data []byte) []byte {
-	return network.kademlia.SendStoreMessage(me, data)
+func (network *Network) SendStoreMessage(addr string, msg *Message) (Message, error) {
+	response, _, err := network.sendSpecificMessage(addr, msg, STORE_ACK)
+	return response, err
+}
+
+func (network *Network) sendSpecificMessage(addr string, msg *Message, responseType string) (Message, interface{}, error) {
+	response, rData, err := SendMessage(addr, *msg)
+	if err != nil {
+		return response, rData, err
+	}
+	if msg.RPC_ID == response.RPC_ID {
+		if response.MsgType == responseType {
+			return response, rData, nil
+		} else {
+			return Message{}, rData, errors.New("Wrong message sent back, it is not a FindNodeAck...")
+		}
+	} else {
+		return Message{}, rData, errors.New("Wrong RPC_ID returned, it is not from the server, sent to...")
+	}
 }
 
 /*
