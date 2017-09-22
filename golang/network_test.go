@@ -78,84 +78,8 @@ func TestNetworkSendMessage(t *testing.T) {
 	if !msg.Equal(returnMsg) {
 		t.Error("Message sent is not Equal to Received.", msg, returnMsg)
 	} else {
-		fmt.Println("Everything went expected, received correct message ", msg, " and returnMsg ", returnMsg)
-	}
-}
-
-func TestNetworkSendFindValueMessage(t *testing.T) {
-	_, rt := CreateTestRT3()
-	kademlia, network := initKademliaAndNetwork(rt)
-	kID := NewKademliaID("FFFFFFFF00000000000000000000000000000000")
-	data := []byte("LookThisUp")
-	storeMessage := StoreMessage{*kID, data}
-	kademlia.Store(storeMessage)
-
-	go network.Listen("localhost", 8007)
-
-	time.Sleep(50 * time.Millisecond)
-
-	item := network.kademlia.SendFindValueMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
-
-	if string(data) != item.Value {
-		t.Error("Couldn't find the stored value.", item)
-	} else {
-		fmt.Println("Item returned : ", item, "\n String : ", item.Value, "\n Key : ", item.Key)
-	}
-}
-
-func TestNetworkSendStoreMessage(t *testing.T) {
-	_, rt := CreateTestRT4()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8009)
-
-	time.Sleep(50 * time.Millisecond)
-
-	contact := network.kademlia.SendStoreMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), []byte("Testing to store"))
-	if string(contact) != "stored" {
-		t.Error("Store message was not successful.", contact)
-	} else {
-		fmt.Println("Successful store!", string(contact))
-	}
-}
-
-func TestNetworkSendFindContactMessage(t *testing.T) {
-	contacts, rt := CreateTestRT2()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8002)
-
-	time.Sleep(50 * time.Millisecond)
-
-	_, rt2 := CreateTestRT()
-	_, network2 := initKademliaAndNetwork(rt2)
-
-	contact := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000000"))
-	if !contact.Equals(contacts[0]) {
-		t.Error("contacts are not equal", contact, contacts[0])
-	}
-	contact2 := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
-	emptyContact := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
-	if !contact2.Equals(emptyContact) {
-		t.Error("Other contact than default found, when not supposed to...", contact2)
-	}
-}
-
-func TestNetworkSendPingMessage(t *testing.T) {
-	_, rt := CreateTestRT2()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8003)
-
-	time.Sleep(50 * time.Millisecond)
-
-	_, rt2 := CreateTestRT()
-	kademlia2, network2 := initKademliaAndNetwork(rt2)
-
-	pingMsg := NewPingMessage(&kademlia2.RT.me)
-	msg, err := network2.SendPingMessage("localhost:8003", &pingMsg)
-	if err != nil {
-		t.Error(err)
-	}
-	if msg.MsgType != PING_ACK {
-		t.Error("Did not receive an ack for the ping message...")
+		fmt.Println("Everything went expected, received correct message ", 
+			msg, " and returnMsg ", returnMsg)
 	}
 }
 

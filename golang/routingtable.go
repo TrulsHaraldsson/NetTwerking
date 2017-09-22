@@ -1,10 +1,15 @@
 package d7024e
 
+import (
+	"sync"
+)
+
 const bucketSize = 20
 
 type RoutingTable struct {
 	me      Contact
 	buckets [IDLength * 8]*bucket
+	mux sync.Mutex
 }
 
 func NewRoutingTable(me Contact) *RoutingTable {
@@ -17,19 +22,23 @@ func NewRoutingTable(me Contact) *RoutingTable {
 }
 
 func (routingTable *RoutingTable) AddContact(contact Contact) {
+	routingTable.mux.Lock()
 	bucketIndex := routingTable.getBucketIndex(contact.ID)
 	bucket := routingTable.buckets[bucketIndex]
 	bucket.AddContact(contact)
+	routingTable.mux.Unlock()
 }
 
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
+	routingTable.mux.Lock()
 	var candidates ContactCandidates
 	bucketIndex := routingTable.getBucketIndex(target)
 	bucket := routingTable.buckets[bucketIndex]
 
 	candidates.Append(bucket.GetContactAndCalcDistance(target))
 
-	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < IDLength*8) && candidates.Len() < count; i++ {
+	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < IDLength*8) && 
+		candidates.Len() < count; i++ {
 		if bucketIndex-i >= 0 {
 			bucket = routingTable.buckets[bucketIndex-i]
 			candidates.Append(bucket.GetContactAndCalcDistance(target))
@@ -46,6 +55,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count 
 		count = candidates.Len()
 	}
 
+	defer routingTable.mux.Unlock()
 	return candidates.GetContacts(count)
 }
 
