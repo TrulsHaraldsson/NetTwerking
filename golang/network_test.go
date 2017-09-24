@@ -82,6 +82,7 @@ func TestNetworkSendMessage(t *testing.T) {
 	}
 }
 
+/*
 func TestNetworkSendFindValueMessage(t *testing.T) {
 	_, rt := CreateTestRT3()
 	kademlia, network := initKademliaAndNetwork(rt)
@@ -133,11 +134,11 @@ func TestNetworkSendFindContactMessage(t *testing.T) {
 	if !contact[0].ID.Equals(NewKademliaID("1111111200000000000000000000000000000000")) {
 		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	}
-	/*contact2 := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
+	contact2 := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
 	emptyContact := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
 	if !contact2[0].Equals(emptyContact) {
 		t.Error("Other contact than default found, when not supposed to...", contact2)
-	}*/
+	}
 }
 
 func TestNetworkSendPingMessage(t *testing.T) {
@@ -159,6 +160,7 @@ func TestNetworkSendPingMessage(t *testing.T) {
 		t.Error("Did not receive an ack for the ping message...")
 	}
 }
+*/
 
 func EchoServer(port int) {
 	addrServer := CreateAddr("localhost", port)
