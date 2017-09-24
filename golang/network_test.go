@@ -119,24 +119,25 @@ func TestNetworkSendStoreMessage(t *testing.T) {
 }
 
 func TestNetworkSendFindContactMessage(t *testing.T) {
-	contacts, rt := CreateTestRT2()
+	_, rt := CreateTestRT2()
 	_, network := initKademliaAndNetwork(rt)
 	go network.Listen("localhost", 8002)
 
 	time.Sleep(50 * time.Millisecond)
 
-	_, rt2 := CreateTestRT()
+	_, rt2 := CreateTestRT9()
 	_, network2 := initKademliaAndNetwork(rt2)
 
-	contact := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000000"))
-	if !contact.Equals(contacts[0]) {
-		t.Error("contacts are not equal", contact, contacts[0])
+	contact := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111200000000000000000000000000000000"))
+	fmt.Println("Node found:", contact[0])
+	if !contact[0].ID.Equals(NewKademliaID("1111111200000000000000000000000000000000")) {
+		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	}
-	contact2 := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
+	/*contact2 := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
 	emptyContact := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
-	if !contact2.Equals(emptyContact) {
+	if !contact2[0].Equals(emptyContact) {
 		t.Error("Other contact than default found, when not supposed to...", contact2)
-	}
+	}*/
 }
 
 func TestNetworkSendPingMessage(t *testing.T) {

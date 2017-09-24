@@ -64,47 +64,59 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 
 /*
  * Sends out a maximum of network.kademlia.K RPC's to find the node in the network with id = kademliaID.
- * Returns the contact if it is found(Can be nil, if not found).
- * TODO: Check first if node is found locally
+ * Returns the K closest contacts found. Closest first in list
  * TODO: Add functionality for processing if no node closer is found.
- * TODO: Dont check same node multiple times.
  * TODO: Setup a network to test more of its functionality
  */
-func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) Contact {
+func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Contact {
 	targetID := kademliaID
 	target := NewContact(targetID, "DummyAdress")
 	closestContacts := kademlia.LookupContact(&target)
-	message := NewFindNodeMessage(&kademlia.RT.me, targetID)
-	counter := 0
-	ch := make(chan Contact)
-	for i := 0; i < kademlia.net.alpha && i < len(closestContacts); i++ {
-		go kademlia.FindContactHelper(closestContacts[i].Address, message, &counter, targetID, ch)
+	if closestContacts[0].ID.Equals(kademliaID) && !closestContacts[0].Equals(kademlia.RT.me) { //If found locally, and not itself.
+		return closestContacts
 	}
-	contact := <-ch
-	return contact
+	message := NewFindNodeMessage(&kademlia.RT.me, targetID)
+
+	tempTable := NewTempContactTable(targetID)
+	tempTable.AppendUniqueSorted(closestContacts)
+	tempTable.BannContact(kademlia.RT.me)
+
+	ch := CreateChannel()
+	for i := 0; i < kademlia.net.alpha && i < tempTable.Len(); i++ {
+		c := tempTable.Get(i)
+		if tempTable.BannContact(c) { //if not already checked, add it.
+			go kademlia.FindContactHelper(c.Address, message, &ch, &tempTable)
+		}
+	}
+	contacts := ch.Read()
+	ch.Close()
+	return contacts
 }
 
-func (kademlia *Kademlia) FindContactHelper(addr string, message Message, counter *int,
-	targetID *KademliaID, ch chan Contact) {
-	if *counter >= kademlia.K {
-		ch <- NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
+func (kademlia *Kademlia) FindContactHelper(addr string, message Message, ch *ContactChannel, tempTable *TempContactTable) {
+	if tempTable.GetNumOfAppends() >= kademlia.K || tempTable.TargetFound() {
+		ch.Write(tempTable.GetKContacts(kademlia.K))
 		return
 	} else {
-		rMessage, ackMessage, err := kademlia.net.SendFindContactMessage(addr, &message) //TODO: dont ignore error
+		rMessage, ackMessage, err := kademlia.net.SendFindContactMessage(addr, &message)
 		if err != nil {
 			return
 		}
-		kademlia.RT.AddContact(rMessage.Sender)
-		closestContact := ackMessage.Nodes[0]
-		if closestContact.ID.Equals(targetID) {
-			ch <- closestContact
-			*counter += kademlia.K
+		kademlia.RT.AddContact(rMessage.Sender) //Updating routingtable with new contact seen.
+		tempTable.AppendUniqueSorted(ackMessage.Nodes)
+		if tempTable.TargetFound() {
+			ch.Write(tempTable.GetKContacts(kademlia.K))
 			return
 		} else {
-			*counter += 1
-			for i := 0; i < kademlia.net.alpha && i < len(ackMessage.Nodes); i++ {
-				go kademlia.FindContactHelper(ackMessage.Nodes[i].Address,
-					message, counter, targetID, ch)
+			indexOffset := 0
+			for i := 0; i < kademlia.net.alpha && (i+indexOffset) < tempTable.Len(); i++ { //alpha recursive calls to the closest nodes.
+				c := tempTable.Get(i + indexOffset)
+				if tempTable.BannContact(c) { //if not already checked, add it.
+					go kademlia.FindContactHelper(c.Address, message, ch, tempTable)
+				} else {
+					indexOffset += 1
+					i -= 1
+				}
 			}
 		}
 	}
