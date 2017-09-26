@@ -96,6 +96,9 @@ func (network *Network) SendPingMessage(addr string, msg *Message) (Message, err
  */
 func (network *Network) SendFindContactMessage(addr string, msg *Message) (Message, AckFindNodeMessage, error) {
 	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_NODE_ACK)
+	if err != nil {
+		return response, AckFindNodeMessage{}, err
+	}
 	return response, responseData.(AckFindNodeMessage), err
 }
 
@@ -104,6 +107,9 @@ func (network *Network) SendFindContactMessage(addr string, msg *Message) (Messa
  */
 func (network *Network) SendFindValueMessage(addr string, msg *Message) (Message, AckFindValueMessage, error) {
 	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_VALUE_ACK)
+	if err != nil {
+		return response, AckFindValueMessage{}, err
+	}
 	return response, responseData.(AckFindValueMessage), err
 }
 
@@ -153,13 +159,15 @@ func SendMessage(addr string, message Message) (Message, interface{}, error) {
 /*
 * Sends data to address specified.
 * Waits for a response and returns it
+
  */
 func SendData(addr string, data []byte) ([]byte, error) {
 	var returnMsg []byte
+	timeOut := 1 * time.Second // Waits for timeOut until execption is thrown.
 	addrLocal := CreateAddr("localhost", 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
-	udpConn.SetDeadline(time.Now().Add(3 * time.Second)) // Waits for 3 seconds
+	udpConn.SetDeadline(time.Now().Add(timeOut))
 	fmt.Println("Listening on", udpConn.LocalAddr().String())
 	if err != nil {
 		return returnMsg, err

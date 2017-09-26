@@ -43,21 +43,8 @@ func CalcDistances(list *[]Contact, target *KademliaID) {
 	}
 }
 
-func Member(list []Contact, contact Contact) bool {
-	for i := 0; i < len(list); i++ {
-		if list[i].Equals(contact) {
-			return true
-		}
-	}
-	return false
-}
-
 type ContactCandidates struct {
 	contacts []Contact
-}
-
-func (canditates *ContactCandidates) Member(contact Contact) bool {
-	return Member(canditates.contacts, contact)
 }
 
 func (candidates *ContactCandidates) Append(contacts []Contact) {
@@ -87,18 +74,23 @@ func (candidates *ContactCandidates) Less(i, j int) bool {
 	return candidates.contacts[i].Less(&candidates.contacts[j])
 }
 
-func (candidates *ContactCandidates) RemoveDuplicates() {
-	// Use map to record duplicates as we find them.
-	result := []Contact{}
+type ContactStateItem struct {
+	contact  Contact
+	queried  bool
+	received bool
+	counter  int
+}
 
-	for v := range candidates.contacts {
-		if !Member(result, candidates.contacts[v]) {
-			result = append(result, candidates.contacts[v])
-			// Do add duplicate.
-		}
-	}
-	// Return the new slice.
-	candidates.contacts = result
+func NewContactStateItem(contact Contact) ContactStateItem {
+	return ContactStateItem{contact: contact, queried: false, received: false, counter: 0}
+}
+
+func (item *ContactStateItem) Less(contactItem ContactStateItem) bool {
+	return item.contact.Less(&contactItem.contact)
+}
+
+func (item *ContactStateItem) Equals(contactItem ContactStateItem) bool {
+	return item.contact.Equals(contactItem.contact)
 }
 
 /*
@@ -106,79 +98,157 @@ func (candidates *ContactCandidates) RemoveDuplicates() {
 * Used when needed to organize received contacts asynchronously.
 * Is threadsafe.
  */
-type TempContactTable struct {
-	contacts       ContactCandidates
-	bannedContacts ContactCandidates
-	mutex          sync.Mutex
-	target         *KademliaID
-	appends        int
+type ContactStateList struct {
+	contacts   []ContactStateItem
+	mutex      sync.Mutex
+	target     *KademliaID
+	k          int
+	maxQueries int
 }
 
-func NewTempContactTable(target *KademliaID) TempContactTable {
-	return TempContactTable{contacts: ContactCandidates{}, bannedContacts: ContactCandidates{}, mutex: sync.Mutex{}, target: target, appends: 0}
+func NewContactStateList(target *KademliaID, k int) ContactStateList {
+	return ContactStateList{contacts: []ContactStateItem{}, mutex: sync.Mutex{}, target: target, k: k, maxQueries: 1}
+}
+
+/*
+* returns k closest contacts to target. if k is larger than list, all contacts will be returned.
+* Only returns contacts that responded.
+ */
+func (list *ContactStateList) GetKClosestContacts() []Contact {
+	list.mutex.Lock()
+	defer list.mutex.Unlock()
+	fmt.Println("list:", list.contacts)
+	contacts := []Contact{}
+	counter := 0
+	for i := 0; i < len(list.contacts); i++ {
+		if list.contacts[i].received {
+			fmt.Println("Appending...")
+			contacts = append(contacts, list.contacts[i].contact)
+			counter += 1
+			if counter == list.k {
+				return contacts
+			}
+		}
+	}
+	return contacts
+}
+
+/*
+* Marks a contact received. this way we know that is does not need to be queried again.
+ */
+func (list *ContactStateList) MarkReceived(contact Contact) {
+	list.mutex.Lock()
+	defer list.mutex.Unlock()
+	for i := 0; i < len(list.contacts); i++ {
+		if list.contacts[i].contact.Equals(contact) {
+			list.contacts[i].received = true
+		}
+	}
+}
+
+/*
+* Sets a contact not querid, so it can be queried again.
+ */
+func (list *ContactStateList) SetNotQueried(contact Contact) {
+	list.mutex.Lock()
+	defer list.mutex.Unlock()
+	for i := 0; i < len(list.contacts); i++ {
+		if list.contacts[i].contact.Equals(contact) {
+			list.contacts[i].queried = false
+			list.contacts[i].counter += 1
+		}
+	}
+}
+
+/*
+* Returns the contact that is next to be queried.
+* returns nil if no contact can be queried.
+ */
+func (list *ContactStateList) GetNextToQuery() *Contact {
+	list.mutex.Lock()
+	defer list.mutex.Unlock()
+	for i := 0; i < len(list.contacts); i++ {
+		if list.contacts[i].queried == false && list.contacts[i].counter < list.maxQueries {
+			list.contacts[i].queried = true
+			return &list.contacts[i].contact
+		}
+	}
+	return nil
+}
+
+/*
+* returns true if the list is considered finished.
+ */
+func (list *ContactStateList) Finished() bool {
+	list.mutex.Lock()
+	defer list.mutex.Unlock()
+	counter := 0
+
+	for i := 0; i < len(list.contacts); i++ {
+		if list.contacts[i].counter == list.maxQueries {
+			continue
+		}
+		if list.contacts[i].received == false {
+			return false
+		}
+		counter += 1
+		if counter == list.k {
+			return true
+		}
+	}
+	return true
 }
 
 /*
 * Appends the contacts, deletes duplicates and sorts them.
  */
-func (table *TempContactTable) AppendUniqueSorted(contacts []Contact) {
-	table.mutex.Lock()
-	CalcDistances(&contacts, table.target)
-	table.contacts.Append(contacts)
-	table.contacts.RemoveDuplicates()
-	table.contacts.Sort()
-	table.appends += 1
-	table.mutex.Unlock()
-}
-
-func (table *TempContactTable) GetNumOfAppends() int {
-	table.mutex.Lock()
-	defer table.mutex.Unlock()
-	return table.appends
-}
-
-func (table *TempContactTable) GetClosest() Contact {
-	table.mutex.Lock()
-	defer table.mutex.Unlock()
-	return table.contacts.contacts[0]
-}
-
-func (table *TempContactTable) TargetFound() bool {
-	table.mutex.Lock()
-	defer table.mutex.Unlock()
-	return table.contacts.contacts[0].ID.Equals(table.target)
-}
-
-func (table *TempContactTable) Get(index int) Contact {
-	table.mutex.Lock()
-	defer table.mutex.Unlock()
-	return table.contacts.contacts[index]
-}
-
-func (table *TempContactTable) GetKContacts(k int) []Contact {
-	table.mutex.Lock()
-	defer table.mutex.Unlock()
-	return table.contacts.GetContacts(k)
-}
-
-func (table *TempContactTable) isBanned(contact Contact) bool {
-	return table.bannedContacts.Member(contact)
-}
-
-func (table *TempContactTable) BannContact(contact Contact) bool {
-	table.mutex.Lock()
-	if table.isBanned(contact) {
-		table.mutex.Unlock()
-		return false
-	} else {
-		table.bannedContacts.Append([]Contact{contact})
-		table.mutex.Unlock()
-		return true
+func (list *ContactStateList) AppendUniqueSorted(contacts []Contact) {
+	list.mutex.Lock()
+	CalcDistances(&contacts, list.target)
+	for i := 0; i < len(contacts); i++ {
+		contact := NewContactStateItem(contacts[i])
+		if !list.member(contact) {
+			list.sortedInsert(contact)
+		}
 	}
+	list.mutex.Unlock()
 }
 
-func (table *TempContactTable) Len() int {
-	table.mutex.Lock()
-	defer table.mutex.Unlock()
-	return table.contacts.Len()
+/*
+* returns true if contact is a member of the list.
+ */
+func (list *ContactStateList) member(contact ContactStateItem) bool {
+	for i := 0; i < len(list.contacts); i++ {
+		if list.contacts[i].Equals(contact) {
+			return true
+		}
+	}
+	return false
+}
+
+/*
+* inserts contacts into list.contacts, and keeps it sorted.
+ */
+func (list *ContactStateList) sortedInsert(contact ContactStateItem) {
+	l := len(list.contacts)
+	if l == 0 {
+		list.contacts = []ContactStateItem{contact}
+		return
+	}
+	i := sort.Search(l, func(i int) bool { return contact.Less(list.contacts[i]) }) //list.contacts[i].Less(contact)
+	if i == 0 {
+		list.contacts = append([]ContactStateItem{contact}, list.contacts...)
+		return
+	}
+	if i == l { // new value is the biggest
+		list.contacts = append(list.contacts, contact)
+		return
+	}
+	list.contacts = append(list.contacts[:i], append([]ContactStateItem{contact}, list.contacts[i:]...)...)
+}
+
+func (list *ContactStateList) Len() int {
+	list.mutex.Lock()
+	defer list.mutex.Unlock()
+	return len(list.contacts)
 }

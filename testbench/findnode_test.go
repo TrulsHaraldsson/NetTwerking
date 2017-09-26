@@ -8,7 +8,7 @@ import (
 	"../golang"
 )
 
-func TestFindNode(t *testing.T) {
+func TestFindNode1(t *testing.T) {
 	// Node B
 	B := d7024e.NewKademlia(8100, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
 	B.Start()
