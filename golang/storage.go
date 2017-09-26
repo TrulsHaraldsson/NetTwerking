@@ -1,8 +1,11 @@
 package d7024e
 
+/*
+* TODO: Remove all fmt's!
+*/
+
 import(
   "crypto/sha1"
-  "fmt"
   "log"
   "reflect"
   "os"
@@ -34,14 +37,12 @@ func (storage *Storage) MoveToMemory (name []byte){
       file.Name = v.Name
       file.Text = v.Text
 
-      fmt.Println("Files before delete: ", Files)
       //Delete file in Files
       Files = append(Files[:i], Files[i+1:]...)
-      fmt.Println("Files after delete : ", Files)
 
       //Insert into Memory
       storage.Memory(name, file.Text)
-      fmt.Println("Breaking out of loop!\n")
+      //break out of for loop.
       break
     }
   }
@@ -57,20 +58,17 @@ func (storage *Storage) Search(name []byte) file{
   returnedFile := file{}
   compareName := storage.HashFile(name)
 
-  //Check local list if file exist, else check tmp.
+  //Check local list if file exist, else check Memory.
   for _, v := range Files {
     if reflect.DeepEqual(v.Name, compareName) {
       returnedFile.Name = v.Name
       returnedFile.Text = v.Text
-
       //break out of for loop.
-      fmt.Println("Breaking out of loop!\n")
       break
     }
   }
   if returnedFile.Name == nil{
-    // Call find file in tmp.
-    fmt.Println("Checking tmp Memory.\n")
+    // Check if memory has file.
     returnedFile = storage.ReadMemory(name)
   }
   return returnedFile
@@ -88,9 +86,10 @@ func (storage *Storage) ReadMemory(name []byte) file {
   hashedName := storage.HashFile(name)
   returnedFile := file{hashedName, []byte(content)}
 
-  //When a file is retrieved from Memory, store it in RAM.
+  /*
+  * When a file is retrieved from Memory, move it from Memory to RAM.
+  */
   storage.RAM(name,[]byte(content))
-  fmt.Println("Moving file from Memory to RAM!\n")
   path := "/tmp/" + string(name)
   os.Remove(path) // clean up temp
 

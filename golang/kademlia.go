@@ -117,6 +117,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo *Contact, message Me
 }
 
 /*
+ * TODO: Change accordingly to SendFindContactMessage!
  * Request to find a value over the network.
  */
 func (kademlia *Kademlia) SendFindValueMessage(me *KademliaID) Item {
@@ -163,8 +164,8 @@ func (kademlia *Kademlia) FindValueHelper(addr string, message Message, counter 
 }
 
 /*
- * Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
- * from neighbor OnStoreMessageReceived func.
+ * TODO: Change accordingly to SendFindContactMessage!
+ * Sends a message over the network to the alpha closest neighbors in the routing table and waits for response from neighbor OnStoreMessageReceived func.
  */
 func (kademlia *Kademlia) SendStoreMessage(me *KademliaID, data []byte) []byte {
 	closest := kademlia.RT.FindClosestContacts(me, kademlia.net.alpha)
@@ -172,7 +173,6 @@ func (kademlia *Kademlia) SendStoreMessage(me *KademliaID, data []byte) []byte {
 	counter := 0
 
 	for i := range closest {
-		//fmt.Println("Contact [", i ,"], : ", "\n Address : ",closest[i].Address ,"\n ID : ",closest[i].ID, "\n Distance : ", closest[i].distance,"\n")
 		me := kademlia.RT.me
 		message := NewStoreMessage(&closest[i], me.ID, &data)
 		go kademlia.StoreHelper(closest[i].Address, message, &counter, ch)
@@ -209,6 +209,8 @@ func (kademlia *Kademlia) StoreHelper(addr string, message Message, counter *int
 
 /*
  * Checks if a certain hash exist in storage, if it does the item is returned of type Item.
+ * TODO: Remove LookupData and use Storage after patch.
+ * TODO: Check same for Store.
  */
 func (kademlia *Kademlia) LookupData(hash *KademliaID) Item {
 	newItem := Item{}
@@ -223,6 +225,8 @@ func (kademlia *Kademlia) LookupData(hash *KademliaID) Item {
 
 /*
  * Stores an item of type Item in a list called Information.
+ * TODO: Change to the use of Storage.
+ * TODO: Update every store/retreive with Storage.
  */
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	item := Item{string(m.Data), m.Key}
