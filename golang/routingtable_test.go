@@ -8,7 +8,7 @@ import (
 func TestRoutingTable(t *testing.T) {
 	_, rt := CreateTestRT()
 
-	contacts := rt.FindClosestContacts(
+	contacts := rt.findClosestContacts(
 		NewKademliaID("2111111400000000000000000000000000000000"), 20)
 	for i := range contacts {
 		fmt.Println(contacts[i].String())
@@ -21,7 +21,7 @@ func CreateTestRT9() ([]Contact, *RoutingTable) {
 	contacts = append(contacts, NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 
 	for _, contact := range contacts {
-		rt.Update(contact)
+		rt.update(contact)
 	}
 	return contacts, rt
 }
@@ -36,7 +36,7 @@ func CreateTestRT8() ([]Contact, *RoutingTable) {
 		NewKademliaID("1111111200000000000000000000000000000000"), "localhost:8003"))
 
 	for _, contact := range contacts {
-		rt.Update(contact)
+		rt.update(contact)
 	}
 	return contacts, rt
 }
@@ -59,7 +59,7 @@ func TestRoutingTableAddContact(t *testing.T) {
 		NewKademliaID("2111111400000000000000000000000000000000"), "localhost:8006"))
 
 	for _, contact := range contacts {
-		go rt.Update(contact)
+		go rt.update(contact)
 	}
 }
 
@@ -81,7 +81,7 @@ func CreateTestRT() ([]Contact, *RoutingTable) {
 		NewKademliaID("2111111400000000000000000000000000000000"), "localhost:8006"))
 
 	for _, contact := range contacts {
-		rt.Update(contact)
+		rt.update(contact)
 	}
 	return contacts, rt
 }
@@ -104,7 +104,7 @@ func CreateTestRT2() ([]Contact, *RoutingTable) {
 		NewKademliaID("2111111400000000000000000000000000000000"), "localhost:8006"))
 
 	for _, contact := range contacts {
-		rt.Update(contact)
+		rt.update(contact)
 	}
 	return contacts, rt
 }
@@ -127,7 +127,7 @@ func CreateTestRT3() ([]Contact, *RoutingTable) {
 		NewKademliaID("2111111400000000000000000000000000000000"), "localhost:8006"))
 
 	for _, contact := range contacts {
-		rt.Update(contact)
+		rt.update(contact)
 	}
 	return contacts, rt
 }
@@ -142,7 +142,7 @@ func CreateTestRT4() ([]Contact, *RoutingTable) {
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8009"))
 
 	for _, contact := range contacts {
-		rt.Update(contact)
+		rt.update(contact)
 	}
 	return contacts, rt
 }

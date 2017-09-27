@@ -33,7 +33,7 @@ func NewKademlia(port int, kID string) *Kademlia {
 		kademliaID = NewRandomKademliaID()
 	}
 	me := NewContact(kademliaID, "localhost:"+strconv.Itoa(port)) //TODO: Should be real ip, not localhost, but works in local tests.
-	rt := NewRoutingTable(me)
+	rt := newRoutingTable(me)
 
 	// These three rows link kademlia to network and vice versa
 	network := NewNetwork(3)
@@ -58,7 +58,7 @@ func (kademlia *Kademlia) Start() {
  * Returns the kademlia.K closest contacts to target.
  */
 func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
-	contacts := kademlia.RT.FindClosestContacts(target.ID, kademlia.K)
+	contacts := kademlia.RT.findClosestContacts(target.ID, kademlia.K)
 	return contacts
 }
 
@@ -100,7 +100,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
-		kademlia.RT.Update(rMessage.Sender)        // Updating routingtable with new contact seen.
+		kademlia.RT.update(rMessage.Sender)        // Updating routingtable with new contact seen.
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
@@ -123,7 +123,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
  * Request to find a value over the network.
  */
 func (kademlia *Kademlia) SendFindValueMessage(me *KademliaID) Item {
-	closest := kademlia.RT.FindClosestContacts(me, kademlia.net.alpha)
+	closest := kademlia.RT.findClosestContacts(me, kademlia.net.alpha)
 	ch := make(chan Item)
 	counter := 0
 
@@ -170,7 +170,7 @@ func (kademlia *Kademlia) FindValueHelper(addr string, message Message, counter 
  * Sends a message over the network to the alpha closest neighbors in the routing table and waits for response from neighbor OnStoreMessageReceived func.
  */
 func (kademlia *Kademlia) SendStoreMessage(me *KademliaID, data []byte) []byte {
-	closest := kademlia.RT.FindClosestContacts(me, kademlia.net.alpha)
+	closest := kademlia.RT.findClosestContacts(me, kademlia.net.alpha)
 	ch := make(chan []byte)
 	counter := 0
 
@@ -284,6 +284,6 @@ func (kademlia *Kademlia) Ping(addr string) {
 	pingMsg := NewPingMessage(kademlia.RT.me)
 	response, error := kademlia.net.SendPingMessage(addr, &pingMsg)
 	if error == nil { // No error
-		kademlia.RT.Update(response.Sender)
+		kademlia.RT.update(response.Sender)
 	}
 }
