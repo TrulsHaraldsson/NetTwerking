@@ -169,6 +169,24 @@ func (kademlia *Kademlia) FindValueHelper(addr string, message Message, counter 
 	}
 }
 
+//SendStoreMessage should be :
+func (kademlia *Kademlia) SendStoreMessageFinal(Me *KademliaID, data[]byte){
+	/*
+	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
+	list := kademlia.SendFindContactMessage
+
+	//2: Filter out the alpha closest out of those 'k' neighbors.
+	for i := 0; i < 3; i ++ {
+
+	//3: Send out async messages to each of the neighbors without caring about response.
+
+}
+
+	//4: Done.
+	*/
+}
+
+
 /*
  * TODO: Change accordingly to SendFindContactMessage!
  * Sends a message over the network to the alpha closest neighbors in the routing table and waits for response from neighbor OnStoreMessageReceived func.
