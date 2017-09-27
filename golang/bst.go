@@ -7,19 +7,19 @@ import (
 )
 
 /*
- * A routing table have a Contact 'me' which is the first entry in the table. 
+ * A routing table have a Contact 'me' which is the first entry in the table.
  * The routing table also holds a reference to the root of a binary search tree.
  */
 type RoutingTableBST struct {
-	me *Contact
+	me   *Contact
 	root *Node
-	mux sync.Mutex
+	mux  sync.Mutex
 }
 
 /*
- * Creates a new routingtable and returns a pointer to it. 
+ * Creates a new routingtable and returns a pointer to it.
  * The given Contact will be the initial entry in the table.
- */ 
+ */
 func NewRoutingTableBST(me Contact) *RoutingTableBST {
 	rt := RoutingTableBST{}
 	rt.me = &me
@@ -30,7 +30,7 @@ func NewRoutingTableBST(me Contact) *RoutingTableBST {
 
 /*
  * Given a contact it either inserts the contact in appropriate bucket, or
- * if the contact allready exists in the routing table the contact will be 
+ * if the contact allready exists in the routing table the contact will be
  * moved to the front of the bucket. Lastly, if the appropriate bucket is full
  * the contact will simply be discarded.
  */
@@ -38,12 +38,12 @@ func (this *RoutingTableBST) Update(contact Contact) {
 	this.mux.Lock()
 	defer this.mux.Unlock()
 	bucket, node := this.root.findBucket(0, contact.ID)
-	
-	if bucket.Front().Equals(*this.me){
-		for i := 0 ; i < 160 ; i ++ {
+
+	if bucket.Front().Equals(*this.me) {
+		for i := 0; i < 160; i++ {
 			meBit := getNBit(uint(i), this.me.ID)
-			otherBit := getNBit(uint(i), contact.ID) 
-			if  meBit != otherBit {
+			otherBit := getNBit(uint(i), contact.ID)
+			if meBit != otherBit {
 				if meBit == 1 {
 					left := NewNode(node.Bucket)
 					left.Parent = node
@@ -52,7 +52,7 @@ func (this *RoutingTableBST) Update(contact Contact) {
 					right := NewNode(NewBucket(&contact))
 					right.Parent = node
 					node.Right = right
-				}else {
+				} else {
 					left := NewNode(NewBucket(&contact))
 					left.Parent = node
 					node.Left = left
@@ -64,13 +64,13 @@ func (this *RoutingTableBST) Update(contact Contact) {
 				return
 			}
 
-		}	
-	}else {
+		}
+	} else {
 		if bucket.Len() < 20 {
 			c := bucket.getContact(contact.ID)
 			if c == nil {
 				bucket.list.PushFront(contact)
-			}else {
+			} else {
 				bucket.list.MoveToFront(c)
 			}
 		}
@@ -82,16 +82,16 @@ func (this *RoutingTableBST) FindClosestContacts(target *KademliaID, count int) 
 	defer this.mux.Unlock()
 	var candidates ContactCandidates
 	bucket, node := this.root.findBucket(0, target)
-	
+
 	candidates.Append(bucket.GetContactAndCalcDistance(target))
 
 	prev := node.prev()
 	next := node.next()
-	
+
 	for {
 		if candidates.Len() >= count {
 			break
-		}else {
+		} else {
 			if prev == nil && next == nil {
 				break
 			}
@@ -107,13 +107,13 @@ func (this *RoutingTableBST) FindClosestContacts(target *KademliaID, count int) 
 			}
 		}
 	}
-	
+
 	candidates.Sort()
-	
+
 	if count > candidates.Len() {
 		count = candidates.Len()
 	}
-	
+
 	return candidates.GetContacts(count)
 }
 
@@ -122,8 +122,8 @@ func (this *RoutingTableBST) FindClosestContacts(target *KademliaID, count int) 
  * two pointers to its children.
  */
 type Node struct {
-	Left *Node
-	Right *Node
+	Left   *Node
+	Right  *Node
 	Parent *Node
 	Bucket *MyBucket
 }
@@ -131,7 +131,7 @@ type Node struct {
 /*
  * Creates a new node and sets it bucket to the given bucket
  */
-func NewNode(bucket *MyBucket) *Node{
+func NewNode(bucket *MyBucket) *Node {
 	node := Node{}
 	node.Bucket = bucket
 	node.Left = nil
@@ -144,15 +144,15 @@ func NewNode(bucket *MyBucket) *Node{
  * Search for a bucket that covers the given contact's ID. The node that
  * holds the bucket is also returned.
  */
-func (this *Node) findBucket(index int, kademliaID *KademliaID) (*MyBucket, *Node){
+func (this *Node) findBucket(index int, kademliaID *KademliaID) (*MyBucket, *Node) {
 	if this.isLeaf() {
 		return this.Bucket, this
-	}else {
+	} else {
 		// Compare i'th bit
 		bit := getNBit(uint(index), kademliaID)
 		if bit == 0 {
 			return this.Right.findBucket(index+1, kademliaID)
-		}else {
+		} else {
 			return this.Left.findBucket(index+1, kademliaID)
 		}
 	}
@@ -161,15 +161,15 @@ func (this *Node) findBucket(index int, kademliaID *KademliaID) (*MyBucket, *Nod
 func (this *Node) insert(contact *Contact) {
 	//id := contact.ID
 	//bit := getNBit(contact.ID)
-	
+
 	// Search for Right bucket
 	// When found Insert
 	// If not found, Create new?
-	// If original 
+	// If original
 }
 
 /*
- * Returns 
+ * Returns
  */
 func (this *Node) next() *Node {
 	if this.isLeftChild() {
@@ -177,12 +177,15 @@ func (this *Node) next() *Node {
 		for {
 			if next.isLeaf() {
 				return next
-			}else{
+			} else {
 				next = next.Left
 			}
 		}
 	} else {
 		next := this.Parent
+		if next == nil {
+			return nil
+		}
 		for {
 			if next.Parent == nil {
 				return nil
@@ -190,7 +193,7 @@ func (this *Node) next() *Node {
 
 			if next.isRightChild() {
 				next = next.Parent
-			}else{
+			} else {
 				return next.Parent.Right
 			}
 		}
@@ -198,28 +201,31 @@ func (this *Node) next() *Node {
 }
 
 /*
- * Return the 
+ * Return the
  */
-func (this *Node) prev() *Node{
+func (this *Node) prev() *Node {
 	if this.isRightChild() {
 		prev := this.Parent.Left
 		for {
-			if prev.isLeaf(){
+			if prev.isLeaf() {
 				return prev
-			}else {
+			} else {
 				prev = prev.Right
 			}
 		}
-	}else {
+	} else {
 		prev := this.Parent
+		if prev == nil {
+			return nil
+		}
 		for {
 			if prev.Parent == nil {
 				return nil
-			} 
+			}
 
 			if prev.isLeftChild() {
 				prev = prev.Parent
-			}else {
+			} else {
 				return prev.Parent.Left
 			}
 		}
@@ -232,7 +238,7 @@ func (this *Node) prev() *Node{
 func (this *Node) isLeftChild() bool {
 	if this.Parent != nil && this.Parent.Left == this {
 		return true
-	}else{
+	} else {
 		return false
 	}
 }
@@ -243,7 +249,7 @@ func (this *Node) isLeftChild() bool {
 func (this *Node) isRightChild() bool {
 	if this.Parent != nil && this.Parent.Right == this {
 		return true
-	}else{
+	} else {
 		return false
 	}
 }
@@ -255,10 +261,9 @@ func (this *Node) isLeaf() bool {
 	return this.Left == nil && this.Right == nil
 }
 
-
 /*
- * A bucket holds contact information. One bucket can hold at 
- * maximum 20 contacts.  
+ * A bucket holds contact information. One bucket can hold at
+ * maximum 20 contacts.
  */
 type MyBucket struct {
 	list *list.List
@@ -295,7 +300,7 @@ func (this *MyBucket) Front() *Contact {
 }
 
 /*
- * Returns the contact with the given ID if it is in the bucket. If 
+ * Returns the contact with the given ID if it is in the bucket. If
  * no contact with that ID exists in the bucket the return will be nil.
  */
 func (this *MyBucket) getContact(id *KademliaID) *list.Element {
@@ -317,28 +322,28 @@ func (this *MyBucket) Len() int {
 
 /*
  * Returns the value of the specified bit, either 0 or 1. If the specified
- * bit is not between 0 and 159 the result will be -1. 
+ * bit is not between 0 and 159 the result will be -1.
  */
 func getNBit(n uint, id *KademliaID) int {
 	if 0 <= n && n <= 159 {
-		byteToCheck := id[n / 8]; // 8 bits per byte
-		bitToCheck := n % 8 // 8 Bits
-		res := byteToCheck & (1<<(7-bitToCheck))
+		byteToCheck := id[n/8] // 8 bits per byte
+		bitToCheck := n % 8    // 8 Bits
+		res := byteToCheck & (1 << (7 - bitToCheck))
 		//fmt.Println("ByteToCheck", byteToCheck)
 		//fmt.Println("bitToCheck", bitToCheck)
 		//fmt.Println("Res:", res)
 		if res > 0 {
 			return 1
-		}else {
+		} else {
 			return 0
 		}
-	}else {
+	} else {
 		return -1
 	}
 }
 
 /*
- * Compares the two given KademliaIDs and Returns TRUE if 
+ * Compares the two given KademliaIDs and Returns TRUE if
  * the first N bits are equal, else FALSE
  */
 func isNBitsEqual(n uint, id1 *KademliaID, id2 *KademliaID) bool {
@@ -348,5 +353,5 @@ func isNBitsEqual(n uint, id1 *KademliaID, id2 *KademliaID) bool {
 			return false
 		}
 	}
-	return true;
+	return true
 }

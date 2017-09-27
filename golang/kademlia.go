@@ -84,7 +84,7 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	for i := 0; i < kademlia.net.alpha; i++ { // Start with alpha RPC's
 		c := tempTable.GetNextToQuery()
 		if c != nil { // if nil, there are no current contacts able to query
-			go kademlia.FindContactHelper(c, message, &ch, &tempTable)
+			go kademlia.FindContactHelper(*c, message, &ch, &tempTable)
 		}
 	}
 	contacts := ch.Read()
@@ -92,24 +92,26 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	return contacts
 }
 
-func (kademlia *Kademlia) FindContactHelper(ContactToSendTo *Contact, message Message,
+func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Message,
 	ch *ContactChannel, tempTable *ContactStateList) {
 	rMessage, ackMessage, err :=
 		kademlia.net.SendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 	if err != nil {
-		tempTable.SetNotQueried(*ContactToSendTo) // Set not queried, so others can try again
+		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
+		//fmt.Println(ackMessage.Nodes)
 		kademlia.RT.AddContact(rMessage.Sender)        // Updating routingtable with new contact seen.
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
-		tempTable.MarkReceived(*ContactToSendTo)       // Mark this contact received.
+		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
+	//fmt.Println(tempTable.contacts)
 	if tempTable.Finished() { // If finished,
 		ch.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
 	} else {
 		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
 			c := tempTable.GetNextToQuery()
 			if c != nil {
-				go kademlia.FindContactHelper(c, message, ch, tempTable)
+				go kademlia.FindContactHelper(*c, message, ch, tempTable)
 			}
 		}
 	}

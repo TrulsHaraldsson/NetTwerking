@@ -50,7 +50,7 @@ func TestFindNode2(t *testing.T) {
 	port := 8105
 	var Node *d7024e.Kademlia
 	for i := 0; i < count; i++ {
-		Node = d7024e.NewKademlia(port+i+1, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+		Node = d7024e.NewKademlia(port+i+1, "none")
 		Node.Start()
 		connectAddr := d7024e.CreateAddr("localhost", port+i)
 		Node.Ping(connectAddr)

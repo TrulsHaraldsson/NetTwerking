@@ -117,12 +117,10 @@ func NewContactStateList(target *KademliaID, k int) ContactStateList {
 func (list *ContactStateList) GetKClosestContacts() []Contact {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
-	fmt.Println("list:", list.contacts)
 	contacts := []Contact{}
 	counter := 0
 	for i := 0; i < len(list.contacts); i++ {
 		if list.contacts[i].received {
-			fmt.Println("Appending...")
 			contacts = append(contacts, list.contacts[i].contact)
 			counter += 1
 			if counter == list.k {
@@ -142,6 +140,7 @@ func (list *ContactStateList) MarkReceived(contact Contact) {
 	for i := 0; i < len(list.contacts); i++ {
 		if list.contacts[i].contact.Equals(contact) {
 			list.contacts[i].received = true
+			return
 		}
 	}
 }
@@ -156,6 +155,7 @@ func (list *ContactStateList) SetNotQueried(contact Contact) {
 		if list.contacts[i].contact.Equals(contact) {
 			list.contacts[i].queried = false
 			list.contacts[i].counter += 1
+			return
 		}
 	}
 }

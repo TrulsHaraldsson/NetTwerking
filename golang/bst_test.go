@@ -1,15 +1,14 @@
 package d7024e
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
-
 
 func TestRoutingTableBSTUpdate(t *testing.T) {
 	me := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
 	rt := NewRoutingTableBST(me)
-	
+
 	c1 := NewContact(NewKademliaID("3000000000000000000000000000000000000000"), "localhost:8001")
 	rt.Update(c1)
 
@@ -24,7 +23,7 @@ func TestRoutingTableBSTUpdate(t *testing.T) {
 	if bucketLeft.getContact(me.ID) == nil {
 		t.Error("Expected to find ourself in this bucket")
 	}
-	
+
 	bucketRight, nodeRight := rt.root.findBucket(0, c2.ID)
 	if rt.root.Right != nodeRight {
 		t.Error("Expected root's right child to exist")
@@ -43,11 +42,11 @@ func TestRoutingTableBSTUpdate(t *testing.T) {
 	}
 }
 
-func TestBSTNewNode (t *testing.T) {
+func TestBSTNewNode(t *testing.T) {
 	me := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "localhost:8001")
 	bucket := NewBucket(&me)
 	node := NewNode(bucket)
-	
+
 	if node.Left != nil {
 		t.Error("Expected Left-Tree to be nil in a newly created Tree")
 	}
@@ -56,7 +55,7 @@ func TestBSTNewNode (t *testing.T) {
 		t.Error("Expected Right-Tree to be nil in newly created Tree")
 	}
 
-	if !( node.Bucket.Front().ID.Equals(NewKademliaID("0000000000000000000000000000000000000000")) ) {
+	if !(node.Bucket.Front().ID.Equals(NewKademliaID("0000000000000000000000000000000000000000"))) {
 		t.Error("Expected ID 0000000000000000000000000000000000000000, got", node.Bucket.Front().ID)
 	}
 }
@@ -77,7 +76,6 @@ func TestBSTFindClosestContacts(t *testing.T) {
 	c3 := NewContact(NewKademliaID("5000000000000000000000000000000000000000"), "localhost:8001")
 	c4 := NewContact(NewKademliaID("4000000000000000000000000000000000000000"), "localhost:8001")
 	c5 := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "localhost:8001")
-
 
 	me := NewContact(NewKademliaID("FF00000000000000000000000000000000000000"), "localhost:8001")
 
@@ -129,7 +127,7 @@ func TestBSTFindClosestContacts(t *testing.T) {
 	}
 }
 
-func TestBSTNext(t *testing.T){
+func TestBSTNext(t *testing.T) {
 	c1 := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
 	c2 := NewContact(NewKademliaID("6000000000000000000000000000000000000000"), "localhost:8001")
 	c3 := NewContact(NewKademliaID("5000000000000000000000000000000000000000"), "localhost:8001")
@@ -179,7 +177,7 @@ func TestBSTNext(t *testing.T){
 	if rootRLL.next() != rootRLRL {
 		t.Error("Expected rootRLRL to be next")
 	}
-	
+
 	if rootRLRL.next() != rootRLRR {
 		t.Error("Expected rootRLRR to be next")
 	}
@@ -193,7 +191,7 @@ func TestBSTNext(t *testing.T){
 	}
 }
 
-func TestBSTPrev(t *testing.T){
+func TestBSTPrev(t *testing.T) {
 	c1 := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
 	c2 := NewContact(NewKademliaID("6000000000000000000000000000000000000000"), "localhost:8001")
 	c3 := NewContact(NewKademliaID("5000000000000000000000000000000000000000"), "localhost:8001")
@@ -243,7 +241,7 @@ func TestBSTPrev(t *testing.T){
 	if rootRLRL.prev() != rootRLL {
 		t.Error("Expected rootRLL to be prev")
 	}
-	
+
 	if rootRLRR.prev() != rootRLRL {
 		t.Error("Expected rootRLRL to be prev")
 	}
@@ -251,13 +249,13 @@ func TestBSTPrev(t *testing.T){
 	if rootRR.prev() != rootRLRR {
 		t.Error("Expected rootRLRR to be prev")
 	}
-	
+
 	if rootL.prev() != nil {
 		t.Error("Expected rootL's prev to be nil")
 	}
 }
 
-func TestBSTFindBucket(t *testing.T){
+func TestBSTFindBucket(t *testing.T) {
 	c1 := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
 	c2 := NewContact(NewKademliaID("6000000000000000000000000000000000000000"), "localhost:8001")
 	c3 := NewContact(NewKademliaID("5000000000000000000000000000000000000000"), "localhost:8001")
@@ -299,21 +297,21 @@ func TestBSTFindBucket(t *testing.T){
 	rootRLRR.Parent = rootRLR
 	rootRLR.Left = rootRLRL
 	rootRLR.Right = rootRLRR
-	
+
 	bucket, node := root.findBucket(0, c1.ID)
 	if node != rootL {
 		t.Error("Expected rootL to be found")
 	}
-	
+
 	if bucket.getContact(c1.ID) == nil {
 		t.Error("Expected to find c1 in this bucket")
 	}
-	
+
 	bucket, node = root.findBucket(0, c4.ID)
 	if node != rootRLRR {
 		t.Error("Expected rootRLRR to be found")
 	}
-	
+
 	if bucket.getContact(c4.ID) == nil {
 		t.Error("Expected to find c4 in this bucket")
 	}
@@ -324,11 +322,11 @@ func TestMyBucket(t *testing.T) {
 	c2 := NewContact(NewKademliaID("7000000000000000000000000000000000000000"), "localhost:8001")
 
 	bucket := NewBucket(&c1)
-	
+
 	if bucket.getContact(c1.ID) == nil {
 		t.Error("Expected to find contact c1 in bucket, got nil")
 	}
-	
+
 	if bucket.getContact(c2.ID) != nil {
 		t.Error("Did not expect to find contact c2 in bucket")
 	}
@@ -336,7 +334,7 @@ func TestMyBucket(t *testing.T) {
 
 func TestGetNBit(t *testing.T) {
 	id := NewKademliaID("800000000000000000000000000000000000000E") // 1000 ... 1110
-	
+
 	res := getNBit(0, id)
 	if res != 1 {
 		t.Error("Expected bit 0 to have value 1, got ", res)
@@ -382,5 +380,12 @@ func TestIsNBitsEqual(t *testing.T) {
 
 	if isNBitsEqual(4, id1, id2) == true {
 		t.Error("Expected the forth bit to be not equal")
-	}	 
+	}
+}
+
+func TestBSTOneNode(t *testing.T) {
+	root := NewNode(nil)
+	root.prev()
+	root.next()
+
 }

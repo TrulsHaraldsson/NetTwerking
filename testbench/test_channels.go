@@ -7,7 +7,7 @@ import (
 
 var variable int = 5
 
-func main() {
+func main2() {
 	ch := make(chan int)  // index, newValue
 	ch2 := make(chan int) // for returning
 	go callAlterSomething(ch)
