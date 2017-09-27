@@ -9,6 +9,7 @@ const bucketSize = 20
 type RoutingTable struct {
 	me      Contact
 	buckets [IDLength * 8]*bucket
+	bstRT *RoutingTableBST
 	mux sync.Mutex
 }
 
@@ -18,19 +19,22 @@ func NewRoutingTable(me Contact) *RoutingTable {
 		routingTable.buckets[i] = newBucket()
 	}
 	routingTable.me = me
+	routingTable.bstRT = NewRoutingTableBST(me)
 	return routingTable
 }
 
 func (routingTable *RoutingTable) AddContact(contact Contact) {
-	routingTable.mux.Lock()
+	routingTable.bstRT.Update(contact)
+	/*routingTable.mux.Lock()
 	bucketIndex := routingTable.getBucketIndex(contact.ID)
 	bucket := routingTable.buckets[bucketIndex]
 	bucket.AddContact(contact)
-	routingTable.mux.Unlock()
+	routingTable.mux.Unlock()*/
 }
 
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
-	routingTable.mux.Lock()
+	return routingTable.bstRT.FindClosestContacts(target, count)
+	/*routingTable.mux.Lock()
 	var candidates ContactCandidates
 	bucketIndex := routingTable.getBucketIndex(target)
 	bucket := routingTable.buckets[bucketIndex]
@@ -56,7 +60,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count 
 	}
 
 	defer routingTable.mux.Unlock()
-	return candidates.GetContacts(count)
+	return candidates.GetContacts(count)*/
 }
 
 func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {

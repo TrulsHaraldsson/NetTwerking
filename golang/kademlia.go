@@ -63,9 +63,10 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
 }
 
 /*
- * Sends out a maximum of network.kademlia.K RPC's to find the node in the network with id = kademliaID.
+ * Sends out FindNode RPC's to find the node in the network with id = kademliaID.
+ * Finishes when the k closest nodes are found, and has responded.
  * Returns the K closest contacts found. Closest first in list
- * TODO: Add functionality for processing if no node closer is found.
+ * TODO: When no closer node is found, should it send out more RPC's ?
  * TODO: Setup a network to test more of its functionality
  */
 func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Contact {
@@ -75,17 +76,15 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	if closestContacts[0].ID.Equals(kademliaID) && !closestContacts[0].Equals(kademlia.RT.me) { //If found locally, and not itself.
 		return closestContacts
 	}
-	message := NewFindNodeMessage(&kademlia.RT.me, targetID)
+	message := NewFindNodeMessage(&kademlia.RT.me, targetID) // Create message to be sent.
 
-	tempTable := NewTempContactTable(targetID)
+	tempTable := NewContactStateList(targetID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
-	tempTable.BannContact(kademlia.RT.me)
-
-	ch := CreateChannel()
-	for i := 0; i < kademlia.net.alpha && i < tempTable.Len(); i++ {
-		c := tempTable.Get(i)
-		if tempTable.BannContact(c) { //if not already checked, add it.
-			go kademlia.FindContactHelper(c.Address, message, &ch, &tempTable)
+	ch := CreateChannel()                     // Creates a channel that can only be written to once.
+	for i := 0; i < kademlia.net.alpha; i++ { // Start with alpha RPC's
+		c := tempTable.GetNextToQuery()
+		if c != nil { // if nil, there are no current contacts able to query
+			go kademlia.FindContactHelper(*c, message, &ch, &tempTable)
 		}
 	}
 	contacts := ch.Read()
@@ -93,33 +92,30 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	return contacts
 }
 
-func (kademlia *Kademlia) FindContactHelper(addr string, message Message, ch *ContactChannel, tempTable *TempContactTable) {
-	if tempTable.GetNumOfAppends() >= kademlia.K || tempTable.TargetFound() {
-		ch.Write(tempTable.GetKContacts(kademlia.K))
-		return
+func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Message,
+	ch *ContactChannel, tempTable *ContactStateList) {
+	rMessage, ackMessage, err :=
+		kademlia.net.SendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
+	if err != nil {
+		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
-		rMessage, ackMessage, err := kademlia.net.SendFindContactMessage(addr, &message)
-		if err != nil {
-			return
-		}
-		kademlia.RT.AddContact(rMessage.Sender) //Updating routingtable with new contact seen.
-		tempTable.AppendUniqueSorted(ackMessage.Nodes)
-		if tempTable.TargetFound() {
-			ch.Write(tempTable.GetKContacts(kademlia.K))
-			return
-		} else {
-			indexOffset := 0
-			for i := 0; i < kademlia.net.alpha && (i+indexOffset) < tempTable.Len(); i++ { //alpha recursive calls to the closest nodes.
-				c := tempTable.Get(i + indexOffset)
-				if tempTable.BannContact(c) { //if not already checked, add it.
-					go kademlia.FindContactHelper(c.Address, message, ch, tempTable)
-				} else {
-					indexOffset += 1
-					i -= 1
-				}
+		//fmt.Println(ackMessage.Nodes)
+		kademlia.RT.AddContact(rMessage.Sender)        // Updating routingtable with new contact seen.
+		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
+		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
+	}
+	//fmt.Println(tempTable.contacts)
+	if tempTable.Finished() { // If finished,
+		ch.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
+	} else {
+		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
+			c := tempTable.GetNextToQuery()
+			if c != nil {
+				go kademlia.FindContactHelper(*c, message, ch, tempTable)
 			}
 		}
 	}
+
 }
 
 /*

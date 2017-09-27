@@ -88,8 +88,10 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 	}
 } */
 
+// contact searched for is offline, so timeout will occur...
+// closest contact found is not the one searched for, since it is offline.
 func TestKademliaSendFindContactMessage(t *testing.T) {
-	_, rt := CreateTestRT2()
+	_, rt := CreateTestRT8()
 	_, network := initKademliaAndNetwork(rt)
 	go network.Listen("localhost", 8002)
 
@@ -100,9 +102,9 @@ func TestKademliaSendFindContactMessage(t *testing.T) {
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111200000000000000000000000000000000"))
-	fmt.Println(contact[0])
-	if !contact[0].ID.Equals(NewKademliaID("1111111200000000000000000000000000000000")) {
-		t.Error("contacts are not equal", contact[0])
+	fmt.Println(contact)
+	if !contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000")) {
+		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	}
 }
 
