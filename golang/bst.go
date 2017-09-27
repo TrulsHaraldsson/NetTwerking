@@ -10,7 +10,7 @@ import (
  * A routing table have a Contact 'me' which is the first entry in the table.
  * The routing table also holds a reference to the root of a binary search tree.
  */
-type RoutingTableBST struct {
+type RoutingTable struct {
 	me   *Contact
 	root *Node
 	mux  sync.Mutex
@@ -20,8 +20,8 @@ type RoutingTableBST struct {
  * Creates a new routingtable and returns a pointer to it.
  * The given Contact will be the initial entry in the table.
  */
-func NewRoutingTableBST(me Contact) *RoutingTableBST {
-	rt := RoutingTableBST{}
+func NewRoutingTable(me Contact) *RoutingTable {
+	rt := RoutingTable{}
 	rt.me = &me
 	bucket := NewBucket(&me)
 	rt.root = NewNode(bucket)
@@ -34,7 +34,7 @@ func NewRoutingTableBST(me Contact) *RoutingTableBST {
  * moved to the front of the bucket. Lastly, if the appropriate bucket is full
  * the contact will simply be discarded.
  */
-func (this *RoutingTableBST) Update(contact Contact) {
+func (this *RoutingTable) Update(contact Contact) {
 	this.mux.Lock()
 	defer this.mux.Unlock()
 	bucket, node := this.root.findBucket(0, contact.ID)
@@ -77,7 +77,7 @@ func (this *RoutingTableBST) Update(contact Contact) {
 	}
 }
 
-func (this *RoutingTableBST) FindClosestContacts(target *KademliaID, count int) []Contact {
+func (this *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
 	this.mux.Lock()
 	defer this.mux.Unlock()
 	var candidates ContactCandidates

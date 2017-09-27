@@ -73,10 +73,10 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	targetID := kademliaID
 	target := NewContact(targetID, "DummyAdress")
 	closestContacts := kademlia.LookupContact(&target)
-	if closestContacts[0].ID.Equals(kademliaID) && !closestContacts[0].Equals(kademlia.RT.me) { //If found locally, and not itself.
+	if closestContacts[0].ID.Equals(kademliaID) && !closestContacts[0].Equals(*(kademlia.RT.me)) { //If found locally, and not itself.
 		return closestContacts
 	}
-	message := NewFindNodeMessage(&kademlia.RT.me, targetID) // Create message to be sent.
+	message := NewFindNodeMessage(kademlia.RT.me, targetID) // Create message to be sent.
 
 	tempTable := NewContactStateList(targetID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
@@ -100,7 +100,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
-		kademlia.RT.AddContact(rMessage.Sender)        // Updating routingtable with new contact seen.
+		kademlia.RT.Update(rMessage.Sender)        // Updating routingtable with new contact seen.
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
@@ -129,7 +129,7 @@ func (kademlia *Kademlia) SendFindValueMessage(me *KademliaID) Item {
 
 	for i := 0; i < kademlia.net.alpha; i++ {
 		me := kademlia.RT.me
-		message := NewFindValueMessage(&me, me.ID)
+		message := NewFindValueMessage(me, me.ID)
 		go kademlia.FindValueHelper(closest[i].Address, message, &counter, ch)
 	}
 	item := <-ch
@@ -240,7 +240,7 @@ func (kademlia *Kademlia) Store(m StoreMessage) {
  * This method is called by the network module when a PING message is received.
  */
 func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr) {
-	msgJson := NewPingAckMessage(&kademlia.RT.me, &message.RPC_ID)
+	msgJson := NewPingAckMessage(kademlia.RT.me, &message.RPC_ID)
 	WriteMessage(addr.String(), msgJson)
 }
 
@@ -271,7 +271,7 @@ func (kademlia *Kademlia) OnStoreMessageReceived(message *Message, data StoreMes
 func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
 	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 	contacts := kademlia.LookupContact(&target)
-	returnMessage := NewFindNodeAckMessage(&kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
+	returnMessage := NewFindNodeAckMessage(kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
 	//fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
 	ConnectAndWrite(addr.String(), rMsgJson)
@@ -281,9 +281,9 @@ func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindN
  * Will send a Ping message to the given address.
  */
 func (kademlia *Kademlia) Ping(addr string) {
-	pingMsg := NewPingMessage(&kademlia.RT.me)
+	pingMsg := NewPingMessage(kademlia.RT.me)
 	response, error := kademlia.net.SendPingMessage(addr, &pingMsg)
 	if error == nil { // No error
-		kademlia.RT.AddContact(response.Sender)
+		kademlia.RT.Update(response.Sender)
 	}
 }

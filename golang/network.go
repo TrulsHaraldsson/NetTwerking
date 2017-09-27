@@ -73,7 +73,7 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 		fmt.Println("Wrong syntax in message, ignoring it...")
 		return
 	}
-	network.kademlia.RT.AddContact(message.Sender)
+	network.kademlia.RT.Update(message.Sender)
 }
 
 /*

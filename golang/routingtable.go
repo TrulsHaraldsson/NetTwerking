@@ -1,5 +1,5 @@
 package d7024e
-
+/*
 import (
 	"sync"
 )
@@ -29,7 +29,7 @@ func (routingTable *RoutingTable) AddContact(contact Contact) {
 	bucketIndex := routingTable.getBucketIndex(contact.ID)
 	bucket := routingTable.buckets[bucketIndex]
 	bucket.AddContact(contact)
-	routingTable.mux.Unlock()*/
+	routingTable.mux.Unlock()
 }
 
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count int) []Contact {
@@ -60,7 +60,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count 
 	}
 
 	defer routingTable.mux.Unlock()
-	return candidates.GetContacts(count)*/
+	return candidates.GetContacts(count)
 }
 
 func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
@@ -75,3 +75,4 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 
 	return IDLength*8 - 1
 }
+*/

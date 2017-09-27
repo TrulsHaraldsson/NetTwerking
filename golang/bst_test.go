@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-func TestRoutingTableBSTUpdate(t *testing.T) {
+func TestRoutingTableUpdate(t *testing.T) {
 	me := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
-	rt := NewRoutingTableBST(me)
+	rt := NewRoutingTable(me)
 
 	c1 := NewContact(NewKademliaID("3000000000000000000000000000000000000000"), "localhost:8001")
 	rt.Update(c1)
@@ -85,7 +85,7 @@ func TestBSTFindClosestContacts(t *testing.T) {
 	b4 := NewBucket(&c4)
 	b5 := NewBucket(&c5)
 
-	rt := NewRoutingTableBST(me)
+	rt := NewRoutingTable(me)
 	rt.root.Bucket = nil
 
 	rootL := NewNode(b1)
