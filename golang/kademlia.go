@@ -118,29 +118,15 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 }
 
 /*
- * TODO: Change accordingly to SendFindContactMessage!
  * Request to find a value over the network.
  */
-<<<<<<< HEAD
-
 func (kademlia *Kademlia) SendFindValueMessage(kID *KademliaID) []byte {
 	target := NewContact(kID, "DummyAdress")
 	closestContacts := kademlia.LookupContact(&target)
-	if closestContacts[0].ID.Equals(kID) && !closestContacts[0].Equals(kademlia.RT.me) { //If found locally, and not itself.
+	if closestContacts[0].ID.Equals(kID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
 		return []byte("")
-=======
-func (kademlia *Kademlia) SendFindValueMessage(me *KademliaID) Item {
-	closest := kademlia.RT.findClosestContacts(me, kademlia.net.alpha)
-	ch := make(chan Item)
-	counter := 0
-
-	for i := 0; i < kademlia.net.alpha; i++ {
-		me := kademlia.RT.me
-		message := NewFindValueMessage(me, me.ID)
-		go kademlia.FindValueHelper(closest[i].Address, message, &counter, ch)
->>>>>>> 3b3810564d30b1f56d8c27f4691fa4c03c610890
 	}
-	message := NewFindValueMessage(&kademlia.RT.me, kID) //FindValueMessage
+	message := NewFindValueMessage(kademlia.RT.me, kID) //FindValueMessage
 	tempTable := NewContactStateList(kID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
 
@@ -171,7 +157,7 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
-		kademlia.RT.AddContact(rMessage.Sender)        // Updating routingtable with new contact seen.
+		kademlia.RT.update(rMessage.Sender)        // Updating routingtable with 
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
@@ -189,19 +175,9 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 }
 
 /*
-<<<<<<< HEAD
 * Sending a store message to neighbors.
 */
 func (kademlia *Kademlia) SendStoreMessage(me *KademliaID, data []byte){
-=======
- * TODO: Change accordingly to SendFindContactMessage!
- * Sends a message over the network to the alpha closest neighbors in the routing table and waits for response from neighbor OnStoreMessageReceived func.
- */
-func (kademlia *Kademlia) SendStoreMessage(me *KademliaID, data []byte) []byte {
-	closest := kademlia.RT.findClosestContacts(me, kademlia.net.alpha)
-	ch := make(chan []byte)
-	counter := 0
->>>>>>> 3b3810564d30b1f56d8c27f4691fa4c03c610890
 
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
 	list := kademlia.SendFindContactMessage(me)
