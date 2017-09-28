@@ -1,8 +1,6 @@
 package d7024e
 
-/*
-see coverage : go test -cover -tags test
-*/
+//All current tests work according to : go test -run Network
 
 import (
 	"encoding/json"
@@ -27,8 +25,9 @@ func TestNetworkListen(t *testing.T) {
 	go network.Listen("localhost", 8000)
 	time.Sleep(50 * time.Millisecond)
 
+	filename := "filenameX200"
 	kID := NewContact(NewRandomKademliaID(), "adress")
-	m1 := NewFindValueMessage(&kID, NewRandomKademliaID())
+	m1 := NewFindValueMessage(&kID, &filename)
 	m1Json, _ := json.Marshal(m1)
 	err1 := ConnectAndWrite("localhost:8000", m1Json)
 	if err1 != nil {
@@ -49,8 +48,9 @@ func TestNetworkListen(t *testing.T) {
 		t.Error(err3)
 	}
 
+	filename2 := "filenameX200"
 	data := []byte("hello world!")
-	m4 := NewStoreMessage(&kID, NewRandomKademliaID(), &data)
+	m4 := NewStoreMessage(&kID, &filename2, &data)
 	m4Json, _ := json.Marshal(m4)
 
 	err4 := ConnectAndWrite("localhost:8000", m4Json)

@@ -20,6 +20,8 @@ type Kademlia struct {
 	net *Network
 }
 
+var storage Storage
+
 /*
  * Creates a new Kademlia instance. Initiate a routing table and
  * links the kademlia instance to a network instance.
@@ -120,14 +122,15 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 /*
  * Request to find a value over the network.
  */
-func (kademlia *Kademlia) SendFindValueMessage(kID *KademliaID) []byte {
-	target := NewContact(kID, "DummyAdress")
-	closestContacts := kademlia.LookupContact(&target)
-	if closestContacts[0].ID.Equals(kID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
+func (kademlia *Kademlia) SendFindValueMessage(name *string) []byte {
+	myself := kademlia.RT.me
+	closestContacts := kademlia.LookupContact(myself) //BackHere
+	//if closestContacts[0].ID.Equals(myself.ID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
+	if !closestContacts[0].ID.Equals(myself.ID){
 		return []byte("")
 	}
-	message := NewFindValueMessage(kademlia.RT.me, kID) //FindValueMessage
-	tempTable := NewContactStateList(kID, kademlia.K) // Creates the temp table
+	message := NewFindValueMessage(myself, name) //FindValueMessage
+	tempTable := NewContactStateList(myself.ID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
 
 	ch1 := CreateChannel() //Fix and see if ch2 is required.
@@ -157,7 +160,7 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
-		kademlia.RT.update(rMessage.Sender)        // Updating routingtable with 
+		kademlia.RT.update(rMessage.Sender)        // Updating routingtable with
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
@@ -177,34 +180,25 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 /*
 * Sending a store message to neighbors.
 */
-func (kademlia *Kademlia) SendStoreMessage(me *KademliaID, data []byte){
+func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
+	myself := kademlia.RT.me
 
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
-	list := kademlia.SendFindContactMessage(me)
+	list := kademlia.SendFindContactMessage(myself.ID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
 	for _, v:= range list {
 		//3: Send out async messages to each of the neighbors without caring about response.
-		message := NewStoreMessage(&v, me, &data)
+		message := NewStoreMessage(&v, filename, data)
 		kademlia.net.SendStoreMessage(v.Address, &message)
 	}
-
 	//4: Done.
 }
 
-/*
- * Checks if a certain hash exist in storage, if it does the item is returned of type Item.
- * TODO: Remove LookupData and use Storage after patch.
- * TODO: Check same for Store.
- */
-func (kademlia *Kademlia) LookupData(hash *KademliaID) Item {
-	newItem := Item{}
-	for _, v := range Information {
-		if v.Key == *hash {
-			newItem.Key = v.Key
-			newItem.Value = v.Value
-		}
-	}
-	return newItem
+
+func (kademlia *Kademlia) Search(filename *string) file {
+	name := []byte(*filename)
+	found := storage.Search(name)
+	return found
 }
 
 /*
@@ -213,8 +207,8 @@ func (kademlia *Kademlia) LookupData(hash *KademliaID) Item {
  * TODO: Update every store/retreive with Storage.
  */
 func (kademlia *Kademlia) Store(m StoreMessage) {
-	item := Item{string(m.Data), m.Key}
-	Information = append(Information, item)
+	name := []byte(m.Name)
+	storage.RAM(name, m.Data)
 	return
 }
 
@@ -229,20 +223,18 @@ func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr)
 /*
  * This method is called by the network module when a FIND_VALUE message is received.
  */
-func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, data FindValueMessage, addr net.Addr) {
-	item := kademlia.LookupData(&data.ValueID)
-	var ackItem []byte
-	var ackNodes []Contact
-	emptyItem := Item{}
 
-	if item.Key == emptyItem.Key{
-		target := NewContact(&data.ValueID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
+func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr){
+	foundFile := kademlia.Search(&fvMessage.Name)
+	var ackFile []byte
+	var ackNodes []Contact
+	if foundFile.Text == nil{
+		target := NewContact(&message.RPC_ID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 		ackNodes = kademlia.LookupContact(&target)
 	}else{
-		ackItem, _ = json.Marshal(item)
+		ackFile, _ = json.Marshal(foundFile)
 	}
-
-	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackItem, &ackNodes)
+	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackFile, &ackNodes)
 	newAck, _ := MarshallMessage(ack)
 	ConnectAndWrite(addr.String(), newAck)
 }

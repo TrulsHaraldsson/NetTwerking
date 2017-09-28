@@ -33,9 +33,9 @@ func TestStoreToAll(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	fmt.Println("All nodes connected")
-	node := d7024e.NewKademliaID("2111111400000000000000000000000000000000")
+	filename := "filenameShit"
 	data := []byte("Testing a fucking shit send.")
-	A.SendStoreMessage(node, data)
+	A.SendStoreMessage(&filename, &data)
 	time.Sleep(50 * time.Millisecond)
 }
 
@@ -54,8 +54,8 @@ func TestStoreToOne(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	fmt.Println("All nodes connected")
-	node1 := d7024e.NewKademliaID("2111111400000000000000000000000000000010")
+	filename1 := "failname"
 	data1 := []byte("Testing a fucking shit send 1 time.")
-	A.SendStoreMessage(node1, data1)
+	A.SendStoreMessage(&filename1, &data1)
 	time.Sleep(50 * time.Millisecond)
 }

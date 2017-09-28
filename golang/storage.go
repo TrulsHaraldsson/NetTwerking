@@ -1,9 +1,5 @@
 package d7024e
 
-/*
-* TODO: Remove all fmt's!
-*/
-
 import(
   "crypto/sha1"
   "log"
