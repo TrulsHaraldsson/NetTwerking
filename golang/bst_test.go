@@ -5,15 +5,15 @@ import (
 	"testing"
 )
 
-func TestRoutingTableBSTUpdate(t *testing.T) {
+func TestRoutingTableUpdate(t *testing.T) {
 	me := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
-	rt := NewRoutingTableBST(me)
+	rt := NewRoutingTable(me)
 
 	c1 := NewContact(NewKademliaID("3000000000000000000000000000000000000000"), "localhost:8001")
-	rt.Update(c1)
+	rt.update(c1)
 
 	c2 := NewContact(NewKademliaID("7000000000000000000000000000000000000000"), "localhost:8001")
-	rt.Update(c2)
+	rt.update(c2)
 
 	bucketLeft, nodeLeft := rt.root.findBucket(0, me.ID)
 	if rt.root.Left != nodeLeft {
@@ -44,8 +44,8 @@ func TestRoutingTableBSTUpdate(t *testing.T) {
 
 func TestBSTNewNode(t *testing.T) {
 	me := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "localhost:8001")
-	bucket := NewBucket(&me)
-	node := NewNode(bucket)
+	bucket := newBucket(&me)
+	node := newNode(bucket)
 
 	if node.Left != nil {
 		t.Error("Expected Left-Tree to be nil in a newly created Tree")
@@ -55,15 +55,15 @@ func TestBSTNewNode(t *testing.T) {
 		t.Error("Expected Right-Tree to be nil in newly created Tree")
 	}
 
-	if !(node.Bucket.Front().ID.Equals(NewKademliaID("0000000000000000000000000000000000000000"))) {
-		t.Error("Expected ID 0000000000000000000000000000000000000000, got", node.Bucket.Front().ID)
+	if !(node.Bucket.front().ID.Equals(NewKademliaID("0000000000000000000000000000000000000000"))) {
+		t.Error("Expected ID 0000000000000000000000000000000000000000, got", node.Bucket.front().ID)
 	}
 }
 
 func TestBSTisLeaf(t *testing.T) {
 	me := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "localhost:8001")
-	bucket := NewBucket(&me)
-	node := NewNode(bucket)
+	bucket := newBucket(&me)
+	node := newNode(bucket)
 
 	if node.isLeaf() == false {
 		t.Error("Expected node to be a leaf.")
@@ -79,49 +79,49 @@ func TestBSTFindClosestContacts(t *testing.T) {
 
 	me := NewContact(NewKademliaID("FF00000000000000000000000000000000000000"), "localhost:8001")
 
-	b1 := NewBucket(&c1)
-	b2 := NewBucket(&c2)
-	b3 := NewBucket(&c3)
-	b4 := NewBucket(&c4)
-	b5 := NewBucket(&c5)
+	b1 := newBucket(&c1)
+	b2 := newBucket(&c2)
+	b3 := newBucket(&c3)
+	b4 := newBucket(&c4)
+	b5 := newBucket(&c5)
 
-	rt := NewRoutingTableBST(me)
+	rt := NewRoutingTable(me)
 	rt.root.Bucket = nil
 
-	rootL := NewNode(b1)
+	rootL := newNode(b1)
 	rootL.Parent = rt.root
-	rootR := NewNode(nil)
+	rootR := newNode(nil)
 	rootR.Parent = rt.root
 	rt.root.Left = rootL
 	rt.root.Right = rootR
 
-	rootRR := NewNode(b5)
+	rootRR := newNode(b5)
 	rootRR.Parent = rootR
-	rootRL := NewNode(nil)
+	rootRL := newNode(nil)
 	rootRL.Parent = rootR
 	rootR.Left = rootRL
 	rootR.Right = rootRR
 
-	rootRLL := NewNode(b2)
+	rootRLL := newNode(b2)
 	rootRLL.Parent = rootRL
-	rootRLR := NewNode(nil)
+	rootRLR := newNode(nil)
 	rootRLR.Parent = rootRL
 	rootRL.Left = rootRLL
 	rootRL.Right = rootRLR
 
-	rootRLRL := NewNode(b3)
+	rootRLRL := newNode(b3)
 	rootRLRL.Parent = rootRLR
-	rootRLRR := NewNode(b4)
+	rootRLRR := newNode(b4)
 	rootRLRR.Parent = rootRLR
 	rootRLR.Left = rootRLRL
 	rootRLR.Right = rootRLRR
 
-	contacts := rt.FindClosestContacts(c3.ID, 3)
+	contacts := rt.findClosestContacts(c3.ID, 3)
 	if len(contacts) != 3 {
 		t.Error("Expected the length of returned array to be 3, got", len(contacts))
 	}
 
-	contacts = rt.FindClosestContacts(c3.ID, 20)
+	contacts = rt.findClosestContacts(c3.ID, 20)
 	if len(contacts) != 5 {
 		t.Error("Expected the length of returned array to be 5, got", len(contacts))
 	}
@@ -134,38 +134,38 @@ func TestBSTNext(t *testing.T) {
 	c4 := NewContact(NewKademliaID("4000000000000000000000000000000000000000"), "localhost:8001")
 	c5 := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "localhost:8001")
 
-	b1 := NewBucket(&c1)
-	b2 := NewBucket(&c2)
-	b3 := NewBucket(&c3)
-	b4 := NewBucket(&c4)
-	b5 := NewBucket(&c5)
+	b1 := newBucket(&c1)
+	b2 := newBucket(&c2)
+	b3 := newBucket(&c3)
+	b4 := newBucket(&c4)
+	b5 := newBucket(&c5)
 
-	root := NewNode(nil)
+	root := newNode(nil)
 
-	rootL := NewNode(b1)
+	rootL := newNode(b1)
 	rootL.Parent = root
-	rootR := NewNode(nil)
+	rootR := newNode(nil)
 	rootR.Parent = root
 	root.Left = rootL
 	root.Right = rootR
 
-	rootRR := NewNode(b5)
+	rootRR := newNode(b5)
 	rootRR.Parent = rootR
-	rootRL := NewNode(nil)
+	rootRL := newNode(nil)
 	rootRL.Parent = rootR
 	rootR.Left = rootRL
 	rootR.Right = rootRR
 
-	rootRLL := NewNode(b2)
+	rootRLL := newNode(b2)
 	rootRLL.Parent = rootRL
-	rootRLR := NewNode(nil)
+	rootRLR := newNode(nil)
 	rootRLR.Parent = rootRL
 	rootRL.Left = rootRLL
 	rootRL.Right = rootRLR
 
-	rootRLRL := NewNode(b3)
+	rootRLRL := newNode(b3)
 	rootRLRL.Parent = rootRLR
-	rootRLRR := NewNode(b4)
+	rootRLRR := newNode(b4)
 	rootRLRR.Parent = rootRLR
 	rootRLR.Left = rootRLRL
 	rootRLR.Right = rootRLRR
@@ -198,38 +198,38 @@ func TestBSTPrev(t *testing.T) {
 	c4 := NewContact(NewKademliaID("4000000000000000000000000000000000000000"), "localhost:8001")
 	c5 := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "localhost:8001")
 
-	b1 := NewBucket(&c1)
-	b2 := NewBucket(&c2)
-	b3 := NewBucket(&c3)
-	b4 := NewBucket(&c4)
-	b5 := NewBucket(&c5)
+	b1 := newBucket(&c1)
+	b2 := newBucket(&c2)
+	b3 := newBucket(&c3)
+	b4 := newBucket(&c4)
+	b5 := newBucket(&c5)
 
-	root := NewNode(nil)
+	root := newNode(nil)
 
-	rootL := NewNode(b1)
+	rootL := newNode(b1)
 	rootL.Parent = root
-	rootR := NewNode(nil)
+	rootR := newNode(nil)
 	rootR.Parent = root
 	root.Left = rootL
 	root.Right = rootR
 
-	rootRR := NewNode(b5)
+	rootRR := newNode(b5)
 	rootRR.Parent = rootR
-	rootRL := NewNode(nil)
+	rootRL := newNode(nil)
 	rootRL.Parent = rootR
 	rootR.Left = rootRL
 	rootR.Right = rootRR
 
-	rootRLL := NewNode(b2)
+	rootRLL := newNode(b2)
 	rootRLL.Parent = rootRL
-	rootRLR := NewNode(nil)
+	rootRLR := newNode(nil)
 	rootRLR.Parent = rootRL
 	rootRL.Left = rootRLL
 	rootRL.Right = rootRLR
 
-	rootRLRL := NewNode(b3)
+	rootRLRL := newNode(b3)
 	rootRLRL.Parent = rootRLR
-	rootRLRR := NewNode(b4)
+	rootRLRR := newNode(b4)
 	rootRLRR.Parent = rootRLR
 	rootRLR.Left = rootRLRL
 	rootRLR.Right = rootRLRR
@@ -262,38 +262,38 @@ func TestBSTFindBucket(t *testing.T) {
 	c4 := NewContact(NewKademliaID("4000000000000000000000000000000000000000"), "localhost:8001")
 	c5 := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "localhost:8001")
 
-	b1 := NewBucket(&c1)
-	b2 := NewBucket(&c2)
-	b3 := NewBucket(&c3)
-	b4 := NewBucket(&c4)
-	b5 := NewBucket(&c5)
+	b1 := newBucket(&c1)
+	b2 := newBucket(&c2)
+	b3 := newBucket(&c3)
+	b4 := newBucket(&c4)
+	b5 := newBucket(&c5)
 
-	root := NewNode(nil)
+	root := newNode(nil)
 
-	rootL := NewNode(b1)
+	rootL := newNode(b1)
 	rootL.Parent = root
-	rootR := NewNode(nil)
+	rootR := newNode(nil)
 	rootR.Parent = root
 	root.Left = rootL
 	root.Right = rootR
 
-	rootRR := NewNode(b5)
+	rootRR := newNode(b5)
 	rootRR.Parent = rootR
-	rootRL := NewNode(nil)
+	rootRL := newNode(nil)
 	rootRL.Parent = rootR
 	rootR.Left = rootRL
 	rootR.Right = rootRR
 
-	rootRLL := NewNode(b2)
+	rootRLL := newNode(b2)
 	rootRLL.Parent = rootRL
-	rootRLR := NewNode(nil)
+	rootRLR := newNode(nil)
 	rootRLR.Parent = rootRL
 	rootRL.Left = rootRLL
 	rootRL.Right = rootRLR
 
-	rootRLRL := NewNode(b3)
+	rootRLRL := newNode(b3)
 	rootRLRL.Parent = rootRLR
-	rootRLRR := NewNode(b4)
+	rootRLRR := newNode(b4)
 	rootRLRR.Parent = rootRLR
 	rootRLR.Left = rootRLRL
 	rootRLR.Right = rootRLRR
@@ -321,7 +321,7 @@ func TestMyBucket(t *testing.T) {
 	c1 := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
 	c2 := NewContact(NewKademliaID("7000000000000000000000000000000000000000"), "localhost:8001")
 
-	bucket := NewBucket(&c1)
+	bucket := newBucket(&c1)
 
 	if bucket.getContact(c1.ID) == nil {
 		t.Error("Expected to find contact c1 in bucket, got nil")
@@ -384,7 +384,7 @@ func TestIsNBitsEqual(t *testing.T) {
 }
 
 func TestBSTOneNode(t *testing.T) {
-	root := NewNode(nil)
+	root := newNode(nil)
 	root.prev()
 	root.next()
 

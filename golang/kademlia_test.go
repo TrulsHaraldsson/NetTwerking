@@ -152,7 +152,7 @@ func TestKademliaSendPingMessage(t *testing.T) {
 	_, rt2 := CreateTestRT()
 	kademlia2, network2 := initKademliaAndNetwork(rt2)
 
-	pingMsg := NewPingMessage(&kademlia2.RT.me)
+	pingMsg := NewPingMessage(kademlia2.RT.me)
 	msg, err := network2.SendPingMessage("localhost:8003", &pingMsg)
 	if err != nil {
 		t.Error(err)

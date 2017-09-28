@@ -3,14 +3,13 @@ package d7024e
 import (
 	"container/list"
 	"sync"
-	//"fmt"
 )
 
 /*
  * A routing table have a Contact 'me' which is the first entry in the table.
  * The routing table also holds a reference to the root of a binary search tree.
  */
-type RoutingTableBST struct {
+type RoutingTable struct {
 	me   *Contact
 	root *Node
 	mux  sync.Mutex
@@ -20,11 +19,11 @@ type RoutingTableBST struct {
  * Creates a new routingtable and returns a pointer to it.
  * The given Contact will be the initial entry in the table.
  */
-func NewRoutingTableBST(me Contact) *RoutingTableBST {
-	rt := RoutingTableBST{}
+func newRoutingTable(me Contact) *RoutingTable {
+	rt := RoutingTable{}
 	rt.me = &me
-	bucket := NewBucket(&me)
-	rt.root = NewNode(bucket)
+	bucket := newBucket(&me)
+	rt.root = newNode(bucket)
 	return &rt
 }
 
@@ -34,29 +33,29 @@ func NewRoutingTableBST(me Contact) *RoutingTableBST {
  * moved to the front of the bucket. Lastly, if the appropriate bucket is full
  * the contact will simply be discarded.
  */
-func (this *RoutingTableBST) Update(contact Contact) {
+func (this *RoutingTable) update(contact Contact) {
 	this.mux.Lock()
 	defer this.mux.Unlock()
 	bucket, node := this.root.findBucket(0, contact.ID)
 
-	if bucket.Front().Equals(*this.me) {
+	if bucket.front().Equals(*this.me) {
 		for i := 0; i < 160; i++ {
 			meBit := getNBit(uint(i), this.me.ID)
 			otherBit := getNBit(uint(i), contact.ID)
 			if meBit != otherBit {
 				if meBit == 1 {
-					left := NewNode(node.Bucket)
+					left := newNode(node.Bucket)
 					left.Parent = node
 					node.Left = left
 					node.Bucket = nil
-					right := NewNode(NewBucket(&contact))
+					right := newNode(newBucket(&contact))
 					right.Parent = node
 					node.Right = right
 				} else {
-					left := NewNode(NewBucket(&contact))
+					left := newNode(newBucket(&contact))
 					left.Parent = node
 					node.Left = left
-					right := NewNode(node.Bucket)
+					right := newNode(node.Bucket)
 					right.Parent = node
 					node.Right = right
 					node.Bucket = nil
@@ -77,13 +76,13 @@ func (this *RoutingTableBST) Update(contact Contact) {
 	}
 }
 
-func (this *RoutingTableBST) FindClosestContacts(target *KademliaID, count int) []Contact {
+func (this *RoutingTable) findClosestContacts(target *KademliaID, count int) []Contact {
 	this.mux.Lock()
 	defer this.mux.Unlock()
 	var candidates ContactCandidates
 	bucket, node := this.root.findBucket(0, target)
 
-	candidates.Append(bucket.GetContactAndCalcDistance(target))
+	candidates.Append(bucket.getContactAndCalcDistance(target))
 
 	prev := node.prev()
 	next := node.next()
@@ -97,12 +96,12 @@ func (this *RoutingTableBST) FindClosestContacts(target *KademliaID, count int) 
 			}
 
 			if next != nil {
-				candidates.Append(next.Bucket.GetContactAndCalcDistance(target))
+				candidates.Append(next.Bucket.getContactAndCalcDistance(target))
 				next = next.next()
 			}
 
 			if prev != nil {
-				candidates.Append(prev.Bucket.GetContactAndCalcDistance(target))
+				candidates.Append(prev.Bucket.getContactAndCalcDistance(target))
 				prev = prev.prev()
 			}
 		}
@@ -131,7 +130,7 @@ type Node struct {
 /*
  * Creates a new node and sets it bucket to the given bucket
  */
-func NewNode(bucket *MyBucket) *Node {
+func newNode(bucket *MyBucket) *Node {
 	node := Node{}
 	node.Bucket = bucket
 	node.Left = nil
@@ -156,16 +155,6 @@ func (this *Node) findBucket(index int, kademliaID *KademliaID) (*MyBucket, *Nod
 			return this.Left.findBucket(index+1, kademliaID)
 		}
 	}
-}
-
-func (this *Node) insert(contact *Contact) {
-	//id := contact.ID
-	//bit := getNBit(contact.ID)
-
-	// Search for Right bucket
-	// When found Insert
-	// If not found, Create new?
-	// If original
 }
 
 /*
@@ -273,13 +262,13 @@ type MyBucket struct {
  * Creates a new bucket and inserts the given contact.
  * Returns the pointer to the bucket.
  */
-func NewBucket(contact *Contact) *MyBucket {
+func newBucket(contact *Contact) *MyBucket {
 	bucket := MyBucket{list.New()}
 	bucket.list.PushFront(*contact)
 	return &bucket
 }
 
-func (this *MyBucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
+func (this *MyBucket) getContactAndCalcDistance(target *KademliaID) []Contact {
 	var contacts []Contact
 
 	for elt := this.list.Front(); elt != nil; elt = elt.Next() {
@@ -294,7 +283,7 @@ func (this *MyBucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
 /*
  * Returns the contact that have been the most recently seen.
  */
-func (this *MyBucket) Front() *Contact {
+func (this *MyBucket) front() *Contact {
 	contact := this.list.Front().Value.(Contact)
 	return &contact
 }
