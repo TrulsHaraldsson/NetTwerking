@@ -24,3 +24,28 @@ func (ch *ContactChannel) Write(contacts []Contact) {
 func (ch *ContactChannel) Read() []Contact {
 	return <-ch.channel
 }
+
+/*	Next channel	*/
+
+type DataChannel struct {
+	datachannel chan []byte
+	once sync.Once
+}
+
+func CreateDataChannel() DataChannel{
+	return DataChannel{datachannel: make(chan []byte), once: sync.Once{}}
+}
+
+func (ch *DataChannel) CloseData(){
+	close(ch.datachannel)
+}
+
+func (ch *DataChannel) WriteData(data []byte){
+	ch.once.Do(func() {
+		ch.datachannel <- data
+	})
+}
+
+func (ch *DataChannel) ReadData() []byte{
+	return <- ch.datachannel
+}

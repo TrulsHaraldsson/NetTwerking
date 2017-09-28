@@ -47,6 +47,7 @@ type AckFindNodeMessage struct {
 }
 
 type AckFindValueMessage struct {
+	Nodes []Contact
 	Value []byte
 }
 
@@ -229,13 +230,14 @@ func NewFindNodeAckMessage(sender *Contact, RPC_ID *KademliaID, nodes *[]Contact
 	return msg
 }
 
-func NewFindValueAckMessage(sender *Contact, RPC_ID *KademliaID, value *[]byte) Message {
+func NewFindValueAckMessage(sender *Contact, RPC_ID *KademliaID, value *[]byte, nodes *[]Contact) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_VALUE_ACK
 	msg.Sender = *sender
 	msg.RPC_ID = *RPC_ID
 
-	var ack = AckFindValueMessage{*value}
+	var ack = AckFindValueMessage{*nodes, *value}
+
 	data, error := json.Marshal(ack)
 	if error != nil {
 		fmt.Println("Error when creating find value ack message")

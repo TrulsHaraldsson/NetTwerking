@@ -22,14 +22,14 @@ func TestProtocolMarshall(t *testing.T) {
 	if err2 != nil {
 		t.Error(err2)
 	}
-	msgData3 := []byte("Hello World!")
+/*	msgData3 := []byte("Hello World!")
 	c3 := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 	msg3 := NewFindValueAckMessage(&c3, NewRandomKademliaID(), &msgData3)
 	err3 := marshallTestHelper(msg3, AckFindValueMessage{msgData3})
 	if err3 != nil {
 		t.Error(err3)
 	}
-	msgData4 := NewKademliaID("fffffffffffffffffffffffffffffffffffffff0")
+*/	msgData4 := NewKademliaID("fffffffffffffffffffffffffffffffffffffff0")
 	c4 := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 	msg4 := NewFindValueMessage(&c4, msgData4)
 	err4 := marshallTestHelper(msg4, FindNodeMessage{*msgData4})
@@ -182,7 +182,10 @@ func TestProtocolNewFindValueAckMessage(t *testing.T) {
 	var RPC_ID = NewKademliaID("0000000000000000000000000000000000000000")
 	var value = []byte("This is data")
 
-	var msg = NewFindValueAckMessage(&sender, RPC_ID, &value)
+	var nodes = []Contact{}
+	nodes = append(nodes, sender)
+
+	var msg = NewFindValueAckMessage(&sender, RPC_ID, &value, &nodes)
 	if msg.MsgType != FIND_VALUE_ACK {
 		t.Error("Expected message type to be", FIND_VALUE_ACK, ", got", msg.MsgType)
 	}
