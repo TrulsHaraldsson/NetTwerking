@@ -12,7 +12,7 @@ import (
 Connection pattern : nodes B,C,D are connected with A.
 A requests a store on all nodes.
 */
-func TestStoreOnce(t *testing.T) {
+func TestStoreToAll(t *testing.T) {
 	A := d7024e.NewKademlia(8400, "2111111400000000000000000000000000000000")
 	A.Start()
 	time.Sleep(50 * time.Millisecond)
@@ -33,19 +33,17 @@ func TestStoreOnce(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	fmt.Println("All nodes connected")
-	contact := A.SendStoreMessage(d7024e.NewKademliaID("2111111400000000000000000000000000000000"), []byte("Test store"))
-	if string(contact) != "stored" {
-		t.Error("Value not stored!")
-	} else {
-		fmt.Println("Complete store.")
-	}
+	node := d7024e.NewKademliaID("2111111400000000000000000000000000000000")
+	data := []byte("Testing a fucking shit send.")
+	A.SendStoreMessage(node, data)
+	time.Sleep(50 * time.Millisecond)
 }
 
 /*
 Connection pattern : nodes A and B are connected.
 A Sends multiple stores to B.
 */
-func TestMultiStore(t *testing.T) {
+func TestStoreToOne(t *testing.T) {
 	A := d7024e.NewKademlia(8410, "2111111400000000000000000000000000000010")
 	A.Start()
 	time.Sleep(50 * time.Millisecond)
@@ -55,22 +53,9 @@ func TestMultiStore(t *testing.T) {
 	B.Ping("localhost:8410")
 	time.Sleep(50 * time.Millisecond)
 
-	contact1 := A.SendStoreMessage(d7024e.NewKademliaID("2111111400000000000000000000000000000010"), []byte("First"))
-	if string(contact1) != "stored" {
-		t.Error("Value not stored!", contact1)
-	} else {
-		fmt.Println("First store complete")
-		contact2 := A.SendStoreMessage(d7024e.NewKademliaID("2111111400000000000000000000000000000010"), []byte("Second"))
-		if string(contact2) != "stored" {
-			t.Error("Value not stored!", contact2)
-		} else {
-			fmt.Println("Second store complete.")
-			contact3 := A.SendStoreMessage(d7024e.NewKademliaID("2111111400000000000000000000000000000010"), []byte("Third"))
-			if string(contact3) != "stored" {
-				t.Error("Value not stored!", contact3)
-			} else {
-				fmt.Println("Third store complete.")
-			}
-		}
-	}
+	fmt.Println("All nodes connected")
+	node1 := d7024e.NewKademliaID("2111111400000000000000000000000000000010")
+	data1 := []byte("Testing a fucking shit send 1 time.")
+	A.SendStoreMessage(node1, data1)
+	time.Sleep(50 * time.Millisecond)
 }

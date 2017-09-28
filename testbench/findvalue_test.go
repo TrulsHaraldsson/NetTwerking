@@ -33,21 +33,18 @@ func TestFindValue(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	fmt.Println("All nodes connected")
-	contact := A.SendStoreMessage(d7024e.NewKademliaID("5111111400000000000000000000000000000000"), []byte("Test store"))
+	node2 := d7024e.NewKademliaID("5111111400000000000000000000000000000000")
+	data := []byte("Testing a fucking shit send.")
+	A.SendStoreMessage(node2, data)
 	time.Sleep(50 * time.Millisecond)
 
-	if string(contact) != "stored" {
-		t.Error("Value not stored!")
+	fmt.Println("Complete store.")
+	//After storing an item on node 8401, look it up.
+	find := A.SendFindValueMessage(d7024e.NewKademliaID("5111111400000000000000000000000000000000"))
+	time.Sleep(50 * time.Millisecond)
+	if string(find) == string(""){
+		t.Error("Couldn't find the stored value.", find)
 	} else {
-		fmt.Println("Complete store.")
-		//After storing an item on node 8401, look it up.
-		find := A.SendFindValueMessage(d7024e.NewKademliaID("5111111400000000000000000000000000000000"))
-		time.Sleep(50 * time.Millisecond)
-		matchTo := d7024e.NewKademliaID("5111111400000000000000000000000000000000")
-		if find.Key == *matchTo {
-			fmt.Println("Successful find : ", string(find.Value))
-		} else {
-			t.Error("Did not find item!", find)
-		}
+		fmt.Println("Item returned : ", string(find), "\n")
 	}
 }
