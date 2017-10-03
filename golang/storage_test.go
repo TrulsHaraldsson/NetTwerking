@@ -2,51 +2,76 @@ package d7024e
 
 import (
 	"testing"
+	"bytes"
+	"crypto/sha1"
+	"reflect"
 )
 
 func TestStorageStoreInRAM(t *testing.T) {
-	//fmt.Println("Storing in RAM!\n")
 	storage := Storage{}
 	name := []byte("filename")
 	text := []byte("File body text.")
 	storage.RAM(name, text)
-}
-
-func TestStorageSearchRAM(t *testing.T) {
-	//fmt.Println("Search for file in RAM!\n")
-	storage := Storage{}
-	name := []byte("filename")
-	text := []byte("File body text.")
-	storage.RAM(name, text)
-	//file := storage.Search(name) //TODO: uncomment
-	//TODO: Fix these function, so its checks file is correct..
-	//fmt.Println("File returned from RAM!\nName: ", file.Name,"\nContent: ", file.Text,"\n")
+	file := storage.ReadRAM(name)
+	bool := bytes.EqualFold(file.Text, text)
+	if bool == false {
+		t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
+	}
 }
 
 func TestStorageStoreInMemory(t *testing.T) {
-	//fmt.Println("Storing in Memory!\n")
 	storage := Storage{}
-	name := []byte("filename")
-	text := []byte("This is a test content for a temp file.\n")
+	name := []byte("filename2")
+	text := []byte("This is a test content for a temp file.")
 	storage.Memory(name, text)
-}
-
-func TestStorageSearchMemory(t *testing.T) {
-	//fmt.Println("Search for file in Memory!\n")
-	storage := Storage{}
-	name := []byte("filename4")
-	text := []byte("This is a test content for a temp file.\n")
-	storage.Memory(name, text)
-	//file := storage.Search(name) //TODO: uncomment
-	//fmt.Println("File returned from Memory!\nName: ", file.Name,"\nContent: ", file.Text,"\n")
+	file := storage.ReadMemory(name)
+	bool := bytes.EqualFold(file.Text, text)
+	if bool == false {
+		t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
+	}
 }
 
 func TestStorageMoveToMemory(t *testing.T) {
-	//fmt.Println("Moving a file from RAM to Memory!")
 	storage := Storage{}
-	name := []byte("filenameX200")
-	text := []byte("This is the content of filenameX200!\n")
+	nameT := []byte("filenameX450")
+	textT := []byte("This is the content of filenameX450!")
+	storage.RAM(nameT, textT)
+	storage.MoveToMemory(nameT)
+	file := storage.ReadMemory(nameT)
+	bool := bytes.EqualFold(textT, file.Text)
+	if bool == false {
+		t.Error("File content do not match!\n", string(textT) ,"\n", string(file.Text),"\n")
+	}
+}
+
+func TestStorageSearch(t *testing.T){
+	storage := Storage{}
+	name := []byte("filename3")
+	text := []byte("File content when creating StorageSearch test!")
 	storage.RAM(name, text)
-	storage.MoveToMemory(name)
-	//fmt.Println("File has been moved from RAM to Memory!\n")
+	file := storage.Search(name)
+	bool := bytes.EqualFold(file.Text, text)
+	if bool == false {
+		t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
+	}
+
+	name2 := []byte("filename4")
+	text2 := []byte("File content when creating StorageSearch test 2!")
+	storage.Memory(name2, text2)
+	filed := storage.ReadMemory(name2)
+	bool2 := bytes.EqualFold(filed.Text, text2)
+	if bool2 == false {
+		t.Error("File content do not match!\n", string(text2) ,"\n", string(filed.Text),"\n")
+	}
+}
+
+func TestStorageHash(t *testing.T){
+	storage := Storage{}
+	name := []byte("filenameB")
+	hash := sha1.New()
+	hashedName := hash.Sum(name)
+	returnedHash := storage.HashFile(name)
+	if reflect.DeepEqual(hashedName, returnedHash) == false {
+		t.Error("Hashing is not correct! \n",hashedName, "\n",returnedHash,"\n")
+	}
 }
