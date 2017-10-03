@@ -1,8 +1,6 @@
 package d7024e
 
-/*
-see coverage : go test -cover -tags test
-*/
+//All current tests work according to : go test -run Network
 
 import (
 	"encoding/json"
@@ -26,8 +24,9 @@ func TestNetworkListen(t *testing.T) {
 	go network.Listen("localhost", 8000)
 	time.Sleep(50 * time.Millisecond)
 
+	filename := "filenameX200"
 	kID := NewContact(NewRandomKademliaID(), "adress")
-	m1 := NewFindValueMessage(&kID, NewRandomKademliaID())
+	m1 := NewFindValueMessage(&kID, &filename)
 	m1Json, _ := json.Marshal(m1)
 	err1 := ConnectAndWrite("localhost:8000", m1Json)
 	if err1 != nil {
@@ -48,8 +47,9 @@ func TestNetworkListen(t *testing.T) {
 		t.Error(err3)
 	}
 
+	filename2 := "filenameX200"
 	data := []byte("hello world!")
-	m4 := NewStoreMessage(&kID, NewRandomKademliaID(), &data)
+	m4 := NewStoreMessage(&kID, &filename2, &data)
 	m4Json, _ := json.Marshal(m4)
 
 	err4 := ConnectAndWrite("localhost:8000", m4Json)
@@ -81,77 +81,18 @@ func TestNetworkSendMessage(t *testing.T) {
 	}
 }
 
-/*
-func TestNetworkSendFindValueMessage(t *testing.T) {
-	_, rt := CreateTestRT3()
-	kademlia, network := initKademliaAndNetwork(rt)
-	kID := NewKademliaID("FFFFFFFF00000000000000000000000000000000")
-	data := []byte("LookThisUp")
-	storeMessage := StoreMessage{*kID, data}
-	kademlia.Store(storeMessage)
-
-	go network.Listen("localhost", 8007)
-
-	time.Sleep(50 * time.Millisecond)
-
-	item := network.kademlia.SendFindValueMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
-
-	if string(data) != item.Value {
-		t.Error("Couldn't find the stored value.", item)
-	} else {
-		fmt.Println("Item returned : ", item, "\n String : ", item.Value, "\n Key : ", item.Key)
-	}
-}
-
-func TestNetworkSendStoreMessage(t *testing.T) {
-	_, rt := CreateTestRT4()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8009)
-
-	time.Sleep(50 * time.Millisecond)
-
-	contact := network.kademlia.SendStoreMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), []byte("Testing to store"))
-	if string(contact) != "stored" {
-		t.Error("Store message was not successful.", contact)
-	} else {
-		fmt.Println("Successful store!", string(contact))
-	}
-}
-
-func TestNetworkSendFindContactMessage(t *testing.T) {
-	_, rt := CreateTestRT2()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8002)
-
-	time.Sleep(50 * time.Millisecond)
-
-	_, rt2 := CreateTestRT9()
-	_, network2 := initKademliaAndNetwork(rt2)
-
-	contact := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111200000000000000000000000000000000"))
-	fmt.Println("Node found:", contact[0])
-	if !contact[0].ID.Equals(NewKademliaID("1111111200000000000000000000000000000000")) {
-		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
-	}
-	contact2 := network2.kademlia.SendFindContactMessage(NewKademliaID("1111111100000000000000000000000000000001"))
-	emptyContact := NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "address")
-	if !contact2[0].Equals(emptyContact) {
-		t.Error("Other contact than default found, when not supposed to...", contact2)
-	}
-}
-
 func TestNetworkSendPingMessage(t *testing.T) {
 	_, rt := CreateTestRT2()
 	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8003)
+	go network.Listen("localhost", 8019)
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT()
 	kademlia2, network2 := initKademliaAndNetwork(rt2)
 
-	pingMsg := NewPingMessage(&kademlia2.RT.me)
-	msg, err := network2.SendPingMessage("localhost:8003", &pingMsg)
+	pingMsg := NewPingMessage(kademlia2.RT.me)
+	msg, err := network2.SendPingMessage("localhost:8019", &pingMsg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -159,7 +100,6 @@ func TestNetworkSendPingMessage(t *testing.T) {
 		t.Error("Did not receive an ack for the ping message...")
 	}
 }
-*/
 
 func EchoServer(port int) {
 	addrServer := CreateAddr("localhost", port)

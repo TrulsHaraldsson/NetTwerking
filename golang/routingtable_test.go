@@ -31,6 +31,8 @@ func CreateTestRT8() ([]Contact, *RoutingTable) {
 		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 	contacts = append(contacts, NewContact(
 		NewKademliaID("1111111200000000000000000000000000000000"), "localhost:8003"))
+	contacts = append(contacts, NewContact(
+		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 
 	for _, contact := range contacts {
 		rt.update(contact)
@@ -38,7 +40,7 @@ func CreateTestRT8() ([]Contact, *RoutingTable) {
 	return contacts, rt
 }
 
-func TestRoutingTableAddContact(t *testing.T) {
+func TestRoutingTableupdate(t *testing.T) {
 	rt := newRoutingTable(NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 	contacts := []Contact{}
@@ -90,7 +92,7 @@ func CreateTestRT2() ([]Contact, *RoutingTable) {
 	contacts = append(contacts, NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 	contacts = append(contacts, NewContact(
-		NewKademliaID("1111111200000000000000000000000000000000"), "localhost:8003"))
+		NewKademliaID("1111111200000000000000000000000000000000"), "localhost:8019"))
 	contacts = append(contacts, NewContact(
 		NewKademliaID("1111111300000000000000000000000000000000"), "localhost:8004"))
 	contacts = append(contacts, NewContact(
@@ -135,6 +137,30 @@ func CreateTestRT4() ([]Contact, *RoutingTable) {
 		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8008"))
 	contacts = append(contacts, NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8009"))
+
+	for _, contact := range contacts {
+		rt.update(contact)
+	}
+	return contacts, rt
+}
+
+func CreateTestRT10() ([]Contact, *RoutingTable) {
+	rt := newRoutingTable(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:9500"))
+	contacts := []Contact{}
+	contacts = append(contacts, NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:9501"))
+	contacts = append(contacts, NewContact(NewKademliaID("1111111200000000000000000000000000000000"), "localhost:9502"))
+
+	for _, contact := range contacts {
+		rt.update(contact)
+	}
+	return contacts, rt
+}
+
+func CreateTestRT11() ([]Contact, *RoutingTable) {
+	rt := newRoutingTable(NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:9501"))
+	contacts := []Contact{}
+	contacts = append(contacts, NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:9500"))
+	contacts = append(contacts, NewContact(NewKademliaID("1111111200000000000000000000000000000000"), "localhost:9502"))
 
 	for _, contact := range contacts {
 		rt.update(contact)

@@ -1,0 +1,13 @@
+title = "TOML Example"
+
+[owner]
+name = "Sir Donkey"
+
+[database]
+server = "192.168.1.1"
+ports = [8001]
+connection_max = 5000
+enabled = true
+
+[clients]
+data = [["{192.199.10.10, 8002}"], ["{192.199.20.20, 8003}"]]

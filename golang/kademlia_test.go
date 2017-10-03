@@ -2,6 +2,8 @@ package d7024e
 
 // According to : (go test -cover -tags KademliaNode) gives 89.6% test coverage atm.
 
+//All current test work when calling : go test -run Kademlia
+
 import (
 	"encoding/json"
 	"testing"
@@ -42,54 +44,29 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	}
 }
 
-func TestKademliaSendFindValueMessage(t *testing.T) {
-	_, rt := CreateTestRT3()
-	kademlia, network := initKademliaAndNetwork(rt)
-	kID := NewKademliaID("FFFFFFFF00000000000000000000000000000000")
-	data := []byte("LookThisUp")
-	storeMessage := StoreMessage{*kID, data}
-	kademlia.Store(storeMessage)
-
-	go network.Listen("localhost", 8007)
-
-	time.Sleep(50 * time.Millisecond)
-
-	item := kademlia.SendFindValueMessage(NewKademliaID("FFFFFFFF00000000000000000000000000000000"))
-
-	if string(data) != item.Value {
-		t.Error("Couldn't find the stored value.", item)
-	} else {
-		//fmt.Println("Item returned : ", item, "\n String : ", item.Value, "\n Key : ", item.Key)
-	}
-}
-
-/*
-//This test is inactive for now, fix kademlia Store and LookupContact first.
-func TestKademliaSendStoreMessage(t *testing.T) {
-	_, rt := CreateTestRT2()
+func TestKademliaSendFindValueMessage2(t *testing.T) {
+	_, rt := CreateTestRT10()
 	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8002)
+
+	go network.Listen("localhost", 9500)
 
 	time.Sleep(50 * time.Millisecond)
 
-	_, rt2 := CreateTestRT9()
+	_, rt2 := CreateTestRT11()
 	_, network2 := initKademliaAndNetwork(rt2)
 
-	node1 :=	NewKademliaID("1111111200000000000000000000000000000000")
-	contact := network2.kademlia.SendFindContactMessage(node1)
-	fmt.Println(contact[0])
-	if !contact[0].ID.Equals(NewKademliaID("1111111200000000000000000000000000000000")) {
-		t.Error("contacts are not equal", contact[0])
-	}else{
-		node2 :=	NewKademliaID("1111111200000000000000000000000000000000")
-		data := []byte("TEsting a fucking shit send.")
-		network2.kademlia.SendStoreMessage(node2, data)
-	}
-} */
+	//contact := network2.kademlia.SendFindContactMessage(
+	//NewKademliaID("1111111100000000000000000000000000000000"))
+	//fmt.Println("The initial node is : ", rt2.me.ID,"\n")
+	//for i, j := range contact {
+	//fmt.Println("[",i,"]", j ,"\n")
+	//}
+	filename2 := "filenameX100"
+	data2 := []byte("Testing a fucking shit send.")
+	network2.kademlia.SendStoreMessage(&filename2, &data2)
+}
 
-// contact searched for is offline, so timeout will occur...
-// closest contact found is not the one searched for, since it is offline.
-func TestKademliaSendFindContactMessage(t *testing.T) {
+func TestKademliaSendStoreMessage(t *testing.T) {
 	_, rt := CreateTestRT8()
 	_, network := initKademliaAndNetwork(rt)
 	go network.Listen("localhost", 8002)
@@ -103,6 +80,31 @@ func TestKademliaSendFindContactMessage(t *testing.T) {
 		NewKademliaID("1111111200000000000000000000000000000000"))
 	//fmt.Println(contact)
 	if !contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000")) {
+		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
+	} else {
+		filename := "filenameX300"
+		data := []byte("Testing a fucking shit send.")
+		network2.kademlia.SendStoreMessage(&filename, &data)
+	}
+}
+
+// contact searched for is offline, so timeout will occur...
+// closest contact found is not the one searched for, since it is offline.
+func TestKademliaSendFindContactMessage(t *testing.T) {
+	_, rt := CreateTestRT8()
+	_, network := initKademliaAndNetwork(rt)
+	go network.Listen("localhost", 9102)
+
+	time.Sleep(50 * time.Millisecond)
+
+	_, rt2 := CreateTestRT9()
+	_, network2 := initKademliaAndNetwork(rt2)
+
+	contact := network2.kademlia.SendFindContactMessage(
+		NewKademliaID("1111111100000000000000000000000000000000"))
+
+	//fmt.Println("Contact list : ",contact,"\n length :", len(contact))
+	if (len(contact) < 1) || (!contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000"))) {
 		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	}
 }
@@ -127,32 +129,22 @@ func TestKademliaSendPingMessage(t *testing.T) {
 	}
 }
 
-func TestKademliaNodeStore(t *testing.T) {
-	//fmt.Println("Testing store data.")
-	data := []byte("hello world!")
+/*
+* Store a file by name and content and then search for it.
+* Two in One test (Store, Search).
+ */
+func TestKademliaNodeSearch(t *testing.T) {
+	//fmt.Println("Testing to search in Storage.Search()!")
+	filename := "filenameX200"
+	data := []byte("This is the content of file : filenameX200\n")
 	kademlia := Kademlia{}
 	kID := NewContact(NewRandomKademliaID(), "adress")
-	message := NewStoreMessage(&kID, NewRandomKademliaID(), &data)
+	message := NewStoreMessage(&kID, &filename, &data)
 	storeMessage := StoreMessage{}
 	json.Unmarshal(message.Data, &storeMessage)
 	kademlia.Store(storeMessage)
-}
 
-func TestKademliaNodeLookupData(t *testing.T) {
-	//fmt.Println("Testing to lookup data.")
-	data := []byte("hello world!")
-	kademlia := Kademlia{}
-	kID := NewContact(NewRandomKademliaID(), "adress")
-	message := NewStoreMessage(&kID, NewRandomKademliaID(), &data)
-	storeMessage := StoreMessage{}
-	json.Unmarshal(message.Data, &storeMessage)
-	kademlia.Store(storeMessage)
-	//fmt.Println("Returned Item : ", kademlia.LookupData(kID.ID))
-}
+	//file := kademlia.Search(&filename)
+	//fmt.Println("This is the returned file : ", file, "\nSHA-1 hashed name : ", file.Name, "\nContent : ", string(file.Text), "\n")
 
-func TestKademliaNodeLookupDataFail(t *testing.T) {
-	//fmt.Println("Fail testing lookup data.")
-	//kademlia := Kademlia{}
-	//kID := NewRandomKademliaID()
-	//fmt.Println("Returned Item : ", kademlia.LookupData(kID))
 }
