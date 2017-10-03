@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 const IDLength = 20
 
 type KademliaID [IDLength]byte
@@ -27,7 +26,7 @@ func NewKademliaID(data string) *KademliaID {
 }
 
 /*
- * Creates a new random-object with a seed based on current time. Hopefully this will be 
+ * Creates a new random-object with a seed based on current time. Hopefully this will be
  * enough to create different seeds for all threads.
  */
 func NewRandomKademliaID() *KademliaID {
@@ -40,9 +39,48 @@ func NewRandomKademliaID() *KademliaID {
 	return &newKademliaID
 }
 
+func NewRandomKademliaIDWithPrefix(prefix KademliaID, index int) *KademliaID {
+	rand := NewRandomKademliaID()
+	prefixOne := &KademliaID{}
+	bitsFlipped := 0
+	for i := 0; i < IDLength; i++ {
+		byte := prefixOne[i]
+		var i2 uint
+		for i2 = 0; i2 < 8; i2++ {
+			if bitsFlipped < index {
+				byte = byte | (1 << (7 - i2))
+				bitsFlipped += 1
+			} else {
+				break
+			}
+		}
+		prefixOne[i] = byte
+	}
+	prefixZero := NewKademliaID("ffffffffffffffffffffffffffffffffffffffff")
+	bitsFlipped = 0
+	for i := 0; i < IDLength; i++ {
+		byte := prefixZero[i]
+		for i2 := 0; i2 < 8; i2++ {
+			if bitsFlipped < index {
+				byte = byte >> 1
+				bitsFlipped += 1
+			} else {
+				break
+			}
+		}
+		prefixZero[i] = byte
+	}
+	for i3 := 0; i3 < IDLength; i3++ {
+		rand[i3] = rand[i3] & prefixZero[i3]
+		prefix[i3] = prefix[i3] & prefixOne[i3]
+		rand[i3] = rand[i3] | prefix[i3]
+	}
+	return rand
+}
+
 /*
- * Check if the calling KademliaID is less than the given KademliaID 
- */ 
+ * Check if the calling KademliaID is less than the given KademliaID
+ */
 func (kademliaID KademliaID) Less(otherKademliaID *KademliaID) bool {
 	for i := 0; i < IDLength; i++ {
 		if kademliaID[i] != otherKademliaID[i] {

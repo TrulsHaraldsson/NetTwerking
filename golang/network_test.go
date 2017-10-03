@@ -4,7 +4,6 @@ package d7024e
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -58,10 +57,10 @@ func TestNetworkListen(t *testing.T) {
 		t.Error(err4)
 	}
 
-	err5 := ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
+	/*err5 := ConnectAndWrite("localhost:8000", []byte("Wrong syntax message!"))
 	if err5 != nil {
 		t.Error(err5)
-	}
+	}*/
 	time.Sleep(400 * time.Millisecond) // To assure server receving data before shutdown.
 }
 
@@ -78,7 +77,7 @@ func TestNetworkSendMessage(t *testing.T) {
 	if !msg.Equal(returnMsg) {
 		t.Error("Message sent is not Equal to Received.", msg, returnMsg)
 	} else {
-		fmt.Println("Everything went expected, received correct message ", msg, " and returnMsg ", returnMsg)
+		//fmt.Println("Everything went expected, received correct message ", msg, " and returnMsg ", returnMsg)
 	}
 }
 
@@ -115,14 +114,14 @@ func EchoServer(port int) {
 		b = b[:n]
 		msg := Message{}
 		json.Unmarshal(b, &msg)
-		fmt.Println("about to write...")
+		//fmt.Println("about to write...")
 		if err != nil {
-			fmt.Println("error occured...")
+			//fmt.Println("error occured...")
 			panic(err)
 		} else {
 			udpConn.WriteTo(b, addrClient)
 		}
-		fmt.Println("written...")
+		//fmt.Println("written...")
 
 	}
 }

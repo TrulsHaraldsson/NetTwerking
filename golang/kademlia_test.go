@@ -6,7 +6,6 @@ package d7024e
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -30,13 +29,14 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 
 	kademlia := Kademlia{RT: rt, K: 20}
 	contacts := kademlia.LookupContact(&contactsCorrect[0])
-	fmt.Println(contacts)
+	//fmt.Println(contacts)
 	for i, contact := range contacts {
-		fmt.Println(" i : ", i, "contact : ", contact)
+		//fmt.Println(" i : ", i, "contact : ", contact)
 
 		if !contact.ID.Equals(contactsCorrect[i].ID) {
+			//fmt.Println(contact.ID, contactsCorrect[i].ID)
 			t.Error("Wrong order in contacts")
-			fmt.Println(contact.ID, contactsCorrect[i].ID)
+
 		}
 		if i > kademlia.K {
 			t.Error("Too many contacts returned")
@@ -44,7 +44,7 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	}
 }
 
-func TestKademliaSendFindValueMessage2(t *testing.T){
+func TestKademliaSendFindValueMessage2(t *testing.T) {
 	_, rt := CreateTestRT10()
 	_, network := initKademliaAndNetwork(rt)
 
@@ -55,17 +55,12 @@ func TestKademliaSendFindValueMessage2(t *testing.T){
 	_, rt2 := CreateTestRT11()
 	_, network2 := initKademliaAndNetwork(rt2)
 
-	contact := network2.kademlia.SendFindContactMessage(
-		NewKademliaID("1111111100000000000000000000000000000000"))
-	fmt.Println("The initial node is : ", rt2.me.ID,"\n")
-	for i, j := range contact {
-		fmt.Println("[",i,"]", j ,"\n")
-	}
-
-	/*
-	Send a store message from 1111111100000000000000000000000000000000 to
-	FFFFFFFF00000000000000000000000000000000
-	*/
+	//contact := network2.kademlia.SendFindContactMessage(
+	//NewKademliaID("1111111100000000000000000000000000000000"))
+	//fmt.Println("The initial node is : ", rt2.me.ID,"\n")
+	//for i, j := range contact {
+	//fmt.Println("[",i,"]", j ,"\n")
+	//}
 	filename2 := "filenameX100"
 	data2 := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename2, &data2)
@@ -83,10 +78,10 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111200000000000000000000000000000000"))
-	fmt.Println(contact)
+	//fmt.Println(contact)
 	if !contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000")) {
 		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
-	}else{
+	} else {
 		filename := "filenameX300"
 		data := []byte("Testing a fucking shit send.")
 		network2.kademlia.SendStoreMessage(&filename, &data)
@@ -108,7 +103,7 @@ func TestKademliaSendFindContactMessage(t *testing.T) {
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111100000000000000000000000000000000"))
 
-	fmt.Println("Contact list : ",contact,"\n length :", len(contact))
+	//fmt.Println("Contact list : ",contact,"\n length :", len(contact))
 	if (len(contact) < 1) || (!contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000"))) {
 		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	}
@@ -137,18 +132,19 @@ func TestKademliaSendPingMessage(t *testing.T) {
 /*
 * Store a file by name and content and then search for it.
 * Two in One test (Store, Search).
-*/
-func TestKademliaNodeSearch(t *testing.T){
-	fmt.Println("Testing to search in Storage.Search()!")
+ */
+func TestKademliaNodeSearch(t *testing.T) {
+	//fmt.Println("Testing to search in Storage.Search()!")
 	filename := "filenameX200"
 	data := []byte("This is the content of file : filenameX200\n")
-
 	kademlia := Kademlia{}
 	kID := NewContact(NewRandomKademliaID(), "adress")
 	message := NewStoreMessage(&kID, &filename, &data)
 	storeMessage := StoreMessage{}
 	json.Unmarshal(message.Data, &storeMessage)
 	kademlia.Store(storeMessage)
-	file := kademlia.Search(&filename)
-	fmt.Println("This is the returned file : ", file, "\nSHA-1 hashed name : ", file.Name, "\nContent : ", string(file.Text),"\n")
+
+	//file := kademlia.Search(&filename)
+	//fmt.Println("This is the returned file : ", file, "\nSHA-1 hashed name : ", file.Name, "\nContent : ", string(file.Text), "\n")
+
 }

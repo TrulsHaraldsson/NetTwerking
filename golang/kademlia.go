@@ -45,6 +45,15 @@ func NewKademlia(port int, kID string) *Kademlia {
 	return &kademlia
 }
 
+func CreateAndStartNode(port int, kID string, connecAddr string) *Kademlia {
+	kademlia := NewKademlia(port, kID)
+	kademlia.Start()
+	if connecAddr != "none" {
+		kademlia.JoinNetwork(connecAddr)
+	}
+	return kademlia
+}
+
 /*
  * Start listening to the given port
  */
@@ -54,6 +63,15 @@ func (kademlia *Kademlia) Start() {
 		panic(err)
 	}
 	go kademlia.net.Listen("localhost", port)
+}
+
+func (kademlia *Kademlia) JoinNetwork(addr string) {
+	kademlia.Ping(addr)
+	kademlia.SendFindContactMessage(kademlia.RT.me.ID)
+	for i := 1; i < kademlia.RT.Size()-2; i++ {
+		id := kademlia.RT.getRandomIDForBucket(i)
+		go kademlia.SendFindContactMessage(id)
+	}
 }
 
 /*
@@ -102,7 +120,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
-		kademlia.RT.update(rMessage.Sender)        // Updating routingtable with new contact seen.
+		kademlia.RT.update(rMessage.Sender)            // Updating routingtable with new contact seen.
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}

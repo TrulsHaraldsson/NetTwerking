@@ -29,7 +29,7 @@ func (network Network) Listen(ip string, port int) {
 	if err != nil {
 		panic(err)
 	} else {
-		fmt.Println("Listening to port", port)
+		//fmt.Println("Listening to port", port)
 	}
 	defer udpConn.Close()
 	for {
@@ -43,7 +43,7 @@ func (network Network) Listen(ip string, port int) {
 				fmt.Println("Error when unmarshalling message...", err2)
 			} else {
 				go network.HandleConnection(m, mData, addrClient)
-				fmt.Println("Starting new thread to handle connection...")
+				//fmt.Println("Starting new thread to handle connection...")
 			}
 		}
 
@@ -57,16 +57,16 @@ func (network Network) Listen(ip string, port int) {
 func (network Network) HandleConnection(message Message, mData interface{}, addr net.Addr) {
 	switch message.MsgType {
 	case PING:
-		fmt.Println("Ping.")
+		//fmt.Println("Ping message received")
 		network.kademlia.OnPingMessageReceived(&message, addr)
 	case FIND_NODE:
-		fmt.Println("Searching for node.")
+		//fmt.Println("Find node message received")
 		network.kademlia.OnFindNodeMessageReceived(&message, mData.(FindNodeMessage), addr)
 	case FIND_VALUE:
-		fmt.Println("Searching for value.")
+		//fmt.Println("Find value message received")
 		network.kademlia.OnFindValueMessageReceived(&message, mData.(FindValueMessage), addr)
 	case STORE:
-		fmt.Println("Storing node info.")
+		//fmt.Println("Store message received")
 		network.kademlia.OnStoreMessageReceived(&message, mData.(StoreMessage), addr)
 
 	default:
@@ -75,7 +75,6 @@ func (network Network) HandleConnection(message Message, mData interface{}, addr
 	}
 	network.kademlia.RT.update(message.Sender)
 }
-
 
 /*
 * Creates a string address
@@ -169,7 +168,7 @@ func SendData(addr string, data []byte) ([]byte, error) {
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
 	udpConn.SetDeadline(time.Now().Add(timeOut))
-	fmt.Println("Listening on", udpConn.LocalAddr().String())
+	//fmt.Println("Listening on", udpConn.LocalAddr().String())
 	if err != nil {
 		return returnMsg, err
 	}
