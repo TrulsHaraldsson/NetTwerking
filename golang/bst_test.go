@@ -1,13 +1,45 @@
 package d7024e
 
 import (
-	"fmt"
 	"testing"
 )
 
+func TestRoutingTableSpecial(t *testing.T) {
+	me := NewContact(NewKademliaID("7a9eb1929b4615f8886a229ae273c649d7c4d3ab"), "localhost:8001")
+	rt := newRoutingTable(me)
+
+	c1 := NewContact(NewKademliaID("6bc2159410a7e14865e82baa0accaa958801e613"), "localhost:8001")
+	rt.update(c1)
+
+	if rt.root.Left.Bucket.Len() != 0 {
+		t.Error("left subtree is not empty:", rt.root.Left.Bucket.front())
+	}
+
+	if rt.Size() != 5 {
+		t.Error("Wrong size:", rt.Size())
+	}
+	if rt.Contacts() != 2 {
+		t.Error("not correct amount of contacts:", rt.Contacts())
+	}
+	// adding self again
+	rt.update(me)
+
+	if rt.root.Left.Bucket.Len() != 0 {
+		t.Error("left subtree is not empty:", rt.root.Left.Bucket.front())
+	}
+
+	if rt.Size() != 5 {
+		t.Error("Wrong size:", rt.Size())
+	}
+	if rt.Contacts() != 2 {
+		t.Error("not correct amount of contacts:", rt.Contacts())
+	}
+
+}
+
 func TestRoutingTableUpdate(t *testing.T) {
 	me := NewContact(NewKademliaID("F000000000000000000000000000000000000000"), "localhost:8001")
-	rt := NewRoutingTable(me)
+	rt := newRoutingTable(me)
 
 	c1 := NewContact(NewKademliaID("3000000000000000000000000000000000000000"), "localhost:8001")
 	rt.update(c1)
@@ -15,7 +47,7 @@ func TestRoutingTableUpdate(t *testing.T) {
 	c2 := NewContact(NewKademliaID("7000000000000000000000000000000000000000"), "localhost:8001")
 	rt.update(c2)
 
-	bucketLeft, nodeLeft := rt.root.findBucket(0, me.ID)
+	bucketLeft, nodeLeft, _ := rt.root.findBucket(0, me.ID)
 	if rt.root.Left != nodeLeft {
 		t.Error("Expected root's left child to exist")
 	}
@@ -24,7 +56,7 @@ func TestRoutingTableUpdate(t *testing.T) {
 		t.Error("Expected to find ourself in this bucket")
 	}
 
-	bucketRight, nodeRight := rt.root.findBucket(0, c2.ID)
+	bucketRight, nodeRight, _ := rt.root.findBucket(0, c2.ID)
 	if rt.root.Right != nodeRight {
 		t.Error("Expected root's right child to exist")
 	}
@@ -40,6 +72,22 @@ func TestRoutingTableUpdate(t *testing.T) {
 	if rt.root.Bucket != nil {
 		t.Error("Expected root bucket to be nil after split")
 	}
+
+	size := bucketRight.Len()
+	if size != 2 {
+		t.Error("wrong size:", size)
+	}
+	if !bucketRight.front().Equals(c2) {
+		t.Error("expected:", c2, "was: ", *bucketRight.front())
+	}
+	rt.update(c1)
+	if bucketRight.Len() != 2 {
+		t.Error("wrong size:", size)
+	}
+	if !bucketRight.front().Equals(c1) {
+		t.Error("expected:", c1, "was: ", *bucketRight.front())
+	}
+	//fmt.Println(rt.findClosestContacts(c2.ID, 20))
 }
 
 func TestBSTNewNode(t *testing.T) {
@@ -85,7 +133,7 @@ func TestBSTFindClosestContacts(t *testing.T) {
 	b4 := newBucket(&c4)
 	b5 := newBucket(&c5)
 
-	rt := NewRoutingTable(me)
+	rt := newRoutingTable(me)
 	rt.root.Bucket = nil
 
 	rootL := newNode(b1)
@@ -298,7 +346,7 @@ func TestBSTFindBucket(t *testing.T) {
 	rootRLR.Left = rootRLRL
 	rootRLR.Right = rootRLRR
 
-	bucket, node := root.findBucket(0, c1.ID)
+	bucket, node, _ := root.findBucket(0, c1.ID)
 	if node != rootL {
 		t.Error("Expected rootL to be found")
 	}
@@ -307,7 +355,7 @@ func TestBSTFindBucket(t *testing.T) {
 		t.Error("Expected to find c1 in this bucket")
 	}
 
-	bucket, node = root.findBucket(0, c4.ID)
+	bucket, node, _ = root.findBucket(0, c4.ID)
 	if node != rootRLRR {
 		t.Error("Expected rootRLRR to be found")
 	}
@@ -362,7 +410,7 @@ func TestGetNBit(t *testing.T) {
 }
 
 func TestIsNBitsEqual(t *testing.T) {
-	fmt.Println("RUNNING")
+	//fmt.Println("RUNNING")
 	id1 := NewKademliaID("5000000000000000000000000000000000000000") // First bits 0101 ...
 	id2 := NewKademliaID("6000000000000000000000000000000000000000") // First bits 0110 ...
 
@@ -388,4 +436,43 @@ func TestBSTOneNode(t *testing.T) {
 	root.prev()
 	root.next()
 
+}
+func TestBSTCloseIDs(t *testing.T) {
+	rt := newRoutingTable(NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "lol:123"))
+	c2 := NewContact(NewKademliaID("0000000000000000000000000000000000000001"), "lol:1234")
+	rt.update(c2)
+	if rt.root.Size() != 161 {
+		t.Error("The amount of buckets should be 161, but is", rt.root.Size())
+	}
+}
+
+func TestBSTFlipBit(t *testing.T) {
+	id := NewKademliaID("0000000000000000000000000000000000000000")
+	flipBit(3, id)
+	if !id.Equals(NewKademliaID("1000000000000000000000000000000000000000")) {
+		t.Error("Flipped bit is not wat it is supposed to be!")
+	}
+}
+
+func TestBSTGetRandomID(t *testing.T) {
+	id := NewKademliaID("0000000000000000000000000000000000000000")
+	rt := newRoutingTable(NewContact(id, "Doesnt matter"))
+	rID := rt.getRandomIDForBucket(5)
+	//fmt.Println(id, rID)
+	if isNBitsEqual(4, id, rID) {
+		if isNBitsEqual(5, id, rID) {
+			t.Error("correct not")
+		}
+	} else {
+		t.Error("Not correct")
+	}
+}
+
+func TestBSTContacts(t *testing.T) {
+	rt := newRoutingTable(NewContact(NewKademliaID("0000000000000000000000000000000000000000"), "lol:123"))
+	c2 := NewContact(NewKademliaID("0000000000000000000000000000000000000001"), "lol:1234")
+	rt.update(c2)
+	if rt.root.Contacts() != 2 {
+		t.Error("The amount contacts in tree should be 2, but is", rt.root.Contacts())
+	}
 }

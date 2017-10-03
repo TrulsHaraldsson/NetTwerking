@@ -27,45 +27,77 @@ func newRoutingTable(me Contact) *RoutingTable {
 	return &rt
 }
 
+func (this *RoutingTable) Size() int {
+	this.mux.Lock()
+	defer this.mux.Unlock()
+	return this.root.Size()
+}
+
+func (this *RoutingTable) Contacts() int {
+	this.mux.Lock()
+	defer this.mux.Unlock()
+	return this.root.Contacts()
+}
+
+func (this *RoutingTable) getRandomIDForBucket(index int) *KademliaID {
+	this.mux.Lock()
+	defer this.mux.Unlock()
+	if index <= 0 {
+		return nil
+	}
+	id := NewRandomKademliaIDWithPrefix(*this.me.ID, index)
+	flipBit(uint(index-1), id)
+	return id
+}
+
+func (this *RoutingTable) update(contact Contact) {
+	this.mux.Lock()
+	defer this.mux.Unlock()
+	this.updateHelper(contact)
+}
+
 /*
  * Given a contact it either inserts the contact in appropriate bucket, or
  * if the contact allready exists in the routing table the contact will be
  * moved to the front of the bucket. Lastly, if the appropriate bucket is full
  * the contact will simply be discarded.
  */
-func (this *RoutingTable) update(contact Contact) {
-	this.mux.Lock()
-	defer this.mux.Unlock()
-	bucket, node := this.root.findBucket(0, contact.ID)
+func (this *RoutingTable) updateHelper(contact Contact) {
+	if contact.Equals(*this.me) {
+		return
+	}
+	bucket, node, i := this.root.findBucket(0, contact.ID)
 
-	if bucket.front().Equals(*this.me) {
-		for i := 0; i < 160; i++ {
-			meBit := getNBit(uint(i), this.me.ID)
-			otherBit := getNBit(uint(i), contact.ID)
-			if meBit != otherBit {
-				if meBit == 1 {
-					left := newNode(node.Bucket)
-					left.Parent = node
-					node.Left = left
-					node.Bucket = nil
-					right := newNode(newBucket(&contact))
-					right.Parent = node
-					node.Right = right
-				} else {
-					left := newNode(newBucket(&contact))
-					left.Parent = node
-					node.Left = left
-					right := newNode(node.Bucket)
-					right.Parent = node
-					node.Right = right
-					node.Bucket = nil
-				}
-				return
-			}
-
+	if bucket.Len() != 0 && bucket.front().Equals(*this.me) {
+		//for i := 0; i < 160; i++ {
+		meBit := getNBit(uint(i), this.me.ID)
+		//otherBit := getNBit(uint(i), contact.ID)
+		//if meBit != otherBit {
+		if meBit == 1 {
+			left := newNode(node.Bucket)
+			left.Parent = node
+			node.Left = left
+			node.Bucket = nil
+			right := newNode(newEmptyBucket())
+			right.Parent = node
+			node.Right = right
+			this.updateHelper(contact)
+		} else {
+			left := newNode(newEmptyBucket())
+			left.Parent = node
+			node.Left = left
+			right := newNode(node.Bucket)
+			right.Parent = node
+			node.Right = right
+			node.Bucket = nil
+			this.updateHelper(contact)
 		}
+		//return
+		//}
+
+		//}
 	} else {
-		if bucket.Len() < 20 {
+		if bucket.Len() < 20 { // TODO: if size >= 20, ping most recently seen.
 			c := bucket.getContact(contact.ID)
 			if c == nil {
 				bucket.list.PushFront(contact)
@@ -80,10 +112,9 @@ func (this *RoutingTable) findClosestContacts(target *KademliaID, count int) []C
 	this.mux.Lock()
 	defer this.mux.Unlock()
 	var candidates ContactCandidates
-	bucket, node := this.root.findBucket(0, target)
+	bucket, node, _ := this.root.findBucket(0, target)
 
 	candidates.Append(bucket.getContactAndCalcDistance(target))
-
 	prev := node.prev()
 	next := node.next()
 
@@ -112,7 +143,6 @@ func (this *RoutingTable) findClosestContacts(target *KademliaID, count int) []C
 	if count > candidates.Len() {
 		count = candidates.Len()
 	}
-
 	return candidates.GetContacts(count)
 }
 
@@ -143,9 +173,9 @@ func newNode(bucket *MyBucket) *Node {
  * Search for a bucket that covers the given contact's ID. The node that
  * holds the bucket is also returned.
  */
-func (this *Node) findBucket(index int, kademliaID *KademliaID) (*MyBucket, *Node) {
+func (this *Node) findBucket(index int, kademliaID *KademliaID) (*MyBucket, *Node, int) {
 	if this.isLeaf() {
-		return this.Bucket, this
+		return this.Bucket, this, index
 	} else {
 		// Compare i'th bit
 		bit := getNBit(uint(index), kademliaID)
@@ -154,6 +184,21 @@ func (this *Node) findBucket(index int, kademliaID *KademliaID) (*MyBucket, *Nod
 		} else {
 			return this.Left.findBucket(index+1, kademliaID)
 		}
+	}
+}
+
+func (this *Node) Size() int {
+	if this.isLeaf() {
+		return 1
+	}
+	return this.Left.Size() + this.Right.Size()
+}
+
+func (this *Node) Contacts() int {
+	if this.isLeaf() {
+		return this.Bucket.Len()
+	} else {
+		return this.Left.Contacts() + this.Right.Contacts()
 	}
 }
 
@@ -268,6 +313,11 @@ func newBucket(contact *Contact) *MyBucket {
 	return &bucket
 }
 
+func newEmptyBucket() *MyBucket {
+	bucket := MyBucket{list.New()}
+	return &bucket
+}
+
 func (this *MyBucket) getContactAndCalcDistance(target *KademliaID) []Contact {
 	var contacts []Contact
 
@@ -343,4 +393,31 @@ func isNBitsEqual(n uint, id1 *KademliaID, id2 *KademliaID) bool {
 		}
 	}
 	return true
+}
+
+func flipBit(n uint, id *KademliaID) {
+	if 0 <= n && n <= 159 {
+		byteToCheck := id[n/8] // 8 bits per byte
+		bitToCheck := n % 8    // 8 Bits
+		res := byteToCheck & (1 << (7 - bitToCheck))
+		if res > 0 {
+			id[n/8] = clearBit(id[n/8], 7-bitToCheck)
+		} else {
+			id[n/8] = setBit(id[n/8], 7-bitToCheck)
+		}
+	}
+}
+
+// Sets the bit at pos in the integer n.
+func setBit(b byte, pos uint) byte {
+	b |= (1 << pos)
+	return b
+}
+
+// Clears the bit at pos in n.
+func clearBit(b byte, pos uint) byte {
+	var mask byte
+	mask = ^(1 << pos)
+	b &= mask
+	return b
 }

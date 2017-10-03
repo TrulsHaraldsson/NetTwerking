@@ -4,7 +4,6 @@ package d7024e
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 )
@@ -28,13 +27,14 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 
 	kademlia := Kademlia{RT: rt, K: 20}
 	contacts := kademlia.LookupContact(&contactsCorrect[0])
-	fmt.Println(contacts)
+	//fmt.Println(contacts)
 	for i, contact := range contacts {
-		fmt.Println(" i : ", i, "contact : ", contact)
+		//fmt.Println(" i : ", i, "contact : ", contact)
 
 		if !contact.ID.Equals(contactsCorrect[i].ID) {
+			//fmt.Println(contact.ID, contactsCorrect[i].ID)
 			t.Error("Wrong order in contacts")
-			fmt.Println(contact.ID, contactsCorrect[i].ID)
+
 		}
 		if i > kademlia.K {
 			t.Error("Too many contacts returned")
@@ -59,10 +59,9 @@ func TestKademliaSendFindValueMessage(t *testing.T) {
 	if string(data) != item.Value {
 		t.Error("Couldn't find the stored value.", item)
 	} else {
-		fmt.Println("Item returned : ", item, "\n String : ", item.Value, "\n Key : ", item.Key)
+		//fmt.Println("Item returned : ", item, "\n String : ", item.Value, "\n Key : ", item.Key)
 	}
 }
-
 
 /*
 //This test is inactive for now, fix kademlia Store and LookupContact first.
@@ -102,7 +101,7 @@ func TestKademliaSendFindContactMessage(t *testing.T) {
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111200000000000000000000000000000000"))
-	fmt.Println(contact)
+	//fmt.Println(contact)
 	if !contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000")) {
 		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	}
@@ -129,7 +128,7 @@ func TestKademliaSendPingMessage(t *testing.T) {
 }
 
 func TestKademliaNodeStore(t *testing.T) {
-	fmt.Println("Testing store data.")
+	//fmt.Println("Testing store data.")
 	data := []byte("hello world!")
 	kademlia := Kademlia{}
 	kID := NewContact(NewRandomKademliaID(), "adress")
@@ -140,7 +139,7 @@ func TestKademliaNodeStore(t *testing.T) {
 }
 
 func TestKademliaNodeLookupData(t *testing.T) {
-	fmt.Println("Testing to lookup data.")
+	//fmt.Println("Testing to lookup data.")
 	data := []byte("hello world!")
 	kademlia := Kademlia{}
 	kID := NewContact(NewRandomKademliaID(), "adress")
@@ -148,12 +147,12 @@ func TestKademliaNodeLookupData(t *testing.T) {
 	storeMessage := StoreMessage{}
 	json.Unmarshal(message.Data, &storeMessage)
 	kademlia.Store(storeMessage)
-	fmt.Println("Returned Item : ", kademlia.LookupData(kID.ID))
+	//fmt.Println("Returned Item : ", kademlia.LookupData(kID.ID))
 }
 
 func TestKademliaNodeLookupDataFail(t *testing.T) {
-	fmt.Println("Fail testing lookup data.")
-	kademlia := Kademlia{}
-	kID := NewRandomKademliaID()
-	fmt.Println("Returned Item : ", kademlia.LookupData(kID))
+	//fmt.Println("Fail testing lookup data.")
+	//kademlia := Kademlia{}
+	//kID := NewRandomKademliaID()
+	//fmt.Println("Returned Item : ", kademlia.LookupData(kID))
 }

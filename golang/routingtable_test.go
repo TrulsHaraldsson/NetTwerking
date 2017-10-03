@@ -1,22 +1,19 @@
 package d7024e
 
 import (
-	"fmt"
 	"testing"
 )
 
 func TestRoutingTable(t *testing.T) {
 	_, rt := CreateTestRT()
 
-	contacts := rt.findClosestContacts(
+	rt.findClosestContacts(
 		NewKademliaID("2111111400000000000000000000000000000000"), 20)
-	for i := range contacts {
-		fmt.Println(contacts[i].String())
-	}
+
 }
 
 func CreateTestRT9() ([]Contact, *RoutingTable) {
-	rt := NewRoutingTable(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
+	rt := newRoutingTable(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 
@@ -27,7 +24,7 @@ func CreateTestRT9() ([]Contact, *RoutingTable) {
 }
 
 func CreateTestRT8() ([]Contact, *RoutingTable) {
-	rt := NewRoutingTable(NewContact(
+	rt := newRoutingTable(NewContact(
 		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(
@@ -42,7 +39,7 @@ func CreateTestRT8() ([]Contact, *RoutingTable) {
 }
 
 func TestRoutingTableAddContact(t *testing.T) {
-	rt := NewRoutingTable(NewContact(
+	rt := newRoutingTable(NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(
@@ -64,11 +61,9 @@ func TestRoutingTableAddContact(t *testing.T) {
 }
 
 func CreateTestRT() ([]Contact, *RoutingTable) {
-	rt := NewRoutingTable(NewContact(
+	rt := newRoutingTable(NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 	contacts := []Contact{}
-	contacts = append(contacts, NewContact(
-		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 	contacts = append(contacts, NewContact(
 		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 	contacts = append(contacts, NewContact(
@@ -87,7 +82,7 @@ func CreateTestRT() ([]Contact, *RoutingTable) {
 }
 
 func CreateTestRT2() ([]Contact, *RoutingTable) {
-	rt := NewRoutingTable(NewContact(
+	rt := newRoutingTable(NewContact(
 		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(
@@ -110,7 +105,7 @@ func CreateTestRT2() ([]Contact, *RoutingTable) {
 }
 
 func CreateTestRT3() ([]Contact, *RoutingTable) {
-	rt := NewRoutingTable(NewContact(
+	rt := newRoutingTable(NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8007"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(
@@ -133,7 +128,7 @@ func CreateTestRT3() ([]Contact, *RoutingTable) {
 }
 
 func CreateTestRT4() ([]Contact, *RoutingTable) {
-	rt := NewRoutingTable(NewContact(
+	rt := newRoutingTable(NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8009"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(
