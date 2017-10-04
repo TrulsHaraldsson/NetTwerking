@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -13,19 +14,20 @@ const MESSAGE_SIZE = 1024
 type Network struct {
 	alpha    int
 	kademlia *Kademlia
+	addr     string
 }
 
-func NewNetwork(alpha int) Network {
-	return Network{alpha, nil}
+func NewNetwork(alpha int, addr string) Network {
+	return Network{alpha: alpha, addr: addr}
 }
 
 /*
 * Starts a UDP socket listening on port and ip specified.
 * When a package is received it will start a new thread handling it.
  */
-func (network Network) Listen(ip string, port int) {
-	addrServer := CreateAddr(ip, port)
-	udpConn, err := net.ListenPacket("udp", addrServer)
+func (network Network) Listen() {
+	//addrServer := CreateAddr(ip, port)
+	udpConn, err := net.ListenPacket("udp", network.addr)
 	if err != nil {
 		panic(err)
 	} else {
@@ -33,7 +35,8 @@ func (network Network) Listen(ip string, port int) {
 	}
 	defer udpConn.Close()
 	for {
-		b, addrClient, err := ReadAnswer(udpConn)
+		b, addrClient, err := network.ReadAnswer(udpConn)
+		fmt.Println("message received.")
 		if err != nil {
 			// handle error
 			fmt.Println("Error when reading from socket...", err)
@@ -57,7 +60,8 @@ func (network Network) Listen(ip string, port int) {
 func (network Network) HandleConnection(message Message, mData interface{}, addr net.Addr) {
 	switch message.MsgType {
 	case PING:
-		//fmt.Println("Ping message received")
+		fmt.Println("Ping message received")
+		fmt.Println("address is:", addr.String())
 		network.kademlia.OnPingMessageReceived(&message, addr)
 	case FIND_NODE:
 		//fmt.Println("Find node message received")
@@ -123,7 +127,7 @@ func (network *Network) SendStoreMessage(addr string, msg *Message) (Message, er
 }
 
 func (network *Network) sendSpecificMessage(addr string, msg *Message, responseType string) (Message, interface{}, error) {
-	response, rData, err := SendMessage(addr, *msg)
+	response, rData, err := network.SendMessage(addr, *msg)
 	if err != nil {
 		return response, rData, err
 	}
@@ -143,12 +147,12 @@ func (network *Network) sendSpecificMessage(addr string, msg *Message, responseT
  * Waits for a response and unmarshalls it as a Message and the MessageData type.
  * Returns both Message and MessageData
  */
-func SendMessage(addr string, message Message) (Message, interface{}, error) {
+func (network *Network) SendMessage(addr string, message Message) (Message, interface{}, error) {
 	msgJson, err := MarshallMessage(message)
 	if err != nil {
 		return Message{}, nil, err
 	}
-	b, err2 := SendData(addr, msgJson)
+	b, err2 := network.SendData(addr, msgJson)
 	if err2 != nil {
 		return Message{}, nil, err2
 	}
@@ -161,24 +165,30 @@ func SendMessage(addr string, message Message) (Message, interface{}, error) {
 * Waits for a response and returns it
 
  */
-func SendData(addr string, data []byte) ([]byte, error) {
+func (network *Network) SendData(addr string, data []byte) ([]byte, error) {
 	var returnMsg []byte
 	timeOut := 1 * time.Second // Waits for timeOut until execption is thrown.
-	addrLocal := CreateAddr("localhost", 0)
+
+	ip := regexp.MustCompile(":").Split(network.addr, 2)[0] //Take port and convert to int
+	addrLocal := CreateAddr(ip, 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
-	udpConn.SetDeadline(time.Now().Add(timeOut))
-	//fmt.Println("Listening on", udpConn.LocalAddr().String())
+	fmt.Println("address is:", network.addr)
 	if err != nil {
+		fmt.Println(err)
 		return returnMsg, err
 	}
+	udpConn.SetDeadline(time.Now().Add(timeOut))
+	fmt.Println("Listening on", udpConn.LocalAddr().String())
 	defer udpConn.Close()
 	_, err2 := udpConn.WriteTo(data, addrRemote)
 	if err2 != nil {
+		fmt.Println(err2)
 		return returnMsg, err2
 	}
-	returnMsg, _, err3 := ReadAnswer(udpConn)
+	returnMsg, _, err3 := network.ReadAnswer(udpConn)
 	if err3 != nil {
+		fmt.Println(err3)
 		return returnMsg, err3
 	}
 	return returnMsg, nil
@@ -188,7 +198,7 @@ func SendData(addr string, data []byte) ([]byte, error) {
 * Reads from the PacketConnection specified,
 * returns whats read as a byte array and the adress from where it came.
  */
-func ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
+func (network *Network) ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
 	b := make([]byte, MESSAGE_SIZE)
 	n, addr, err := udpConn.ReadFrom(b)
 	b = b[:n]
@@ -201,12 +211,12 @@ func ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
 /*
 * Writes a message of type Message to addr, does not wait for response.
  */
-func WriteMessage(addr string, message Message) error {
+func (network *Network) WriteMessage(addr string, message Message) error {
 	msgJson, err := MarshallMessage(message)
 	if err != nil {
 		return err
 	}
-	err2 := ConnectAndWrite(addr, msgJson)
+	err2 := network.ConnectAndWrite(addr, msgJson)
 	return err2
 }
 
@@ -214,8 +224,10 @@ func WriteMessage(addr string, message Message) error {
 * Connects to addr and writes the message.
 * Does not wait for a response.
  */
-func ConnectAndWrite(addr string, message []byte) error {
-	addrLocal := CreateAddr("localhost", 0)
+func (network *Network) ConnectAndWrite(addr string, message []byte) error {
+	//addrLocal := CreateAddr("localhost", 0)
+	ip := regexp.MustCompile(":").Split(network.addr, 2)[0] //Take port and convert to int
+	addrLocal := CreateAddr(ip, 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
 	if err != nil {

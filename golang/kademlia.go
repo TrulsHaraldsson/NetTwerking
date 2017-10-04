@@ -3,8 +3,6 @@ package d7024e
 import (
 	"encoding/json"
 	"net"
-	"regexp"
-	"strconv"
 )
 
 var Information []Item
@@ -27,26 +25,26 @@ var storage Storage
  * links the kademlia instance to a network instance.
  * NOTE: This function wont start listening.
  */
-func NewKademlia(port int, kID string) *Kademlia {
+func NewKademlia(addr string, kID string) *Kademlia {
 	var kademliaID *KademliaID
 	if kID != "none" {
 		kademliaID = NewKademliaID(kID)
 	} else {
 		kademliaID = NewRandomKademliaID()
 	}
-	me := NewContact(kademliaID, "localhost:"+strconv.Itoa(port)) //TODO: Should be real ip, not localhost, but works in local tests.
+	me := NewContact(kademliaID, addr) //TODO: Should be real ip, not localhost, but works in local tests.
 	rt := newRoutingTable(me)
 
 	// These three rows link kademlia to network and vice versa
-	network := NewNetwork(3)
+	network := NewNetwork(3, addr)
 	kademlia := Kademlia{rt, 20, &network}
 	network.kademlia = &kademlia
 
 	return &kademlia
 }
 
-func CreateAndStartNode(port int, kID string, connecAddr string) *Kademlia {
-	kademlia := NewKademlia(port, kID)
+func CreateAndStartNode(address string, kID string, connecAddr string) *Kademlia {
+	kademlia := NewKademlia(address, kID)
 	kademlia.Start()
 	if connecAddr != "none" {
 		kademlia.JoinNetwork(connecAddr)
@@ -58,11 +56,11 @@ func CreateAndStartNode(port int, kID string, connecAddr string) *Kademlia {
  * Start listening to the given port
  */
 func (kademlia *Kademlia) Start() {
-	port, err := strconv.Atoi(regexp.MustCompile(":").Split(kademlia.RT.me.Address, 2)[1]) //Take port and convert to int
-	if err != nil {
-		panic(err)
-	}
-	go kademlia.net.Listen("localhost", port)
+	//port, err := strconv.Atoi(regexp.MustCompile(":").Split(kademlia.RT.me.Address, 2)[1]) //Take port and convert to int
+	//if err != nil {
+	//	panic(err)
+	//}
+	go kademlia.net.Listen()
 }
 
 func (kademlia *Kademlia) JoinNetwork(addr string) {
@@ -144,15 +142,15 @@ func (kademlia *Kademlia) SendFindValueMessage(name *string) []byte {
 	myself := kademlia.RT.me
 	closestContacts := kademlia.LookupContact(myself) //BackHere
 	//if closestContacts[0].ID.Equals(myself.ID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
-	if !closestContacts[0].ID.Equals(myself.ID){
+	if !closestContacts[0].ID.Equals(myself.ID) {
 		return []byte("")
 	}
-	message := NewFindValueMessage(myself, name) //FindValueMessage
+	message := NewFindValueMessage(myself, name)            //FindValueMessage
 	tempTable := NewContactStateList(myself.ID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
 
-	ch1 := CreateChannel() //Fix and see if ch2 is required.
-	ch2 := CreateDataChannel()                     // Creates a channel that can only be written to once.
+	ch1 := CreateChannel()                    //Fix and see if ch2 is required.
+	ch2 := CreateDataChannel()                // Creates a channel that can only be written to once.
 	for i := 0; i < kademlia.net.alpha; i++ { // Start with alpha RPC's
 		c := tempTable.GetNextToQuery()
 		if c != nil { // if nil, there are no current contacts able to query
@@ -165,7 +163,7 @@ func (kademlia *Kademlia) SendFindValueMessage(name *string) []byte {
 	return data
 }
 
-func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Message, ch1 *ContactChannel, ch2 *DataChannel, tempTable *ContactStateList){
+func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Message, ch1 *ContactChannel, ch2 *DataChannel, tempTable *ContactStateList) {
 	rMessage, ackMessage, err :=
 		kademlia.net.SendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 
@@ -178,12 +176,12 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
-		kademlia.RT.update(rMessage.Sender)        // Updating routingtable with
+		kademlia.RT.update(rMessage.Sender)            // Updating routingtable with
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
 
-	if tempTable.Finished(){ // If finished,
+	if tempTable.Finished() { // If finished,
 		ch1.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
 	} else {
 		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
@@ -197,21 +195,20 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 
 /*
 * Sending a store message to neighbors.
-*/
-func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
+ */
+func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) {
 	myself := kademlia.RT.me
 
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
 	list := kademlia.SendFindContactMessage(myself.ID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
-	for _, v:= range list {
+	for _, v := range list {
 		//3: Send out async messages to each of the neighbors without caring about response.
 		message := NewStoreMessage(&v, filename, data)
 		kademlia.net.SendStoreMessage(v.Address, &message)
 	}
 	//4: Done.
 }
-
 
 func (kademlia *Kademlia) Search(filename *string) file {
 	name := []byte(*filename)
@@ -235,26 +232,26 @@ func (kademlia *Kademlia) Store(m StoreMessage) {
  */
 func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr) {
 	msgJson := NewPingAckMessage(kademlia.RT.me, &message.RPC_ID)
-	WriteMessage(addr.String(), msgJson)
+	kademlia.net.WriteMessage(addr.String(), msgJson)
 }
 
 /*
  * This method is called by the network module when a FIND_VALUE message is received.
  */
 
-func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr){
+func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr) {
 	foundFile := kademlia.Search(&fvMessage.Name)
 	var ackFile []byte
 	var ackNodes []Contact
-	if foundFile.Text == nil{
+	if foundFile.Text == nil {
 		target := NewContact(&message.RPC_ID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 		ackNodes = kademlia.LookupContact(&target)
-	}else{
+	} else {
 		ackFile, _ = json.Marshal(foundFile)
 	}
 	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackFile, &ackNodes)
 	newAck, _ := MarshallMessage(ack)
-	ConnectAndWrite(addr.String(), newAck)
+	kademlia.net.ConnectAndWrite(addr.String(), newAck)
 }
 
 /*
@@ -264,7 +261,7 @@ func (kademlia *Kademlia) OnStoreMessageReceived(message *Message, data StoreMes
 	kademlia.Store(data)
 	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 	newAck, _ := MarshallMessage(ack)
-	ConnectAndWrite(addr.String(), newAck)
+	kademlia.net.ConnectAndWrite(addr.String(), newAck)
 }
 
 /*
@@ -276,16 +273,18 @@ func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindN
 	returnMessage := NewFindNodeAckMessage(kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
 	//fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
-	ConnectAndWrite(addr.String(), rMsgJson)
+	kademlia.net.ConnectAndWrite(addr.String(), rMsgJson)
 }
 
 /*
  * Will send a Ping message to the given address.
  */
-func (kademlia *Kademlia) Ping(addr string) {
+func (kademlia *Kademlia) Ping(addr string) bool {
 	pingMsg := NewPingMessage(kademlia.RT.me)
 	response, error := kademlia.net.SendPingMessage(addr, &pingMsg)
 	if error == nil { // No error
 		kademlia.RT.update(response.Sender)
+		return true
 	}
+	return false
 }

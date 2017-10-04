@@ -1,0 +1,13 @@
+version: '3'
+services:
+  kademlia-interactive:
+    image: nettwerking_kademlia-interactive:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        interactive: "true"
+    deploy:
+      replicas: 2
+#  kademlia-follower:
+#    build: .
