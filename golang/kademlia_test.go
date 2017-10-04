@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+	"bytes"
 )
 
 func TestKademliaNodeLookupContact(t *testing.T) {
@@ -55,12 +56,6 @@ func TestKademliaSendFindValueMessage2(t *testing.T) {
 	_, rt2 := CreateTestRT11()
 	_, network2 := initKademliaAndNetwork(rt2)
 
-	//contact := network2.kademlia.SendFindContactMessage(
-	//NewKademliaID("1111111100000000000000000000000000000000"))
-	//fmt.Println("The initial node is : ", rt2.me.ID,"\n")
-	//for i, j := range contact {
-	//fmt.Println("[",i,"]", j ,"\n")
-	//}
 	filename2 := "filenameX100"
 	data2 := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename2, &data2)
@@ -78,7 +73,6 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111200000000000000000000000000000000"))
-	//fmt.Println(contact)
 	if !contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000")) {
 		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	} else {
@@ -88,8 +82,10 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 	}
 }
 
-// contact searched for is offline, so timeout will occur...
-// closest contact found is not the one searched for, since it is offline.
+/*
+* contact searched for is offline, so timeout will occur...
+* closest contact found is not the one searched for, since it is offline.
+*/
 func TestKademliaSendFindContactMessage(t *testing.T) {
 	_, rt := CreateTestRT8()
 	_, network := initKademliaAndNetwork(rt)
@@ -103,7 +99,6 @@ func TestKademliaSendFindContactMessage(t *testing.T) {
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111100000000000000000000000000000000"))
 
-	//fmt.Println("Contact list : ",contact,"\n length :", len(contact))
 	if (len(contact) < 1) || (!contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000"))) {
 		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
 	}
@@ -134,17 +129,17 @@ func TestKademliaSendPingMessage(t *testing.T) {
 * Two in One test (Store, Search).
  */
 func TestKademliaNodeSearch(t *testing.T) {
-	//fmt.Println("Testing to search in Storage.Search()!")
-	filename := "filenameX200"
-	data := []byte("This is the content of file : filenameX200\n")
+	filename := "filenameXY"
+	data := []byte("This is the content of file filenameXY!")
 	kademlia := Kademlia{}
 	kID := NewContact(NewRandomKademliaID(), "adress")
 	message := NewStoreMessage(&kID, &filename, &data)
 	storeMessage := StoreMessage{}
 	json.Unmarshal(message.Data, &storeMessage)
 	kademlia.Store(storeMessage)
-
-	//file := kademlia.Search(&filename)
-	//fmt.Println("This is the returned file : ", file, "\nSHA-1 hashed name : ", file.Name, "\nContent : ", string(file.Text), "\n")
-
+	file := kademlia.Search(&filename)
+	bool := bytes.EqualFold(file.Text, data)
+	if bool == false {
+		t.Error("File content do not match!\n", string(data) ,"\n", string(file.Text),"\n")
+	}
 }

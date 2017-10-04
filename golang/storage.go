@@ -45,24 +45,29 @@ func (storage *Storage) MoveToMemory (name []byte){
 }
 
 /*
+* Check if file is in RAM
+*/
+func (storage *Storage) ReadRAM(name []byte) file{
+  file := file{}
+  compareName := storage.HashFile(name)
+  for _, v := range Files {
+    if reflect.DeepEqual(v.Name, compareName) {
+      file.Name = v.Name
+      file.Text = v.Text
+      break
+    }
+  }
+  return file
+}
+
+/*
 * Look if the RAM storage include a certain file, if so return file, else
 check Memory if it's there and return.
 * TODO: Files that are requested within a timer, are refreshed in main Memory, rest are stored somewhere else.
 * TODO: Include timers for each file within main Memory such that they are discarded from main Memory when the timer runs out. Then purge files that are not used for "very long" time.
 */
 func (storage *Storage) Search(name []byte) file{
-  returnedFile := file{}
-  compareName := storage.HashFile(name)
-
-  //Check local list if file exist, else check Memory.
-  for _, v := range Files {
-    if reflect.DeepEqual(v.Name, compareName) {
-      returnedFile.Name = v.Name
-      returnedFile.Text = v.Text
-      //break out of for loop.
-      break
-    }
-  }
+  returnedFile := storage.ReadRAM(name)
   if returnedFile.Name == nil{
     // Check if memory has file.
     returnedFile = storage.ReadMemory(name)

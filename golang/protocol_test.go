@@ -118,12 +118,12 @@ func TestProtocolNewFindNodeMessage(t *testing.T) {
 	}
 }
 
-/*
 func TestProtocolNewFindValueMessage(t *testing.T) {
 	sender := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
-	var valueID = NewKademliaID("aaaaaaaa00000000000000000000000000000000")
 
-	var msg = NewFindValueMessage(&sender, valueID)
+	var filename = "filenameY250"
+	var msg = NewFindValueMessage(&sender, &filename)
+
 	if msg.MsgType != FIND_VALUE {
 		t.Error("Expected message type to be", FIND_VALUE, ", got", msg.MsgType)
 	}
@@ -132,7 +132,7 @@ func TestProtocolNewFindValueMessage(t *testing.T) {
 		t.Error("Expected sender to be", sender, ", got", msg.Sender)
 	}
 }
-*/
+
 func TestProtocolNewStoreAckMessage(t *testing.T) {
 	sender := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 	var RPC_ID = NewKademliaID("0000000000000000000000000000000000000000")

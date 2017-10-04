@@ -23,10 +23,19 @@ func TestNetworkListen(t *testing.T) {
 
 	go network.Listen("localhost", 8000)
 	time.Sleep(50 * time.Millisecond)
-
-	filename := "filenameX200"
 	kID := NewContact(NewRandomKademliaID(), "adress")
-	m1 := NewFindValueMessage(&kID, &filename)
+
+	/*
+	* Create a file in tmp before this test!
+	*/
+	storage := Storage{}
+
+	filename1 := "filenameBAS"
+	bytefilename1 := []byte(filename1)
+	bytefiletext1 := []byte("Testing")
+	storage.Memory(bytefilename1, bytefiletext1)
+
+	m1 := NewFindValueMessage(&kID, &filename1)
 	m1Json, _ := json.Marshal(m1)
 	err1 := ConnectAndWrite("localhost:8000", m1Json)
 	if err1 != nil {
@@ -47,9 +56,9 @@ func TestNetworkListen(t *testing.T) {
 		t.Error(err3)
 	}
 
-	filename2 := "filenameX200"
-	data := []byte("hello world!")
-	m4 := NewStoreMessage(&kID, &filename2, &data)
+	filename4 := "filenameX444"
+	data4 := []byte("hello world!")
+	m4 := NewStoreMessage(&kID, &filename4, &data4)
 	m4Json, _ := json.Marshal(m4)
 
 	err4 := ConnectAndWrite("localhost:8000", m4Json)
@@ -122,6 +131,5 @@ func EchoServer(port int) {
 			udpConn.WriteTo(b, addrClient)
 		}
 		//fmt.Println("written...")
-
 	}
 }
