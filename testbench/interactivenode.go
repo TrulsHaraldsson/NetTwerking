@@ -1,18 +1,18 @@
 package main
 
 import (
-	//"bufio"
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
 	//"strconv"
 	"time"
 	"net"
-	//"../golang"
+	"../golang"
 )
 /*
  * INSTRUCTIONS TO START:
- * 1. sudo docker build -t server
+ * 1. sudo docker build -t server . 
  * 2. sudo docker run server
  * NOTE: Now the server will run indefinitely.
  * 
@@ -60,16 +60,12 @@ func main() {
 		fmt.Println("ADDRESS", a)
 
 	}
-
-/*	for {
-		fmt.Println("Running", time.Now())
-		time.Sleep(1 * time.Second)
-	}
+/*
 	//fmt.Println("IP:", *address)
 	//fmt.Println("PORT:", *port)
 
 	kID := d7024e.NewRandomKademliaID()
-	c := d7024e.NewContact(kID, "localhost:port")
+	c := d7024e.NewContact(kID, addrs[0]+PORT)
 	fmt.Println("Node ID:", kID)
 
 	kademlia := d7024e.NewKademlia(*port, "none")
@@ -78,11 +74,13 @@ func main() {
 	//kademlia := d7024e.Kademlia{rt, 20}
 	//network := d7024e.NewNetwork(3, kademlia)
 	go kademlia.Start()
+*/
 
 	time.Sleep(1 * time.Second)
 
 	reader := bufio.NewReader(os.Stdin)
 	if *interactive == true {
+		kademlia := d7024e.CreateAndStartNode(addrs[0], PORT, "none", "none")
 		fmt.Println("Following options are valid:")
 		fmt.Println("QUIT, quits the program.")
 		fmt.Println("PING, send ping message to a given port on localhost.")
@@ -94,23 +92,21 @@ func main() {
 			}
 			switch input {
 			case d7024e.PING:
-				fmt.Println("Please write a port to send to e.g. 65002.")
-				rport, _ := reader.ReadString('\n')
-				rport = rport[:len(rport)-1]
-				rp, _ := strconv.Atoi(rport)
-				msg := d7024e.NewPingMessage(&c)
-				response, _, _ := d7024e.SendMessage(
-					d7024e.CreateAddr("127.0.0.1", rp), msg)
-				fmt.Println(response)
+				fmt.Println("Please write an IP addres e.g. 172.17.0.3")
+				adr, _ := reader.ReadString('\n')
+				adr = adr[:len(adr)-1]
+				kademlia.Ping(adr)
 			default:
 				fmt.Println("Wrong syntax in message, ignoring it...")
 			}
 			input, _ = reader.ReadString('\n')
 			input = input[:len(input)-1]
 		}
+
 	} else {
+		d7024e.CreateAndStartNode(addrs[0], PORT, "none", "172.17.0.2")
 		fmt.Println("Press enter to quit")
 		_, _ = reader.ReadString('\n')
 	}
-*/
+
 }

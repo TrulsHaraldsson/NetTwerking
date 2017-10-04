@@ -10,15 +10,15 @@ import (
 func TestBootstrap1(t *testing.T) {
 	//"7a9eb1929b4615f8886a229ae273c649d7c4d3ab"
 	//"6bc2159410a7e14865e82baa0accaa958801e613"
-	d7024e.CreateAndStartNode(8510, "none", "none")
+	d7024e.CreateAndStartNode("localhost", 8510, "none", "none")
 	time.Sleep(50 * time.Millisecond)
 
-	k2 := d7024e.CreateAndStartNode(8511, "none", "localhost:8510")
+	k2 := d7024e.CreateAndStartNode("localhost", 8511, "none", "localhost:8510")
 	time.Sleep(50 * time.Millisecond)
 	if k2.RT.Contacts() != 2 {
 		t.Error("Wrong amount of contacts: ", k2.RT.Contacts())
 	}
-	k3 := d7024e.CreateAndStartNode(8512, "none", "localhost:8510")
+	k3 := d7024e.CreateAndStartNode("loclahost", 8512, "none", "localhost:8510")
 	time.Sleep(50 * time.Millisecond)
 	if k3.RT.Contacts() != 3 {
 		t.Error("Wrong amount of contacts: ", k3.RT.Contacts())

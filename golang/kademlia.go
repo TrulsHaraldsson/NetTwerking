@@ -5,6 +5,7 @@ import (
 	"net"
 	"regexp"
 	"strconv"
+	"fmt"
 )
 
 var Information []Item
@@ -27,14 +28,14 @@ var storage Storage
  * links the kademlia instance to a network instance.
  * NOTE: This function wont start listening.
  */
-func NewKademlia(port int, kID string) *Kademlia {
+func NewKademlia(ip string, port int, kID string) *Kademlia {
 	var kademliaID *KademliaID
 	if kID != "none" {
 		kademliaID = NewKademliaID(kID)
 	} else {
 		kademliaID = NewRandomKademliaID()
 	}
-	me := NewContact(kademliaID, "localhost:"+strconv.Itoa(port)) //TODO: Should be real ip, not localhost, but works in local tests.
+	me := NewContact(kademliaID, ip+":"+strconv.Itoa(port)) //TODO: Should be real ip, not localhost, but works in local tests.
 	rt := newRoutingTable(me)
 
 	// These three rows link kademlia to network and vice versa
@@ -45,8 +46,8 @@ func NewKademlia(port int, kID string) *Kademlia {
 	return &kademlia
 }
 
-func CreateAndStartNode(port int, kID string, connecAddr string) *Kademlia {
-	kademlia := NewKademlia(port, kID)
+func CreateAndStartNode(ip string, port int, kID string, connecAddr string) *Kademlia {
+	kademlia := NewKademlia(ip, port, kID)
 	kademlia.Start()
 	if connecAddr != "none" {
 		kademlia.JoinNetwork(connecAddr)
@@ -285,6 +286,7 @@ func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindN
 func (kademlia *Kademlia) Ping(addr string) {
 	pingMsg := NewPingMessage(kademlia.RT.me)
 	response, error := kademlia.net.SendPingMessage(addr, &pingMsg)
+	fmt.Println("Response:", response)
 	if error == nil { // No error
 		kademlia.RT.update(response.Sender)
 	}
