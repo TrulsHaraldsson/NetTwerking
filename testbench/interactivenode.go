@@ -1,25 +1,40 @@
 package main
 
 import (
-	"bufio"
+	//"bufio"
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
+	//"strconv"
 	"time"
-
-	"../golang"
+	"net"
+	//"../golang"
 )
-
+/*
+ * INSTRUCTIONS TO START:
+ * 1. sudo docker build -t server
+ * 2. sudo docker run server
+ * NOTE: Now the server will run indefinitely.
+ * 
+ * INSTRUCTIONS TO STOP:
+ * 1. Open a second terminal
+ * 2. sudo docker container ls
+ * 3. find 'container id' for the server 
+ * 3. sudo stop 'container id'
+ */
 const MESSAGE_SIZE = 1024
+const PORT = 7999
 
 func main() {
 	// (flagName, default value, description)
-	address := flag.String("addr", "127.0.0.1", "IP-address of this node")
+	//address := flag.String("addr", "127.0.0.1", "IP-address of this node")
 	port := flag.Int("port", 65000, "Port this node will listen to")
+	
 	interactive := flag.Bool("interactive", false, "Manual Control")
 
 	flag.Parse()
+
+	fmt.Println(*port)
 
 	if *interactive == true {
 		fmt.Println("Booting up an interactive node")
@@ -27,8 +42,31 @@ func main() {
 		fmt.Println("Booting up a non-interactive node")
 	}
 
-	fmt.Println("IP:", *address)
-	fmt.Println("PORT:", *port)
+	name, err := os.Hostname()
+	if err != nil {
+		fmt.Printf("Oops: %v\n", err)
+		return
+	}
+
+	fmt.Println("Host name:", name)
+	addrs, err := net.LookupHost(name)
+
+	if err != nil {
+		fmt.Printf("Oops: %v\n", err)
+		return
+	}
+
+	for _, a := range addrs {
+		fmt.Println("ADDRESS", a)
+
+	}
+
+/*	for {
+		fmt.Println("Running", time.Now())
+		time.Sleep(1 * time.Second)
+	}
+	//fmt.Println("IP:", *address)
+	//fmt.Println("PORT:", *port)
 
 	kID := d7024e.NewRandomKademliaID()
 	c := d7024e.NewContact(kID, "localhost:port")
@@ -74,5 +112,5 @@ func main() {
 		fmt.Println("Press enter to quit")
 		_, _ = reader.ReadString('\n')
 	}
-
+*/
 }
