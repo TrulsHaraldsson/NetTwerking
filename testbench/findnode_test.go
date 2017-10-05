@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -10,24 +11,24 @@ import (
 
 func TestFindNode1(t *testing.T) {
 	// Node B
-	B := d7024e.NewKademlia(8100, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+	B := d7024e.NewKademlia("localhost:8100", "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
 	B.Start()
 	time.Sleep(10 * time.Millisecond)
 
 	// Node A
-	A := d7024e.NewKademlia(8101, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+	A := d7024e.NewKademlia("localhost:8101", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	A.Start()
 	A.Ping("localhost:8100")
 	time.Sleep(10 * time.Millisecond)
 
 	// Node C
-	C := d7024e.NewKademlia(8102, "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+	C := d7024e.NewKademlia("localhost:8102", "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
 	C.Start()
 	C.Ping("localhost:8100")
 	time.Sleep(10 * time.Millisecond)
 
 	// NODE D
-	D := d7024e.NewKademlia(8103, "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+	D := d7024e.NewKademlia("localhost:8103", "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
 	D.Start()
 	D.Ping("localhost:8102")
 	time.Sleep(10 * time.Millisecond)
@@ -42,7 +43,7 @@ func TestFindNode1(t *testing.T) {
 
 func TestFindNode2(t *testing.T) {
 	// Node B
-	B := d7024e.NewKademlia(8105, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
+	B := d7024e.NewKademlia("localhost:8105", "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
 	B.Start()
 	time.Sleep(10 * time.Millisecond)
 
@@ -50,7 +51,7 @@ func TestFindNode2(t *testing.T) {
 	port := 8105
 	var Node *d7024e.Kademlia
 	for i := 0; i < count; i++ {
-		Node = d7024e.NewKademlia(port+i+1, "none")
+		Node = d7024e.NewKademlia("localhost:"+strconv.Itoa(port+i+1), "none")
 		Node.Start()
 		connectAddr := d7024e.CreateAddr("localhost", port+i)
 		Node.Ping(connectAddr)
