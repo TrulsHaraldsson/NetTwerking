@@ -64,12 +64,12 @@ func main() {
 		fmt.Println("ADDRESS", a)
 
 	}
-	kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "none")
-
+	
 	time.Sleep(1 * time.Second)
 
 	reader := bufio.NewReader(os.Stdin)
 	if *interactive == true {
+		kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "none")
 		fmt.Println("Following options are valid:")
 		fmt.Println("QUIT, quits the program.")
 		fmt.Println("PING, send ping message to a given port on localhost.")
@@ -85,6 +85,10 @@ func main() {
 				onPing2(kademlia, reader)
 			case d7024e.FIND_NODE:
 				onFindNode(kademlia, reader)
+			case d7024e.FIND_VALUE:
+				onFindValue(kademlia, reader)
+			case d7024e.STORE:
+				onStore(kademlia, reader)
 			default:
 				fmt.Println("Wrong syntax in message, ignoring it...")
 			}
@@ -92,62 +96,14 @@ func main() {
 			input = input[:len(input)-1]
 		}
 	} else {
-		fmt.Println("Press enter to quit")
-		_, _ = reader.ReadString('\n')
-	}
-
-	/*	for {
-			fmt.Println("Running", time.Now())
+		d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "172.18.0.2")
+		for{
 			time.Sleep(1 * time.Second)
 		}
-		//fmt.Println("IP:", *address)
-		//fmt.Println("PORT:", *port)
+		//fmt.Println("Press enter to quit")
+		//_, _ = reader.ReadString('\n')
+	}
 
-		kID := d7024e.NewRandomKademliaID()
-		c := d7024e.NewContact(kID, "localhost:port")
-		fmt.Println("Node ID:", kID)
-
-		kademlia := d7024e.NewKademlia(*port, "none")
-		//contact := d7024e.NewContact(kID, d7024e.CreateAddr(*address, *port))
-		//rt := d7024e.NewRoutingTable(contact)
-		//kademlia := d7024e.Kademlia{rt, 20}
-		//network := d7024e.NewNetwork(3, kademlia)
-		go kademlia.Start()
-
-		time.Sleep(1 * time.Second)
-
-		reader := bufio.NewReader(os.Stdin)
-		if *interactive == true {
-			fmt.Println("Following options are valid:")
-			fmt.Println("QUIT, quits the program.")
-			fmt.Println("PING, send ping message to a given port on localhost.")
-			input, _ := reader.ReadString('\n')
-			input = input[:len(input)-1]
-			for {
-				if input == "QUIT" {
-					break
-				}
-				switch input {
-				case d7024e.PING:
-					fmt.Println("Please write a port to send to e.g. 65002.")
-					rport, _ := reader.ReadString('\n')
-					rport = rport[:len(rport)-1]
-					rp, _ := strconv.Atoi(rport)
-					msg := d7024e.NewPingMessage(&c)
-					response, _, _ := d7024e.SendMessage(
-						d7024e.CreateAddr("127.0.0.1", rp), msg)
-					fmt.Println(response)
-				default:
-					fmt.Println("Wrong syntax in message, ignoring it...")
-				}
-				input, _ = reader.ReadString('\n')
-				input = input[:len(input)-1]
-			}
-		} else {
-			fmt.Println("Press enter to quit")
-			_, _ = reader.ReadString('\n')
-		}
-	*/
 }
 
 func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
@@ -179,4 +135,23 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	}
 	contacts := kademlia.SendFindContactMessage(kID)
 	fmt.Println("Contacts found:", contacts)
+}
+
+func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	fmt.Println("Please write the kademliaID that the VALUE have")
+	rid, _ := reader.ReadString('\n')
+	rid = rid[:len(rid)-1]
+	var kID *d7024e.KademliaID
+	if rid == "none" {
+		kID = d7024e.NewRandomKademliaID()
+	} else {
+		kID = d7024e.NewKademliaID(rid)
+	}
+	data_as_byte_array := kademlia.SendFindValueMessage(kID)
+	fmt.Println("Value found:", data_as_byte_array)
+ 
+}
+
+func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	fmt.Println("Not implemented yet")
 }
