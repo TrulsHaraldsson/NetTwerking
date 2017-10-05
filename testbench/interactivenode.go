@@ -35,13 +35,13 @@ func main() {
 	//address := flag.String("addr", "127.0.0.1", "IP-address of this node")
 	port := flag.Int("port", 65000, "Port this node will listen to")
 
-	interactive := flag.Bool("interactive", false, "Manual Control")
+	interactive := flag.String("interactive", "false", "Manual Control")
 
 	flag.Parse()
 
 	fmt.Println(*port)
 
-	if *interactive == true {
+	if *interactive == "true" {
 		fmt.Println("Booting up an interactive node")
 	} else {
 		fmt.Println("Booting up a non-interactive node")
@@ -64,11 +64,11 @@ func main() {
 		fmt.Println("ADDRESS", a)
 
 	}
-	
+
 	time.Sleep(1 * time.Second)
 
 	reader := bufio.NewReader(os.Stdin)
-	if *interactive == true {
+	if *interactive == "true" {
 		kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "none")
 		fmt.Println("Following options are valid:")
 		fmt.Println("QUIT, quits the program.")
@@ -96,8 +96,9 @@ func main() {
 			input = input[:len(input)-1]
 		}
 	} else {
-		d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "172.18.0.2")
-		for{
+		time.Sleep(1 * time.Second)
+		d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "10.0.0.2:7999")
+		for {
 			time.Sleep(1 * time.Second)
 		}
 		//fmt.Println("Press enter to quit")
@@ -139,7 +140,7 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 
 func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Please write the kademliaID that the VALUE have")
-	rid, _ := reader.ReadString('\n')
+	/*rid, _ := reader.ReadString('\n')
 	rid = rid[:len(rid)-1]
 	var kID *d7024e.KademliaID
 	if rid == "none" {
@@ -149,7 +150,8 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	}
 	data_as_byte_array := kademlia.SendFindValueMessage(kID)
 	fmt.Println("Value found:", data_as_byte_array)
- 
+	*/
+
 }
 
 func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {

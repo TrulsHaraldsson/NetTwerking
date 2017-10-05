@@ -19,4 +19,4 @@ services:
     depends_on:
       - kademlia-interactive
     deploy:
-      replicas: 5
+      replicas: 20
