@@ -3,7 +3,6 @@ package d7024e
 import (
 	"encoding/json"
 	"net"
-	//"fmt"
 )
 
 var Information []Item
@@ -17,9 +16,10 @@ type Kademlia struct {
 	RT  *RoutingTable
 	K   int
 	net *Network
+	storage *Storage
 }
 
-var storage Storage
+//var storage Storage
 
 /*
  * Creates a new Kademlia instance. Initiate a routing table and
@@ -33,12 +33,13 @@ func NewKademlia(addr string, kID string) *Kademlia {
 	} else {
 		kademliaID = NewRandomKademliaID()
 	}
-	me := NewContact(kademliaID, addr) //TODO: Should be real ip, not localhost, but works in local tests.
+	me := NewContact(kademliaID, addr)
 	rt := newRoutingTable(me)
+	storage := Storage{}
 
 	// These three rows link kademlia to network and vice versa
 	network := NewNetwork(3, addr)
-	kademlia := Kademlia{rt, 20, &network}
+	kademlia := Kademlia{rt, 20, &network, &storage}
 	network.kademlia = &kademlia
 
 	return &kademlia
@@ -57,10 +58,6 @@ func CreateAndStartNode(address string, kID string, connecAddr string) *Kademlia
  * Start listening to the given port
  */
 func (kademlia *Kademlia) Start() {
-	//port, err := strconv.Atoi(regexp.MustCompile(":").Split(kademlia.RT.me.Address, 2)[1]) //Take port and convert to int
-	//if err != nil {
-	//	panic(err)
-	//}
 	go kademlia.net.Listen()
 }
 
@@ -95,11 +92,13 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	if closestContacts[0].ID.Equals(kademliaID) && !closestContacts[0].Equals(*(kademlia.RT.me)) { //If found locally, and not itself.
 		return closestContacts
 	}
+
 	message := NewFindNodeMessage(kademlia.RT.me, targetID) // Create message to be sent.
 
 	tempTable := NewContactStateList(targetID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
 	ch := CreateChannel()                     // Creates a channel that can only be written to once.
+
 	for i := 0; i < kademlia.net.alpha; i++ { // Start with alpha RPC's
 		c := tempTable.GetNextToQuery()
 		if c != nil { // if nil, there are no current contacts able to query
@@ -203,7 +202,7 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 */
 func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
 	valueID := NewValueID(filename)
-
+	
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
 	contacts := kademlia.SendFindContactMessage(valueID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
@@ -219,7 +218,7 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
 
 func (kademlia *Kademlia) Search(filename *string) *file {
 	name := []byte(*filename)
-	found := storage.Search(name)
+	found := kademlia.storage.Search(name)
 	return found
 }
 
@@ -230,7 +229,7 @@ func (kademlia *Kademlia) Search(filename *string) *file {
  */
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	name := []byte(m.Name)
-	storage.RAM(name, m.Data)
+	kademlia.storage.RAM(name, m.Data)
 	return
 }
 
@@ -286,6 +285,7 @@ func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindN
 
 /*
  * Will send a Ping message to the given address.
+ * Returns True if there was a response, else False. 
  */
 func (kademlia *Kademlia) Ping(addr string) bool {
 	pingMsg := NewPingMessage(kademlia.RT.me)

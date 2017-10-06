@@ -15,9 +15,13 @@ func TestKademliaBootstrap(t *testing.T) {
 	k1 := CreateAndStartNode("localhost:11000", "none", "none")
 
 	k2 := CreateAndStartNode("localhost:12000", "none", "localhost:11000")
-	if k1.RT.Contacts() != 2 || k2.RT.Contacts() != 2 {
-		t.Error("Wrong amount of contacts in rt after bootstrap...")
+	if k1.RT.Contacts() != 2 {
+		t.Error("Expected k1 to have 2 contacts in its routing table, got", k1.RT.Contacts())
 	}
+
+	if k2.RT.Contacts() != 2 {
+		t.Error("Expected k2 to have 2 contacts in its routing table, got", k2.RT.Contacts())
+	} 
 }
 
 func TestKademliaNodeLookupContact(t *testing.T) {
@@ -54,7 +58,7 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	}
 }
 
-func TestKademliaSendFindValueMessage2(t *testing.T) {
+func TestKademliaSendFindValueMessage(t *testing.T) {
 	_, rt := CreateTestRT10()
 	_, network := initKademliaAndNetwork(rt, 9500)
 
@@ -64,7 +68,6 @@ func TestKademliaSendFindValueMessage2(t *testing.T) {
 
 	_, rt2 := CreateTestRT11()
 	_, network2 := initKademliaAndNetwork(rt2, 3)
-
 	filename2 := "filenameX100"
 	data2 := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename2, &data2)
