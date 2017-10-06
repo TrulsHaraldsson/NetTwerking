@@ -95,7 +95,8 @@ func (network *Network) SendPingMessage(addr string, msg *Message) (Message, err
 }
 
 /*
-*
+ * Send a find contact message to the given addr.
+ * Returns the response of from the given addr.
  */
 func (network *Network) sendFindContactMessage(addr string, msg *Message) (Message, AckFindNodeMessage, error) {
 	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_NODE_ACK)
@@ -106,7 +107,7 @@ func (network *Network) sendFindContactMessage(addr string, msg *Message) (Messa
 }
 
 /*
-* Request to find a value over the network.
+ * Request to find a value over the network.
  */
 func (network *Network) sendFindValueMessage(addr string, msg *Message) (Message, AckFindValueMessage, error) {
 	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_VALUE_ACK)
@@ -117,14 +118,18 @@ func (network *Network) sendFindValueMessage(addr string, msg *Message) (Message
 }
 
 /*
-Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
-from neighbor OnStoreMessageReceived func.
-*/
+ * Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
+ * from neighbor OnStoreMessageReceived func.
+ */
 func (network *Network) sendStoreMessage(addr string, msg *Message) (Message, error) {
 	response, _, err := network.sendSpecificMessage(addr, msg, STORE_ACK)
 	return response, err
 }
 
+/*
+ * Sends a message of specific type defind by Message.
+ * Returns the Ack type of the given Message. e.g. Message = PING, Ack = PING_ACK 
+ */
 func (network *Network) sendSpecificMessage(addr string, msg *Message, responseType string) (Message, interface{}, error) {
 	response, rData, err := network.sendMessage(addr, *msg)
 	if err != nil {
