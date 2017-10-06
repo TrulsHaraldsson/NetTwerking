@@ -11,6 +11,10 @@ How to create a distributed system 101
 7. Do what you want in the container.
 8. When quitting, run: docker stack rm name-of-stack & docker swarm leave --force
 
+## Docker BUILD and RUN
+1. sudo docker-compose build
+2. sudo docker-compose run kademlia-interactive
+
 ### Docker debugging commands
 * docker logs 'id' : Shows all stuff printed to stdout in the container.
 * docker stack services 'stack-name' : Shows how many replicas you have up and running of each service.
