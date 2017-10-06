@@ -6,7 +6,7 @@ import(
   "reflect"
   "os"
   "io/ioutil"
-  "fmt"
+  //"fmt"
 )
 
 type Storage struct{}
@@ -82,8 +82,8 @@ and return it.
 func (storage *Storage) ReadMemory(name []byte) *file {
   content, err := ioutil.ReadFile("/tmp/" + string(name))
 	if err != nil {
-		fmt.Println("ReadMemory:", err)
-		return nil 
+//		fmt.Println("ReadMemory:", err)
+		return nil
 	}
   //hashedName := storage.HashFile(name)
   returnedFile := &file{name, []byte(content)}
@@ -103,6 +103,7 @@ func (storage *Storage) ReadMemory(name []byte) *file {
 */
 func (storage *Storage) RAM(name []byte, text []byte){
   //fileName := storage.HashFile(name)
+  //fmt.Println("RAM: Storing file", string(name))
   newFile := file{name, text}
   Files = append(Files, newFile)
   return

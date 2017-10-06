@@ -7,7 +7,7 @@ This entire file content will be implemented into Kademlia later on, with these 
 //Containers in golang : https://www.youtube.com/watch?v=HPuvDm8IC-4
 
 import (
-  "fmt"
+//  "fmt"
   "time"
   "math/rand"
 )
@@ -21,22 +21,22 @@ func (timers *Timers) startTimer(){
   ticker := time.NewTicker(time.Millisecond * 1000)
     go func() {
         for t := range ticker.C {
-            fmt.Println("Tick")
+//            fmt.Println("Tick")
             //Will change to kademliaSendPing
             timers.interval(t)
         }
     }()
     time.Sleep(time.Second * 10) //In final version, there will be no sleep (or atleast not one that stops within an hour or so).
     ticker.Stop()
-    now := time.Now()
-    fmt.Println("Time stopped at : ", now.String())
+//    now := time.Now()
+//    fmt.Println("Time stopped at : ", now.String())
 }
 
 func (timers *Timers) showTimer(tick time.Time){
-  fmt.Println("Tick-Tack", tick.String() ,"\n")
+//  fmt.Println("Tick-Tack", tick.String() ,"\n")
   time.Sleep(time.Millisecond * 100)
-  diff := time.Since(tick)
-  fmt.Println("Time difference : ", diff.String())
+//  diff := time.Since(tick)
+//  fmt.Println("Time difference : ", diff.String())
 }
 
 /*
@@ -48,12 +48,12 @@ func (timers *Timers) interval(tick time.Time){
   random := rand.Intn(100)
   time.Sleep(time.Millisecond * time.Duration(random)) //Only to mimic lag.
   tickTack := time.Since(tick)
-  fmt.Println("time : ", tickTack.String())
+//  fmt.Println("time : ", tickTack.String())
   if tickTack < time.Duration(time.Millisecond * 80) {
-    fmt.Println("-Tack is within interval!\n")
+//    fmt.Println("-Tack is within interval!\n")
     //DO NOTHING
   }else{
-    fmt.Println("-Tack too late!\n")
+//    fmt.Println("-Tack too late!\n")
     //Remove files from RAM
   }
 }

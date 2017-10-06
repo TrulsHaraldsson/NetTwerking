@@ -5,11 +5,20 @@ package d7024e
 //All current test work when calling : go test -run Kademlia
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 	"time"
-	"bytes"
 )
+
+func TestKademliaBootstrap(t *testing.T) {
+	k1 := CreateAndStartNode("localhost:11000", "none", "none")
+
+	k2 := CreateAndStartNode("localhost:12000", "none", "localhost:11000")
+	if k1.RT.Contacts() != 2 || k2.RT.Contacts() != 2 {
+		t.Error("Wrong amount of contacts in rt after bootstrap...")
+	}
+}
 
 func TestKademliaNodeLookupContact(t *testing.T) {
 	_, rt := CreateTestRT()
@@ -47,14 +56,14 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 
 func TestKademliaSendFindValueMessage2(t *testing.T) {
 	_, rt := CreateTestRT10()
-	_, network := initKademliaAndNetwork(rt)
+	_, network := initKademliaAndNetwork(rt, 9500)
 
-	go network.Listen("localhost", 9500)
+	go network.Listen()
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT11()
-	_, network2 := initKademliaAndNetwork(rt2)
+	_, network2 := initKademliaAndNetwork(rt2, 3)
 
 	filename2 := "filenameX100"
 	data2 := []byte("Testing a fucking shit send.")
@@ -63,13 +72,13 @@ func TestKademliaSendFindValueMessage2(t *testing.T) {
 
 func TestKademliaSendStoreMessage(t *testing.T) {
 	_, rt := CreateTestRT8()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8002)
+	_, network := initKademliaAndNetwork(rt, 8002)
+	go network.Listen()
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT9()
-	_, network2 := initKademliaAndNetwork(rt2)
+	_, network2 := initKademliaAndNetwork(rt2, 4)
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111200000000000000000000000000000000"))
@@ -85,16 +94,16 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 /*
 * contact searched for is offline, so timeout will occur...
 * closest contact found is not the one searched for, since it is offline.
-*/
+ */
 func TestKademliaSendFindContactMessage(t *testing.T) {
 	_, rt := CreateTestRT8()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 9102)
+	_, network := initKademliaAndNetwork(rt, 9102)
+	go network.Listen()
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT9()
-	_, network2 := initKademliaAndNetwork(rt2)
+	_, network2 := initKademliaAndNetwork(rt2, 5)
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111100000000000000000000000000000000"))
@@ -106,13 +115,13 @@ func TestKademliaSendFindContactMessage(t *testing.T) {
 
 func TestKademliaSendPingMessage(t *testing.T) {
 	_, rt := CreateTestRT2()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8003)
+	_, network := initKademliaAndNetwork(rt, 8003)
+	go network.Listen()
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT()
-	kademlia2, network2 := initKademliaAndNetwork(rt2)
+	kademlia2, network2 := initKademliaAndNetwork(rt2, 6)
 
 	pingMsg := NewPingMessage(kademlia2.RT.me)
 	msg, err := network2.SendPingMessage("localhost:8003", &pingMsg)
@@ -140,6 +149,6 @@ func TestKademliaNodeSearch(t *testing.T) {
 	file := kademlia.Search(&filename)
 	bool := bytes.EqualFold(file.Text, data)
 	if bool == false {
-		t.Error("File content do not match!\n", string(data) ,"\n", string(file.Text),"\n")
+		t.Error("File content do not match!\n", string(data), "\n", string(file.Text), "\n")
 	}
 }

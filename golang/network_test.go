@@ -5,33 +5,32 @@ package d7024e
 import (
 	"encoding/json"
 	"net"
+	"strconv"
 	"testing"
 	"time"
 	//"fmt"
 )
 
-func initKademliaAndNetwork(rt *RoutingTable) (*Kademlia, *Network) {
-	network := NewNetwork(3)
+func initKademliaAndNetwork(rt *RoutingTable, port int) (*Kademlia, *Network) {
+	network := NewNetwork(3, "localhost:"+strconv.Itoa(port))
 	kademlia := Kademlia{rt, 20, &network}
 	network.kademlia = &kademlia
 	return &kademlia, &network
 }
 
 func TestNetworkListen(t *testing.T) {
-/*	_, rt := CreateTestRT()
+	_, rt := CreateTestRT()
 
-	_, network := initKademliaAndNetwork(rt)
+	_, network := initKademliaAndNetwork(rt, 8000)
 
-	go network.Listen("localhost", 8000)
+	go network.Listen()
 	time.Sleep(50 * time.Millisecond)
 	kID := NewContact(NewRandomKademliaID(), "adress")
-*/
 	/*
 	* Create a file in tmp before this test!
-	*/
-/*	storage := Storage{}
-	
-	fmt.Println("HELLO1")
+	 */
+	storage := Storage{}
+
 	filename1 := "filenameBAS"
 	bytefilename1 := []byte(filename1)
 	bytefiletext1 := []byte("Testing")
@@ -39,41 +38,41 @@ func TestNetworkListen(t *testing.T) {
 
 	m1 := NewFindValueMessage(&kID, NewValueID(&filename1))
 	m1Json, _ := json.Marshal(m1)
-	err1 := ConnectAndWrite("localhost:8000", m1Json)
+	err1 := network.ConnectAndWrite("localhost:8000", m1Json)
 	if err1 != nil {
 		t.Error("error1:", err1)
 	}
 
-	fmt.Println("HELLO2")
+	//fmt.Println("HELLO2")
 	m2 := NewPingMessage(&kID)
 	m2Json, _ := json.Marshal(m2)
-	err2 := ConnectAndWrite("localhost:8000", m2Json)
+	err2 := network.ConnectAndWrite("localhost:8000", m2Json)
 	if err2 != nil {
 		t.Error("error2:",err2)
 	}
 
-	fmt.Println("HELLO3")
+	//fmt.Println("HELLO3")
 	m3 := NewFindNodeMessage(&kID, NewRandomKademliaID())
 	m3Json, _ := json.Marshal(m3)
-	err3 := ConnectAndWrite("localhost:8000", m3Json)
+	err3 := network.ConnectAndWrite("localhost:8000", m3Json)
 	if err3 != nil {
 		t.Error("error3:",err3)
 	}
 
-	fmt.Println("HELLO4")
+	//fmt.Println("HELLO4")
 	filename4 := "filenameX444"
 	data4 := []byte("hello world!")
 	m4 := NewStoreMessage(&kID, &filename4, &data4)
 	m4Json, _ := json.Marshal(m4)
 
-	err4 := ConnectAndWrite("localhost:8000", m4Json)
+	err4 := network.ConnectAndWrite("localhost:8000", m4Json)
 	if err4 != nil {
 		t.Error("error4:",err4)
 	}
 
-	fmt.Println("HELLO5")	
+	//fmt.Println("HELLO5")
 	//time.Sleep(400 * time.Millisecond) // To assure server receving data before shutdown.
-	fmt.Println("HELLO6")*/
+	//fmt.Println("HELLO6")
 }
 
 func TestNetworkSendMessage(t *testing.T) {
@@ -81,7 +80,8 @@ func TestNetworkSendMessage(t *testing.T) {
 	time.Sleep(50 * time.Millisecond) //To assure server is up before sending data
 	c := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "adress")
 	msg := NewPingMessage(&c)
-	returnMsg, _, err := SendMessage("localhost:7999", msg)
+	network := NewNetwork(3, "localhost:3333")
+	returnMsg, _, err := network.SendMessage("localhost:7999", msg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -95,13 +95,13 @@ func TestNetworkSendMessage(t *testing.T) {
 
 func TestNetworkSendPingMessage(t *testing.T) {
 	_, rt := CreateTestRT2()
-	_, network := initKademliaAndNetwork(rt)
-	go network.Listen("localhost", 8019)
+	_, network := initKademliaAndNetwork(rt, 8019)
+	go network.Listen()
 
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT()
-	kademlia2, network2 := initKademliaAndNetwork(rt2)
+	kademlia2, network2 := initKademliaAndNetwork(rt2, 7)
 
 	pingMsg := NewPingMessage(kademlia2.RT.me)
 	msg, err := network2.SendPingMessage("localhost:8019", &pingMsg)
