@@ -35,7 +35,7 @@ func (network Network) Listen() {
 	}
 	defer udpConn.Close()
 	for {
-		b, addrClient, err := network.ReadAnswer(udpConn)
+		b, addrClient, err := network.readAnswer(udpConn)
 		//fmt.Println("message received.")
 		if err != nil {
 			// handle error
@@ -45,7 +45,7 @@ func (network Network) Listen() {
 			if err2 != nil {
 				fmt.Println("Error when unmarshalling message...", err2)
 			} else {
-				go network.HandleConnection(m, mData, addrClient)
+				go network.handleConnection(m, mData, addrClient)
 				//fmt.Println("Starting new thread to handle connection...")
 			}
 		}
@@ -56,7 +56,7 @@ func (network Network) Listen() {
 * Depending on the message type, different functions are run.
 * Also gives a answer back to the caller.
  */
-func (network Network) HandleConnection(message Message, mData interface{}, addr net.Addr) {
+func (network Network) handleConnection(message Message, mData interface{}, addr net.Addr) {
 	switch message.MsgType {
 	case PING:
 		//fmt.Println("Ping message received")
@@ -97,7 +97,7 @@ func (network *Network) SendPingMessage(addr string, msg *Message) (Message, err
 /*
 *
  */
-func (network *Network) SendFindContactMessage(addr string, msg *Message) (Message, AckFindNodeMessage, error) {
+func (network *Network) sendFindContactMessage(addr string, msg *Message) (Message, AckFindNodeMessage, error) {
 	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_NODE_ACK)
 	if err != nil {
 		return response, AckFindNodeMessage{}, err
@@ -108,7 +108,7 @@ func (network *Network) SendFindContactMessage(addr string, msg *Message) (Messa
 /*
 * Request to find a value over the network.
  */
-func (network *Network) SendFindValueMessage(addr string, msg *Message) (Message, AckFindValueMessage, error) {
+func (network *Network) sendFindValueMessage(addr string, msg *Message) (Message, AckFindValueMessage, error) {
 	response, responseData, err := network.sendSpecificMessage(addr, msg, FIND_VALUE_ACK)
 	if err != nil {
 		return response, AckFindValueMessage{}, err
@@ -120,13 +120,13 @@ func (network *Network) SendFindValueMessage(addr string, msg *Message) (Message
 Sends a message over the network to the alpha closest neighbors in the routing table and waits for response
 from neighbor OnStoreMessageReceived func.
 */
-func (network *Network) SendStoreMessage(addr string, msg *Message) (Message, error) {
+func (network *Network) sendStoreMessage(addr string, msg *Message) (Message, error) {
 	response, _, err := network.sendSpecificMessage(addr, msg, STORE_ACK)
 	return response, err
 }
 
 func (network *Network) sendSpecificMessage(addr string, msg *Message, responseType string) (Message, interface{}, error) {
-	response, rData, err := network.SendMessage(addr, *msg)
+	response, rData, err := network.sendMessage(addr, *msg)
 	if err != nil {
 		return response, rData, err
 	}
@@ -146,12 +146,12 @@ func (network *Network) sendSpecificMessage(addr string, msg *Message, responseT
  * Waits for a response and unmarshalls it as a Message and the MessageData type.
  * Returns both Message and MessageData
  */
-func (network *Network) SendMessage(addr string, message Message) (Message, interface{}, error) {
+func (network *Network) sendMessage(addr string, message Message) (Message, interface{}, error) {
 	msgJson, err := MarshallMessage(message)
 	if err != nil {
 		return Message{}, nil, err
 	}
-	b, err2 := network.SendData(addr, msgJson)
+	b, err2 := network.sendData(addr, msgJson)
 	if err2 != nil {
 		return Message{}, nil, err2
 	}
@@ -160,44 +160,45 @@ func (network *Network) SendMessage(addr string, message Message) (Message, inte
 }
 
 /*
-* Sends data to address specified.
-* Waits for a response and returns it
-
+ * Sends data to the given address. Then waits for a response or timeout.
+ * Returns: The response as a byte array.
  */
-func (network *Network) SendData(addr string, data []byte) ([]byte, error) {
+func (network *Network) sendData(addr string, data []byte) ([]byte, error) {
 	var returnMsg []byte
-	timeOut := 1 * time.Second // Waits for timeOut until execption is thrown.
-
+	
 	ip := regexp.MustCompile(":").Split(network.addr, 2)[0] //Take port and convert to int
 	addrLocal := CreateAddr(ip, 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
-	//fmt.Println("address is:", network.addr)
 	if err != nil {
 		fmt.Println("network/SendData: err ", err)
 		return returnMsg, err
 	}
+
+	// Waits for timeOut until execption is thrown.
+	timeOut := 1 * time.Second 
 	udpConn.SetDeadline(time.Now().Add(timeOut))
-	//fmt.Println("Listening on", udpConn.LocalAddr().String())
 	defer udpConn.Close()
 	_, err2 := udpConn.WriteTo(data, addrRemote)
 	if err2 != nil {
 		fmt.Println("network/SendData: err2 ", err2)
 		return returnMsg, err2
 	}
-	returnMsg, _, err3 := network.ReadAnswer(udpConn)
+
+	returnMsg, _, err3 := network.readAnswer(udpConn)
 	if err3 != nil {
 		fmt.Println("network/SendData: err3 ", err3)
 		return returnMsg, err3
 	}
+
 	return returnMsg, nil
 }
 
 /*
-* Reads from the PacketConnection specified,
-* returns whats read as a byte array and the adress from where it came.
+ * Reads from the specified UDP net.PacketConn 
+ * Returns the data as a byte array and the adress from where it came.
  */
-func (network *Network) ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
+func (network *Network) readAnswer(udpConn net.PacketConn) ([]byte, net.Addr, error) {
 	b := make([]byte, MESSAGE_SIZE)
 	n, addr, err := udpConn.ReadFrom(b)
 	b = b[:n]
@@ -208,22 +209,22 @@ func (network *Network) ReadAnswer(udpConn net.PacketConn) ([]byte, net.Addr, er
 }
 
 /*
-* Writes a message of type Message to addr, does not wait for response.
+ * Writes a message of type Message to addr, does not wait for response.
  */
 func (network *Network) WriteMessage(addr string, message Message) error {
 	msgJson, err := MarshallMessage(message)
 	if err != nil {
 		return err
 	}
-	err2 := network.ConnectAndWrite(addr, msgJson)
+	err2 := network.connectAndWrite(addr, msgJson)
 	return err2
 }
 
 /*
-* Connects to addr and writes the message.
-* Does not wait for a response.
+ * Connects to addr and writes the message.
+ * Does not wait for a response.
  */
-func (network *Network) ConnectAndWrite(addr string, message []byte) error {
+func (network *Network) connectAndWrite(addr string, message []byte) error {
 	//addrLocal := CreateAddr("localhost", 0)
 	ip := regexp.MustCompile(":").Split(network.addr, 2)[0] //Take port and convert to int
 	addrLocal := CreateAddr(ip, 0)

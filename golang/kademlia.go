@@ -113,7 +113,7 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Message,
 	ch *ContactChannel, tempTable *ContactStateList) {
 	rMessage, ackMessage, err :=
-		kademlia.net.SendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
+		kademlia.net.sendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 	if err != nil {
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
@@ -167,7 +167,7 @@ func (kademlia *Kademlia) SendFindValueMessage(kademliaID *KademliaID) []byte {
 
 func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Message, ch1 *ContactChannel, ch2 *DataChannel, tempTable *ContactStateList) {
 	rMessage, ackMessage, err :=
-		kademlia.net.SendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
+		kademlia.net.sendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 
 	if ackMessage.Value != nil {
 		//fmt.Println("FindValueHelper: Found Value!")
@@ -210,7 +210,7 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
 		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
-		kademlia.net.SendStoreMessage(v.Address, &message)
+		kademlia.net.sendStoreMessage(v.Address, &message)
 	}
 	//4: Done.
 }
@@ -258,7 +258,7 @@ func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage
 	}
 	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackFile, &ackNodes)
 	newAck, _ := MarshallMessage(ack)
-	kademlia.net.ConnectAndWrite(addr.String(), newAck)
+	kademlia.net.connectAndWrite(addr.String(), newAck)
 }
 
 /*
@@ -268,7 +268,7 @@ func (kademlia *Kademlia) OnStoreMessageReceived(message *Message, data StoreMes
 	kademlia.Store(data)
 	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 	newAck, _ := MarshallMessage(ack)
-	kademlia.net.ConnectAndWrite(addr.String(), newAck)
+	kademlia.net.connectAndWrite(addr.String(), newAck)
 }
 
 /*
@@ -280,7 +280,7 @@ func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindN
 	returnMessage := NewFindNodeAckMessage(kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
 	//fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
-	kademlia.net.ConnectAndWrite(addr.String(), rMsgJson)
+	kademlia.net.connectAndWrite(addr.String(), rMsgJson)
 }
 
 /*

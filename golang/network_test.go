@@ -38,7 +38,7 @@ func TestNetworkListen(t *testing.T) {
 
 	m1 := NewFindValueMessage(&kID, NewValueID(&filename1))
 	m1Json, _ := json.Marshal(m1)
-	err1 := network.ConnectAndWrite("localhost:8000", m1Json)
+	err1 := network.connectAndWrite("localhost:8000", m1Json)
 	if err1 != nil {
 		t.Error("error1:", err1)
 	}
@@ -46,7 +46,7 @@ func TestNetworkListen(t *testing.T) {
 	//fmt.Println("HELLO2")
 	m2 := NewPingMessage(&kID)
 	m2Json, _ := json.Marshal(m2)
-	err2 := network.ConnectAndWrite("localhost:8000", m2Json)
+	err2 := network.connectAndWrite("localhost:8000", m2Json)
 	if err2 != nil {
 		t.Error("error2:",err2)
 	}
@@ -54,7 +54,7 @@ func TestNetworkListen(t *testing.T) {
 	//fmt.Println("HELLO3")
 	m3 := NewFindNodeMessage(&kID, NewRandomKademliaID())
 	m3Json, _ := json.Marshal(m3)
-	err3 := network.ConnectAndWrite("localhost:8000", m3Json)
+	err3 := network.connectAndWrite("localhost:8000", m3Json)
 	if err3 != nil {
 		t.Error("error3:",err3)
 	}
@@ -65,7 +65,7 @@ func TestNetworkListen(t *testing.T) {
 	m4 := NewStoreMessage(&kID, &filename4, &data4)
 	m4Json, _ := json.Marshal(m4)
 
-	err4 := network.ConnectAndWrite("localhost:8000", m4Json)
+	err4 := network.connectAndWrite("localhost:8000", m4Json)
 	if err4 != nil {
 		t.Error("error4:",err4)
 	}
@@ -81,7 +81,7 @@ func TestNetworkSendMessage(t *testing.T) {
 	c := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "adress")
 	msg := NewPingMessage(&c)
 	network := NewNetwork(3, "localhost:3333")
-	returnMsg, _, err := network.SendMessage("localhost:7999", msg)
+	returnMsg, _, err := network.sendMessage("localhost:7999", msg)
 	if err != nil {
 		t.Error(err)
 	}
