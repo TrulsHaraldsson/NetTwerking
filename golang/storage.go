@@ -2,11 +2,11 @@ package d7024e
 
 import(
   "crypto/sha1"
-  "log"
+  //"log"
   "reflect"
   "os"
   "io/ioutil"
-  //"strconv"
+  "fmt"
 )
 
 type Storage struct{}
@@ -22,14 +22,14 @@ type file struct{
 }
 
 /*
-* When a file misses the update, it is no longer prioriticed and
+* When a file misses the update, it is no longer prioritized and
 * moved to Memory from RAM.
 */
 func (storage *Storage) MoveToMemory (name []byte){
   file := file{}
-  compareName := storage.HashFile(name)
+  //compareName := storage.HashFile(name)
   for i, v := range Files {
-    if reflect.DeepEqual(v.Name, compareName) {
+    if reflect.DeepEqual(v.Name, name) {
       file.Name = v.Name
       file.Text = v.Text
 
@@ -47,17 +47,17 @@ func (storage *Storage) MoveToMemory (name []byte){
 /*
 * Check if file is in RAM
 */
-func (storage *Storage) ReadRAM(name []byte) file{
+func (storage *Storage) ReadRAM(name []byte) *file{
   file := file{}
-  compareName := storage.HashFile(name)
+  //compareName := storage.HashFile(name)
   for _, v := range Files {
-    if reflect.DeepEqual(v.Name, compareName) {
+    if reflect.DeepEqual(v.Name, name) {
       file.Name = v.Name
       file.Text = v.Text
       break
     }
   }
-  return file
+  return &file
 }
 
 /*
@@ -66,7 +66,7 @@ check Memory if it's there and return.
 * TODO: Files that are requested within a timer, are refreshed in main Memory, rest are stored somewhere else.
 * TODO: Include timers for each file within main Memory such that they are discarded from main Memory when the timer runs out. Then purge files that are not used for "very long" time.
 */
-func (storage *Storage) Search(name []byte) file{
+func (storage *Storage) Search(name []byte) *file{
   returnedFile := storage.ReadRAM(name)
   if returnedFile.Name == nil{
     // Check if memory has file.
@@ -79,13 +79,14 @@ func (storage *Storage) Search(name []byte) file{
 * Read Memory and see if a file is there, if so, move file to RAM
 and return it.
 */
-func (storage *Storage) ReadMemory(name []byte) file {
+func (storage *Storage) ReadMemory(name []byte) *file {
   content, err := ioutil.ReadFile("/tmp/" + string(name))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("ReadMemory:", err)
+		return nil 
 	}
-  hashedName := storage.HashFile(name)
-  returnedFile := file{hashedName, []byte(content)}
+  //hashedName := storage.HashFile(name)
+  returnedFile := &file{name, []byte(content)}
 
   /*
   * When a file is retrieved from Memory, move it from Memory to RAM.
@@ -101,8 +102,8 @@ func (storage *Storage) ReadMemory(name []byte) file {
 * Store a file into RAM, does not return anything.
 */
 func (storage *Storage) RAM(name []byte, text []byte){
-  fileName := storage.HashFile(name)
-  newFile := file{fileName, text}
+  //fileName := storage.HashFile(name)
+  newFile := file{name, text}
   Files = append(Files, newFile)
   return
 }

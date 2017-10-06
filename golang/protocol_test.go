@@ -33,8 +33,9 @@ func TestProtocolMarshall(t *testing.T) {
 
 	c4 := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 	msgDataString := string(msgData3)
-	msg4 := NewFindValueMessage(&c4, &msgDataString)
-	err4 := marshallTestHelper(msg4, FindValueMessage{msgDataString})
+	valueID := NewValueID(&msgDataString)
+	msg4 := NewFindValueMessage(&c4, valueID)
+	err4 := marshallTestHelper(msg4, FindValueMessage{*valueID})
 	if err4 != nil {
 		t.Error(err4)
 	}
@@ -122,7 +123,8 @@ func TestProtocolNewFindValueMessage(t *testing.T) {
 	sender := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 
 	var filename = "filenameY250"
-	var msg = NewFindValueMessage(&sender, &filename)
+	valueID := NewValueID(&filename)
+	var msg = NewFindValueMessage(&sender, valueID)
 
 	if msg.MsgType != FIND_VALUE {
 		t.Error("Expected message type to be", FIND_VALUE, ", got", msg.MsgType)

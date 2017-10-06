@@ -28,7 +28,7 @@ type FindNodeMessage struct {
 }
 
 type FindValueMessage struct {
-	Name string
+	Name KademliaID
 	//Node Contact
 }
 
@@ -116,7 +116,7 @@ func (m1 Message) Equal(m2 Message) bool {
 	}
 }
 
-func NewFindValueMessage(sender *Contact, name *string) Message {
+func NewFindValueMessage(sender *Contact, name *KademliaID) Message {
 	var msg = Message{}
 	msg.MsgType = FIND_VALUE
 	msg.Sender = *sender

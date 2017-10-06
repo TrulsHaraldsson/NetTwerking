@@ -5,6 +5,7 @@ import (
 	"net"
 	"regexp"
 	"strconv"
+	"fmt"
 )
 
 var Information []Item
@@ -140,14 +141,14 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 /*
  * Request to find a value over the network.
  */
-func (kademlia *Kademlia) SendFindValueMessage(name *string) []byte {
+func (kademlia *Kademlia) SendFindValueMessage(kademliaID *KademliaID) []byte {
 	myself := kademlia.RT.me
 	closestContacts := kademlia.LookupContact(myself) //BackHere
 	//if closestContacts[0].ID.Equals(myself.ID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
 	if !closestContacts[0].ID.Equals(myself.ID){
 		return []byte("")
 	}
-	message := NewFindValueMessage(myself, name) //FindValueMessage
+	message := NewFindValueMessage(myself, kademliaID) //FindValueMessage
 	tempTable := NewContactStateList(myself.ID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
 
@@ -159,7 +160,9 @@ func (kademlia *Kademlia) SendFindValueMessage(name *string) []byte {
 			go kademlia.FindValueHelper(*c, message, &ch1, &ch2, &tempTable)
 		}
 	}
+	fmt.Println("SendFindValueMessage: Before ReadData")
 	data := ch2.ReadData()
+	fmt.Println("SendFindValueMessage: After ReadData")
 	ch1.Close()
 	ch2.CloseData()
 	return data
@@ -170,6 +173,7 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		kademlia.net.SendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 
 	if ackMessage.Value != nil {
+		fmt.Println("FindValueHelper: Found Value:")
 		ch2.WriteData(ackMessage.Value) // Can only be written to once.
 		return
 	}
@@ -197,23 +201,25 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 
 /*
 * Sending a store message to neighbors.
+* filename - Filename in plain text e.g. MyFile.txt
 */
 func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
-	myself := kademlia.RT.me
-
+	valueID := NewValueID(filename)
+	
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
-	list := kademlia.SendFindContactMessage(myself.ID)
+	contacts := kademlia.SendFindContactMessage(valueID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
-	for _, v:= range list {
+	for _, v:= range contacts {
+		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
-		message := NewStoreMessage(&v, filename, data)
+		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
 		kademlia.net.SendStoreMessage(v.Address, &message)
 	}
 	//4: Done.
 }
 
 
-func (kademlia *Kademlia) Search(filename *string) file {
+func (kademlia *Kademlia) Search(filename *string) *file {
 	name := []byte(*filename)
 	found := storage.Search(name)
 	return found
@@ -243,11 +249,12 @@ func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr)
  */
 
 func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr){
-	foundFile := kademlia.Search(&fvMessage.Name)
+	filename := fvMessage.Name.String()
+	foundFile := kademlia.Search( &filename )
 	var ackFile []byte
 	var ackNodes []Contact
-	if foundFile.Text == nil{
-		target := NewContact(&message.RPC_ID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
+	if foundFile == nil {
+		target := NewContact(&fvMessage.Name, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 		ackNodes = kademlia.LookupContact(&target)
 	}else{
 		ackFile, _ = json.Marshal(foundFile)

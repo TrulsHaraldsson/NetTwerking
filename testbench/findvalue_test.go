@@ -40,7 +40,8 @@ func TestFindValue(t *testing.T) {
 
 	fmt.Println("Complete store!")
 	//After storing an item on node 8401, look it up.
-	find := A.SendFindValueMessage(&filename2)
+	A.SendStoreMessage(&filename2, &data)
+	find := A.SendFindValueMessage(d7024e.NewValueID(&filename2))
 	time.Sleep(50 * time.Millisecond)
 	fmt.Println("Find : ", find)
 }
