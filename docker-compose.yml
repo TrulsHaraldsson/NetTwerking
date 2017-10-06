@@ -1,0 +1,22 @@
+version: '3'
+services:
+  kademlia-interactive:
+    image: nettwerking_kademlia-interactive:latest
+    stdin_open: true
+    tty: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["go", "run", "testbench/interactivenode.go", "--port", "7999", "--interactive", "true"]
+    deploy:
+      replicas: 1
+  kademlia-follower:
+    image: nettwerking_kademlia-follower:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["go", "run", "testbench/interactivenode.go", "--port", "7999", "--interactive", "false"]
+    depends_on:
+      - kademlia-interactive
+    deploy:
+      replicas: 20
