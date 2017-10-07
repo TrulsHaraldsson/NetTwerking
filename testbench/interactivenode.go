@@ -5,6 +5,7 @@ import (
 	"flag"
 	//"strings"
 	"fmt"
+	"io/ioutil"
 	"os"
 	//"log"
 	"strconv"
@@ -38,6 +39,9 @@ func main() {
 
 	interactive := flag.String("interactive", "false", "Manual Control")
 
+	id := flag.String("id", "none", "id of node to connect to")
+	addr := flag.String("addr", "none", "ip address of node to connect to")
+
 	flag.Parse()
 
 	fmt.Println(*port)
@@ -70,7 +74,8 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 	if *interactive == "true" {
-		kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "none")
+		kID := "abcdef1234abcdef1234abcdef1234abcdef1234"
+		kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), kID, nil)
 		fmt.Println("Following options are valid:")
 		fmt.Println("QUIT, quits the program.")
 		fmt.Println("PING, send ping message to a given port on localhost.")
@@ -92,6 +97,9 @@ func main() {
 				onFindValue(kademlia, reader)
 			case d7024e.STORE:
 				onStore(kademlia, reader)
+			case "ls": //shows 20 closest contacts to a random id.
+				c := d7024e.NewContact(d7024e.NewKademliaID(kID), "lol")
+				fmt.Println(kademlia.LookupContact(&c))
 			default:
 				fmt.Println("Wrong syntax in message, ignoring it...")
 			}
@@ -100,7 +108,10 @@ func main() {
 		}
 	} else {
 		time.Sleep(1 * time.Second)
-		d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "10.0.0.2:7999")
+		fmt.Println("Connecting to addr:", *addr)
+		fmt.Println("With ID:", *id)
+		initContact := d7024e.NewContact(d7024e.NewKademliaID(*id), *addr)
+		d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", &initContact)
 		for {
 			time.Sleep(1 * time.Second)
 		}
@@ -138,8 +149,23 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 		kID = d7024e.NewKademliaID(rid)
 	}
 	contacts := kademlia.SendFindContactMessage(kID)
-	fmt.Println("Contacts found:", contacts)
+	fmt.Println("Number of contacts found:", len(contacts))
 }
+
+/* Old function
+func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	fmt.Println("Please write the path/name of the file you want to store.")
+	rid, _ := reader.ReadString('\n')
+	f, _ := os.Open(rid[:len(rid)-1])
+	content, _ := ioutil.ReadAll(f)
+	content = []byte(content)
+	fmt.Println("You wish to store \n", string(content), "\nUnder which name?")
+	name, _ := reader.ReadString('\n')
+	name = name[:len(name)-1]
+	kademlia.SendStoreMessage(&name, &content)
+	fmt.Println("Store Sent!", name)
+}
+*/
 
 func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 	fmt.Println("Want to store a new file or load an already existing one?\n new or load")

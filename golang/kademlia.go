@@ -2,7 +2,9 @@ package d7024e
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
+	"time"
 )
 
 var Information []Item
@@ -45,11 +47,12 @@ func NewKademlia(addr string, kID string) *Kademlia {
 	return &kademlia
 }
 
-func CreateAndStartNode(address string, kID string, connecAddr string) *Kademlia {
+func CreateAndStartNode(address string, kID string, initContact *Contact) *Kademlia {
 	kademlia := NewKademlia(address, kID)
 	kademlia.Start()
-	if connecAddr != "none" {
-		kademlia.JoinNetwork(connecAddr)
+	if initContact != nil {
+		kademlia.RT.update(*initContact)
+		kademlia.JoinNetwork()
 	}
 	return kademlia
 }
@@ -61,9 +64,19 @@ func (kademlia *Kademlia) Start() {
 	go kademlia.net.Listen()
 }
 
-func (kademlia *Kademlia) JoinNetwork(addr string) {
-	kademlia.Ping(addr)
-	kademlia.SendFindContactMessage(kademlia.RT.me.ID)
+func (kademlia *Kademlia) JoinNetwork() {
+	for {
+		// fmt.Println("routingtable size:", kademlia.RT.Contacts())
+		// c := NewContact(NewRandomKademliaID(), "address:123")
+		// fmt.Println("routingtable contacts:", kademlia.LookupContact(&c))
+		contacts := kademlia.SendFindContactMessage(kademlia.RT.me.ID)
+		if len(contacts) > 1 {
+			fmt.Println("breaking, len is:", len(contacts))
+			break
+		}
+		fmt.Println("not breaking, len is:", len(contacts))
+		time.Sleep(2 * time.Second)
+	}
 	for i := 1; i < kademlia.RT.Size()-2; i++ {
 		id := kademlia.RT.getRandomIDForBucket(i)
 		go kademlia.SendFindContactMessage(id)
@@ -89,14 +102,11 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	targetID := kademliaID
 	target := NewContact(targetID, "DummyAdress")
 	closestContacts := kademlia.LookupContact(&target)
-	if closestContacts[0].ID.Equals(kademliaID) && !closestContacts[0].Equals(*(kademlia.RT.me)) { //If found locally, and not itself.
-		return closestContacts
-	}
-
 	message := NewFindNodeMessage(kademlia.RT.me, targetID) // Create message to be sent.
 
 	tempTable := NewContactStateList(targetID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
+	tempTable.MarkReceived(*kademlia.RT.me)
 	ch := CreateChannel()                     // Creates a channel that can only be written to once.
 
 	for i := 0; i < kademlia.net.alpha; i++ { // Start with alpha RPC's
@@ -115,6 +125,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 	rMessage, ackMessage, err :=
 		kademlia.net.sendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 	if err != nil {
+		fmt.Println(err)
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
