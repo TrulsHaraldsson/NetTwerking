@@ -12,9 +12,8 @@ import (
 )
 
 func TestKademliaBootstrap(t *testing.T) {
-	k1 := CreateAndStartNode("localhost:11000", "none", "none")
-
-	k2 := CreateAndStartNode("localhost:12000", "none", "localhost:11000")
+	k1 := CreateAndStartNode("localhost:11000", "none", nil)
+	k2 := CreateAndStartNode("localhost:12000", "none", k1.RT.me)
 	if k1.RT.Contacts() != 2 || k2.RT.Contacts() != 2 {
 		t.Error("Wrong amount of contacts in rt after bootstrap...")
 	}

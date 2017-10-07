@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const MESSAGE_SIZE = 1024
+const MESSAGE_SIZE = 4096
 
 type Network struct {
 	alpha    int
@@ -36,7 +36,7 @@ func (network Network) Listen() {
 	defer udpConn.Close()
 	for {
 		b, addrClient, err := network.ReadAnswer(udpConn)
-		fmt.Println("message received.")
+		//fmt.Println("message received.")
 		if err != nil {
 			// handle error
 			fmt.Println("Error when reading from socket...", err)
@@ -60,8 +60,7 @@ func (network Network) Listen() {
 func (network Network) HandleConnection(message Message, mData interface{}, addr net.Addr) {
 	switch message.MsgType {
 	case PING:
-		fmt.Println("Ping message received")
-		fmt.Println("address is:", addr.String())
+		//fmt.Println("Ping message received")
 		network.kademlia.OnPingMessageReceived(&message, addr)
 	case FIND_NODE:
 		//fmt.Println("Find node message received")
@@ -173,13 +172,13 @@ func (network *Network) SendData(addr string, data []byte) ([]byte, error) {
 	addrLocal := CreateAddr(ip, 0)
 	addrRemote, _ := net.ResolveUDPAddr("udp", addr)
 	udpConn, err := net.ListenPacket("udp", addrLocal)
-	fmt.Println("address is:", network.addr)
+	//fmt.Println("address is:", network.addr)
 	if err != nil {
 		fmt.Println(err)
 		return returnMsg, err
 	}
 	udpConn.SetDeadline(time.Now().Add(timeOut))
-	fmt.Println("Listening on", udpConn.LocalAddr().String())
+	//fmt.Println("Listening on", udpConn.LocalAddr().String())
 	defer udpConn.Close()
 	_, err2 := udpConn.WriteTo(data, addrRemote)
 	if err2 != nil {
