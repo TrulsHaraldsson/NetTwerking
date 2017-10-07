@@ -5,10 +5,10 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
-	"io/ioutil"
 	//"strconv"
 
 	"net"
@@ -80,7 +80,7 @@ func main() {
 		fmt.Println("PING, send ping message to a given port on localhost.")
 		fmt.Println("FIND_NODE, search for closest nodes to specified ID.")
 		fmt.Println("STORE, store a file with a given name")
-//		fmt.Println("FIND_VALUE, find a file")
+		//		fmt.Println("FIND_VALUE, find a file")
 		input, _ := reader.ReadString('\n')
 		input = input[:len(input)-1]
 		for {
@@ -96,7 +96,7 @@ func main() {
 				onFindValue(kademlia, reader)
 			case d7024e.STORE:
 				onStore(kademlia, reader)
-			case "ls":
+			case "ls": //shows 20 closest contacts to a random id.
 				c := d7024e.NewContact(d7024e.NewKademliaID(kID), "lol")
 				fmt.Println(kademlia.LookupContact(&c))
 			default:
@@ -151,13 +151,13 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Number of contacts found:", len(contacts))
 }
 
-func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader){
+func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Please write the path/name of the file you want to store.")
 	rid, _ := reader.ReadString('\n')
 	f, _ := os.Open(rid[:len(rid)-1])
-  content, _ := ioutil.ReadAll(f)
+	content, _ := ioutil.ReadAll(f)
 	content = []byte(content)
-	fmt.Println("You wish to store \n",string(content), "\nUnder which name?")
+	fmt.Println("You wish to store \n", string(content), "\nUnder which name?")
 	name, _ := reader.ReadString('\n')
 	name = name[:len(name)-1]
 	kademlia.SendStoreMessage(&name, &content)
