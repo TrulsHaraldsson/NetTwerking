@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"io/ioutil"
 	//"strconv"
 
 	"net"
@@ -78,6 +79,8 @@ func main() {
 		fmt.Println("QUIT, quits the program.")
 		fmt.Println("PING, send ping message to a given port on localhost.")
 		fmt.Println("FIND_NODE, search for closest nodes to specified ID.")
+		fmt.Println("STORE, store a file with a given name")
+//		fmt.Println("FIND_VALUE, find a file")
 		input, _ := reader.ReadString('\n')
 		input = input[:len(input)-1]
 		for {
@@ -148,22 +151,25 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Number of contacts found:", len(contacts))
 }
 
-func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
-	fmt.Println("Please write the kademliaID that the VALUE have")
-	/*rid, _ := reader.ReadString('\n')
+func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader){
+	fmt.Println("Please write the path/name of the file you want to store.")
+	rid, _ := reader.ReadString('\n')
+	f, _ := os.Open(rid[:len(rid)-1])
+  content, _ := ioutil.ReadAll(f)
+	content = []byte(content)
+	fmt.Println("You wish to store \n",string(content), "\nUnder which name?")
+	name, _ := reader.ReadString('\n')
+	name = name[:len(name)-1]
+	kademlia.SendStoreMessage(&name, &content)
+	fmt.Println("Store Sent!", name)
+}
+
+/*
+func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader){
+	fmt.Println("Please write the name of the file you wish to see content off.")
+	rid, _ := reader.ReadString('\n')
 	rid = rid[:len(rid)-1]
-	var kID *d7024e.KademliaID
-	if rid == "none" {
-		kID = d7024e.NewRandomKademliaID()
-	} else {
-		kID = d7024e.NewKademliaID(rid)
-	}
-	data_as_byte_array := kademlia.SendFindValueMessage(kID)
-	fmt.Println("Value found:", data_as_byte_array)
-	*/
-
+	content := kademlia.SendFindValueMessage(&rid)
+	fmt.Println("Content : ", string(content))
 }
-
-func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
-	fmt.Println("Not implemented yet")
-}
+*/
