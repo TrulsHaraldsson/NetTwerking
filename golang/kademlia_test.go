@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
-	"fmt"
 )
 
 func TestKademliaBootstrap(t *testing.T) {
@@ -151,7 +150,6 @@ func TestKademliaRAMSearch(t *testing.T) {
 	json.Unmarshal(message.Data, &storeMessage)
 	kademlia.Store(storeMessage)
 	file := kademlia.Search(&filename)
-	fmt.Println("file returned : ", &file)
 	if *file == ""{
 //		bText := []byte(string(file.Text))
 //		bool := bytes.EqualFold(bText, data)

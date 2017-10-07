@@ -222,7 +222,7 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 
 func (kademlia *Kademlia) Search(filename *string) *string {
 	name := []byte(*filename)
-	found := storage.Search(name)
+	found := kademlia.storage.Search(name)
 	//fmt.Println("Searched for filename : ", filename, "Got : ", string(found.Text), "with type : ", reflect.TypeOf(found.Text))
 	text := string(found.Text)
 //	fmt.Println("Text to return : ", string(text), "type : ", reflect.TypeOf(string(text)))
@@ -239,7 +239,7 @@ func (kademlia *Kademlia) Search(filename *string) *string {
  */
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	name := []byte(m.Name)
-	storage.RAM(name, m.Data)
+	kademlia.storage.RAM(name, m.Data)
 //	fmt.Println("Storing into RAM")
 	return
 }

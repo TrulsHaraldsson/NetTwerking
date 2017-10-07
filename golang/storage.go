@@ -5,7 +5,7 @@ import(
   //"log"
   "reflect"
 //  "os"
-  "fmt"
+  //"fmt"
   "io/ioutil"
 )
 
@@ -82,7 +82,7 @@ and return it.
 func (storage *Storage) ReadMemory(name []byte) *file {
   content, err := ioutil.ReadFile("/tmp/" + string(name))
 	if err != nil {
-		fmt.Println("ReadMemory if file exist: ", err)
+		//fmt..Println("ReadMemory if file exist: ", err)
 		return nil
 	}
   //fmt.Printf("File contents: %s", content,"\n")
