@@ -3,7 +3,7 @@ package d7024e
 import (
   "testing"
   "time"
-  "fmt"
+//  "fmt"
 //  "reflect"
 )
 
@@ -17,15 +17,15 @@ func TestTimer(t *testing.T){
   ticker := time.NewTicker(time.Millisecond * 500)
     go func() {
         for t := range ticker.C {
-            fmt.Println("Tick\n")
+//            fmt.Println("Tick\n")
             timers.showTimer(t)
         }
     }()
 
   time.Sleep(time.Millisecond * 2600)
   ticker.Stop()
-  now := time.Now()
-  fmt.Println("Time stopped at : ", now.String())
+//  now := time.Now()
+//  fmt.Println("Time stopped at : ", now.String())
 }
 
 func TestInterval(t *testing.T){
@@ -39,6 +39,6 @@ func TestInterval(t *testing.T){
 
   time.Sleep(time.Millisecond * 2600)
   ticker.Stop()
-  now := time.Now()
-  fmt.Println("Time stopped at : ", now.String())
+//  now := time.Now()
+//  fmt.Println("Time stopped at : ", now.String())
 }

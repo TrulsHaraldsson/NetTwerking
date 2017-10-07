@@ -475,4 +475,10 @@ func TestBSTContacts(t *testing.T) {
 	if rt.root.Contacts() != 2 {
 		t.Error("The amount contacts in tree should be 2, but is", rt.root.Contacts())
 	}
+
+	c3 := NewContact(NewKademliaID("1000000000000000000000000000000000000002"), "lol:1234")
+	rt.update(c3)
+	if rt.root.Contacts() != 3 {
+		t.Error("The amount contacts in tree should be 3, but is", rt.root.Contacts())
+	}
 }

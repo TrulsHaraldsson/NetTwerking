@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -33,9 +33,9 @@ func TestFindNode1(t *testing.T) {
 	D.Ping("localhost:8102")
 	time.Sleep(10 * time.Millisecond)
 
-	fmt.Println("All nodes connected", A)
+	//fmt.Println("All nodes connected", A)
 	contacts := A.SendFindContactMessage(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
-	fmt.Println("Closest contact returned:", contacts[0])
+	//fmt.Println("Closest contact returned:", contacts[0])
 	if !contacts[0].ID.Equals(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")) {
 		t.Error("Not correct contact returned", contacts[0])
 	}
@@ -59,13 +59,12 @@ func TestFindNode2(t *testing.T) {
 	}
 
 	contacts := Node.SendFindContactMessage(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
-	fmt.Println(contacts)
-	fmt.Println("length:", len(contacts))
+	//fmt.Println(contacts)
+	//fmt.Println("length:", len(contacts))
 	if contacts[0].ID.Equals(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")) {
 		t.Error("Contact found, when not supposed to")
 	}
 	if len(contacts) != 20 {
 		t.Error("Supposed to be of length 20, but is", len(contacts))
 	}
-
 }

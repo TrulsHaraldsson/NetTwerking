@@ -3,6 +3,7 @@ package d7024e
 import (
 	"testing"
 	"bytes"
+	//"fmt"
 	"crypto/sha1"
 	"reflect"
 )
@@ -25,9 +26,13 @@ func TestStorageStoreInMemory(t *testing.T) {
 	text := []byte("This is a test content for a temp file.")
 	storage.Memory(name, text)
 	file := storage.ReadMemory(name)
-	bool := bytes.EqualFold(file.Text, text)
-	if bool == false {
-		t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
+	if file == nil{
+		t.Error("File is nil")
+	}else{
+		bool := bytes.EqualFold(file.Text, text)
+		if bool == false {
+			t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
+		}
 	}
 }
 
@@ -38,9 +43,13 @@ func TestStorageMoveToMemory(t *testing.T) {
 	storage.RAM(nameT, textT)
 	storage.MoveToMemory(nameT)
 	file := storage.ReadMemory(nameT)
-	bool := bytes.EqualFold(textT, file.Text)
-	if bool == false {
-		t.Error("File content do not match!\n", string(textT) ,"\n", string(file.Text),"\n")
+	if file == nil{
+		t.Error("File is nil")
+	}else{
+		bool := bytes.EqualFold(textT, file.Text)
+		if bool == false {
+			t.Error("File content do not match!\n", string(textT) ,"\n", string(file.Text),"\n")
+		}
 	}
 }
 
@@ -50,18 +59,26 @@ func TestStorageSearch(t *testing.T){
 	text := []byte("File content when creating StorageSearch test!")
 	storage.RAM(name, text)
 	file := storage.Search(name)
-	bool := bytes.EqualFold(file.Text, text)
-	if bool == false {
-		t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
+	if file == nil{
+		t.Error("File is nil")
+	}else{
+		bool := bytes.EqualFold(file.Text, text)
+		if bool == false {
+			t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
+		}
 	}
 
 	name2 := []byte("filename4")
 	text2 := []byte("File content when creating StorageSearch test 2!")
 	storage.Memory(name2, text2)
 	filed := storage.ReadMemory(name2)
-	bool2 := bytes.EqualFold(filed.Text, text2)
-	if bool2 == false {
-		t.Error("File content do not match!\n", string(text2) ,"\n", string(filed.Text),"\n")
+	if filed == nil{
+		t.Error("File is nil")
+	}else{
+		bool2 := bytes.EqualFold(filed.Text, text2)
+		if bool2 == false {
+			t.Error("File content do not match!\n", string(text2) ,"\n", string(filed.Text),"\n")
+		}
 	}
 }
 

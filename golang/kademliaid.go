@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"math/rand"
 	"time"
+	"crypto/sha1"
 )
 
 const IDLength = 20
@@ -24,6 +25,23 @@ func NewKademliaID(data string) *KademliaID {
 
 	return &newKademliaID
 }
+
+func NewValueID(filename *string) *KademliaID{
+	hash := sha1.New().Sum([]byte(*filename))
+	newKademliaID := KademliaID{}
+	for i := 0; i < IDLength; i++ {
+		newKademliaID[i] = hash[i]
+	}
+	return &newKademliaID	
+}
+
+/*func NewKademliaIDFromByteArray(id []byte) *KademliaID {
+	newKademliaID := KademliaID{}
+	for i := 0; i < IDLength; i++ {
+		newKademliaID[i] = id[i]
+	}
+	return &newKademliaID
+}*/
 
 /*
  * Creates a new random-object with a seed based on current time. Hopefully this will be

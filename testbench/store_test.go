@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"testing"
 	"time"
 
@@ -32,7 +32,7 @@ func TestStoreToAll(t *testing.T) {
 	D.Ping("localhost:8400")
 	time.Sleep(50 * time.Millisecond)
 
-	fmt.Println("All nodes connected")
+	//fmt.Println("All nodes connected")
 	filename := "filenameShit"
 	data := []byte("Testing a fucking shit send.")
 	A.SendStoreMessage(&filename, &data)
@@ -53,7 +53,7 @@ func TestStoreToOne(t *testing.T) {
 	B.Ping("localhost:8410")
 	time.Sleep(50 * time.Millisecond)
 
-	fmt.Println("All nodes connected")
+	//fmt.Println("All nodes connected")
 	filename1 := "failname"
 	data1 := []byte("Testing a fucking shit send 1 time.")
 	A.SendStoreMessage(&filename1, &data1)
