@@ -174,7 +174,7 @@ func (network *Network) SendData(addr string, data []byte) ([]byte, error) {
 	udpConn, err := net.ListenPacket("udp", addrLocal)
 	//fmt.Println("address is:", network.addr)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("ListenPacket error", err)
 		return returnMsg, err
 	}
 	udpConn.SetDeadline(time.Now().Add(timeOut))
@@ -182,12 +182,12 @@ func (network *Network) SendData(addr string, data []byte) ([]byte, error) {
 	defer udpConn.Close()
 	_, err2 := udpConn.WriteTo(data, addrRemote)
 	if err2 != nil {
-		fmt.Println(err2)
+		fmt.Println("WriteTo error", err2)
 		return returnMsg, err2
 	}
 	returnMsg, _, err3 := network.ReadAnswer(udpConn)
 	if err3 != nil {
-		fmt.Println(err3)
+		fmt.Println("Read answer error", err3)
 		return returnMsg, err3
 	}
 	return returnMsg, nil

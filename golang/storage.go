@@ -4,9 +4,9 @@ import(
   "crypto/sha1"
   //"log"
   "reflect"
-  "os"
+//  "os"
+  "fmt"
   "io/ioutil"
-  //"fmt"
 )
 
 type Storage struct{}
@@ -54,10 +54,10 @@ func (storage *Storage) ReadRAM(name []byte) *file{
     if reflect.DeepEqual(v.Name, name) {
       file.Name = v.Name
       file.Text = v.Text
-      break
+      return &file
     }
   }
-  return &file
+  return nil
 }
 
 /*
@@ -68,7 +68,7 @@ check Memory if it's there and return.
 */
 func (storage *Storage) Search(name []byte) *file{
   returnedFile := storage.ReadRAM(name)
-  if returnedFile.Name == nil{
+  if returnedFile == nil{
     // Check if memory has file.
     returnedFile = storage.ReadMemory(name)
   }
@@ -82,19 +82,18 @@ and return it.
 func (storage *Storage) ReadMemory(name []byte) *file {
   content, err := ioutil.ReadFile("/tmp/" + string(name))
 	if err != nil {
-//		fmt.Println("ReadMemory:", err)
+		fmt.Println("ReadMemory if file exist: ", err)
 		return nil
 	}
-  //hashedName := storage.HashFile(name)
+  //fmt.Printf("File contents: %s", content,"\n")
   returnedFile := &file{name, []byte(content)}
 
   /*
   * When a file is retrieved from Memory, move it from Memory to RAM.
   */
   storage.RAM(name,[]byte(content))
-  path := "/tmp/" + string(name)
-  os.Remove(path) // clean up temp
-
+//  path := "/tmp/" + string(name)
+//  os.Remove(path) // clean up temp
   return returnedFile
 }
 
@@ -103,7 +102,6 @@ func (storage *Storage) ReadMemory(name []byte) *file {
 */
 func (storage *Storage) RAM(name []byte, text []byte){
   //fileName := storage.HashFile(name)
-  //fmt.Println("RAM: Storing file", string(name))
   newFile := file{name, text}
   Files = append(Files, newFile)
   return
@@ -113,7 +111,8 @@ func (storage *Storage) RAM(name []byte, text []byte){
 * Store a file into Memory, does not return anything.
 */
 func (storage *Storage) Memory(name []byte, text []byte) {
-  file := "/tmp/" + string(name)
+  file := string(name)
+  file = "/tmp/" + file
   err := ioutil.WriteFile(file, text, 0644)
   if err != nil{
     panic(err)

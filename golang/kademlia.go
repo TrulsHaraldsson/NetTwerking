@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net"
 	//"fmt"
+	//"reflect"
 )
 
 var Information []Item
@@ -139,7 +140,10 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 /*
  * Request to find a value over the network.
  */
-func (kademlia *Kademlia) SendFindValueMessage(kademliaID *KademliaID) []byte {
+//func (kademlia *Kademlia) SendFindValueMessage(kademliaID *KademliaID) []byte {
+func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
+	kademliaID := NewValueID(filename)
+//	fmt.Println("filename : ", kademliaID, reflect.TypeOf(kademliaID),"\n")
 	myself := kademlia.RT.me
 	closestContacts := kademlia.LookupContact(myself) //BackHere
 	//if closestContacts[0].ID.Equals(myself.ID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
@@ -201,9 +205,9 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 * Sending a store message to neighbors.
 * filename - Filename in plain text e.g. MyFile.txt
 */
-func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
+func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *KademliaID {
 	valueID := NewValueID(filename)
-
+	//fmt.Println("In SendStoreMessage\nValueID ", valueID.String(), " type : ", reflect.TypeOf(valueID))
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
 	contacts := kademlia.SendFindContactMessage(valueID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
@@ -213,14 +217,21 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte){
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
 		kademlia.net.SendStoreMessage(v.Address, &message)
 	}
+	return valueID
 	//4: Done.
 }
 
 
-func (kademlia *Kademlia) Search(filename *string) *file {
+func (kademlia *Kademlia) Search(filename *string) *string {
 	name := []byte(*filename)
 	found := storage.Search(name)
-	return found
+	//fmt.Println("Searched for filename : ", filename, "Got : ", string(found.Text), "with type : ", reflect.TypeOf(found.Text))
+	text := string(found.Text)
+//	fmt.Println("Text to return : ", string(text), "type : ", reflect.TypeOf(string(text)))
+	strtext := string(text)
+	return &strtext
+	//return &found.Text
+
 }
 
 /*
@@ -231,6 +242,7 @@ func (kademlia *Kademlia) Search(filename *string) *file {
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	name := []byte(m.Name)
 	storage.RAM(name, m.Data)
+//	fmt.Println("Storing into RAM")
 	return
 }
 

@@ -20,12 +20,12 @@ func initKademliaAndNetwork(rt *RoutingTable, port int) (*Kademlia, *Network) {
 
 func TestNetworkListen(t *testing.T) {
 	_, rt := CreateTestRT()
-
 	_, network := initKademliaAndNetwork(rt, 8000)
 
 	go network.Listen()
 	time.Sleep(50 * time.Millisecond)
 	kID := NewContact(NewRandomKademliaID(), "adress")
+
 	/*
 	* Create a file in tmp before this test!
 	 */
@@ -35,14 +35,14 @@ func TestNetworkListen(t *testing.T) {
 	bytefilename1 := []byte(filename1)
 	bytefiletext1 := []byte("Testing")
 	storage.Memory(bytefilename1, bytefiletext1)
-
+/*
 	m1 := NewFindValueMessage(&kID, NewValueID(&filename1))
 	m1Json, _ := json.Marshal(m1)
 	err1 := network.ConnectAndWrite("localhost:8000", m1Json)
 	if err1 != nil {
 		t.Error("error1:", err1)
 	}
-
+*/
 	//fmt.Println("HELLO2")
 	m2 := NewPingMessage(&kID)
 	m2Json, _ := json.Marshal(m2)
@@ -83,7 +83,7 @@ func TestNetworkSendMessage(t *testing.T) {
 	network := NewNetwork(3, "localhost:3333")
 	returnMsg, _, err := network.SendMessage("localhost:7999", msg)
 	if err != nil {
-		t.Error(err)
+		t.Error("SendMessage error ", err)
 	}
 
 	if !msg.Equal(returnMsg) {
@@ -106,7 +106,7 @@ func TestNetworkSendPingMessage(t *testing.T) {
 	pingMsg := NewPingMessage(kademlia2.RT.me)
 	msg, err := network2.SendPingMessage("localhost:8019", &pingMsg)
 	if err != nil {
-		t.Error(err)
+		t.Error("error ", err)
 	}
 	if msg.MsgType != PING_ACK {
 		t.Error("Did not receive an ack for the ping message...")
