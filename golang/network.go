@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const MESSAGE_SIZE = 1024
+const MESSAGE_SIZE = 4096
 
 type Network struct {
 	alpha    int
@@ -60,7 +60,6 @@ func (network Network) handleConnection(message Message, mData interface{}, addr
 	switch message.MsgType {
 	case PING:
 		//fmt.Println("Ping message received")
-		//fmt.Println("address is:", addr.String())
 		network.kademlia.OnPingMessageReceived(&message, addr)
 	case FIND_NODE:
 		//fmt.Println("Find node message received")

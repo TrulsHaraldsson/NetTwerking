@@ -6,4 +6,4 @@ ADD . /app
 
 EXPOSE 7999
 
-#CMD ["go", "run", "testbench/interactivenode.go", "--port", "7999", "--interactive", "true"]
+CMD ["go", "run", "testbench/interactivenode.go", "--port", "7999", "--interactive", "true"]
