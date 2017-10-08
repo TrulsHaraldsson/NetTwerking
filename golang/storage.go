@@ -80,9 +80,9 @@ func (storage *Storage) Search(name []byte) *file{
 and return it.
 */
 func (storage *Storage) ReadMemory(name []byte) *file {
-  content, err := ioutil.ReadFile("/tmp/" + string(name))
+  filename := "./files/" + string(name)
+  content, err := ioutil.ReadFile(filename)
 	if err != nil {
-		//fmt..Println("ReadMemory if file exist: ", err)
 		return nil
 	}
   //fmt.Printf("File contents: %s", content,"\n")
@@ -111,12 +111,17 @@ func (storage *Storage) RAM(name []byte, text []byte){
 * Store a file into Memory, does not return anything.
 */
 func (storage *Storage) Memory(name []byte, text []byte) {
-  file := string(name)
+  /*file := string(name)
   file = "/tmp/" + file
   err := ioutil.WriteFile(file, text, 0644)
   if err != nil{
     panic(err)
-  }
+  }*/
+  filename := "./files/" + string(name)
+	err2 := ioutil.WriteFile(filename, text, 0644)
+	if err2 != nil {
+		panic(err2)
+	}
 }
 
 /*
