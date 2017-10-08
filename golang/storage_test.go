@@ -3,9 +3,9 @@ package d7024e
 import (
 	"testing"
 	"bytes"
-	//"fmt"
 	"crypto/sha1"
 	"reflect"
+	"os"
 )
 
 func TestStorageStoreInRAM(t *testing.T) {
@@ -34,6 +34,8 @@ func TestStorageStoreInMemory(t *testing.T) {
 			t.Error("File content do not match!\n", string(text) ,"\n", string(file.Text),"\n")
 		}
 	}
+	path := "./../newfiles/" + string(name)
+	os.Remove(path)
 }
 func TestStorageMoveToMemory(t *testing.T) {
 	storage := Storage{}
@@ -50,6 +52,8 @@ func TestStorageMoveToMemory(t *testing.T) {
 			t.Error("File content do not match!\n", string(textT) ,"\n", string(file.Text),"\n")
 		}
 	}
+	path := "./../newfiles/" + string(nameT)
+	os.Remove(path)
 }
 
 func TestStorageSearch(t *testing.T){
@@ -79,6 +83,8 @@ func TestStorageSearch(t *testing.T){
 			t.Error("File content do not match!\n", string(text2) ,"\n", string(filed.Text),"\n")
 		}
 	}
+	path := "./../newfiles/" + string(name2)
+	os.Remove(path)
 }
 
 func TestStorageHash(t *testing.T){

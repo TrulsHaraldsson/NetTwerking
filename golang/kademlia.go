@@ -1,5 +1,7 @@
 package d7024e
 
+//Self comment : All tests pass
+
 import (
 	"encoding/json"
 	"fmt"

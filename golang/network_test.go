@@ -1,7 +1,5 @@
 package d7024e
 
-//All current tests work according to : go test -run Network
-
 import (
 	"encoding/json"
 	"net"

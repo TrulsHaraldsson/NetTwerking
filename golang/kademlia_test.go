@@ -2,13 +2,12 @@ package d7024e
 
 // According to : (go test -cover -tags KademliaNode) gives 89.6% test coverage atm.
 
-//All current test work when calling : go test -run Kademlia
-
 import (
-	//"bytes"
 	"encoding/json"
 	"testing"
 	"time"
+	"bytes"
+	"os"
 )
 
 func TestKademliaBootstrap(t *testing.T) {
@@ -146,24 +145,14 @@ func TestKademliaRAMSearch(t *testing.T) {
 	kademlia.Store(storeMessage)
 	file := kademlia.Search(&filename)
 	if *file == ""{
-//		bText := []byte(string(file.Text))
-//		bool := bytes.EqualFold(bText, data)
-//		if bool == false {
-
-		t.Error("File content do not match!\n")
-//			t.Error("File content do not match!\n", string(data), "\n", string(file.Text), "\n")
-		//}
-	}
-
-
-	/*if file != nil{
-		bool := bytes.EqualFold(file.Text, data)
+		bText := []byte(*file)
+		bool := bytes.EqualFold(bText, data)
 		if bool == false {
-			t.Error("File content do not match!\n", string(data), "\n", string(file.Text), "\n")
+			t.Error("File content do not match!\n")
 		}
-	} */
+	}
 }
-/*
+
 func TestKademliaMemorySearch(t *testing.T) {
 	name := "filenameXY"
 	filename := []byte(name)
@@ -172,11 +161,13 @@ func TestKademliaMemorySearch(t *testing.T) {
 	storage := Storage{}
 	storage.Memory(filename, data)
 	file := kademlia.Search(&name)
-	if file != nil{
-		bool := bytes.EqualFold(file.Text, data)
+	if *file == ""{
+		bText := []byte(*file)
+		bool := bytes.EqualFold(bText, data)
 		if bool == false {
-			t.Error("File content do not match!\n", string(data), "\n", string(file.Text), "\n")
+			t.Error("File content do not match!\n")
 		}
 	}
+	path := "./../newfiles/" + name
+	os.Remove(path)
 }
-*/
