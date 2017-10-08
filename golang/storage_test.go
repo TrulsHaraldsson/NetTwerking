@@ -35,7 +35,6 @@ func TestStorageStoreInMemory(t *testing.T) {
 		}
 	}
 }
-
 func TestStorageMoveToMemory(t *testing.T) {
 	storage := Storage{}
 	nameT := []byte("filenameX450")

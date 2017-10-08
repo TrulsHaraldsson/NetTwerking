@@ -9,8 +9,7 @@ import (
 	"log"
 	"strconv"
 	"time"
-	"reflect"
-	"io/ioutil"
+	//"reflect"
 	"net"
 	"../golang"
 )
@@ -72,7 +71,6 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 	if *interactive == "true" {
-<<<<<<< HEAD
 		kID := "abcdef1234abcdef1234abcdef1234abcdef1234"
 		kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), kID, nil)
 		//kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "none")

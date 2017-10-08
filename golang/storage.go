@@ -4,7 +4,7 @@ import(
   "crypto/sha1"
   //"log"
   "reflect"
-//  "os"
+  //"os"
   //"fmt"
   "io/ioutil"
 )
@@ -80,7 +80,23 @@ func (storage *Storage) Search(name []byte) *file{
 and return it.
 */
 func (storage *Storage) ReadMemory(name []byte) *file {
-  filename := "./files/" + string(name)
+  /*
+  path := "./../newfiles"
+  files, err := ioutil.ReadDir(path)
+  if err != nil {
+    fmt.Println(err)
+  }
+  fmt.Println("\n")
+  for _, f := range files {
+    fmt.Println(f.Name())
+  }
+  filename := "./../files/" + string(name)
+  err = os.Chmod(filename, 0666)
+  if err != nil {
+     fmt.Println(err)
+  }
+*/
+  filename := "./../newfiles/" + string(name)
   content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil
@@ -92,8 +108,8 @@ func (storage *Storage) ReadMemory(name []byte) *file {
   * When a file is retrieved from Memory, move it from Memory to RAM.
   */
   storage.RAM(name,[]byte(content))
-//  path := "/tmp/" + string(name)
-//  os.Remove(path) // clean up temp
+//  path := "./files/" + string(name)
+//  os.Remove(path) // clean up
   return returnedFile
 }
 
@@ -111,13 +127,24 @@ func (storage *Storage) RAM(name []byte, text []byte){
 * Store a file into Memory, does not return anything.
 */
 func (storage *Storage) Memory(name []byte, text []byte) {
-  /*file := string(name)
-  file = "/tmp/" + file
-  err := ioutil.WriteFile(file, text, 0644)
-  if err != nil{
-    panic(err)
-  }*/
-  filename := "./files/" + string(name)
+/*  path := "./../newfiles"
+  files, err := ioutil.ReadDir(path)
+  if err != nil {
+    fmt.Println(err)
+  }
+  fmt.Println("\n")
+  for _, f := range files {
+    fmt.Println(f.Name())
+  }
+
+  filename := "./../files/" + string(name)
+  err = os.Create(filename, 0666)
+  if err != nil {
+     fmt.Println(err)
+  }
+*/
+
+  filename := "./../newfiles/" + string(name)
 	err2 := ioutil.WriteFile(filename, text, 0644)
 	if err2 != nil {
 		panic(err2)

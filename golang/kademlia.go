@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"os"
 )
 
 var Information []Item
@@ -29,6 +30,9 @@ type Kademlia struct {
  * NOTE: This function wont start listening.
  */
 func NewKademlia(addr string, kID string) *Kademlia {
+
+	os.Mkdir("./../newfiles/", 0700)
+
 	var kademliaID *KademliaID
 	if kID != "none" {
 		kademliaID = NewKademliaID(kID)
