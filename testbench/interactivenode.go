@@ -182,7 +182,7 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 	text = text[:len(text)-1]
 	data := []byte(text)
 
-	file := "./files/" + filename
+	file := "./newfiles/" + filename
 
 	err := ioutil.WriteFile(file, data, 0644)
 	if err != nil{
@@ -225,7 +225,7 @@ func old(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 
 		//-- Read the old file --//
 
-		name := "./files/" + file
+		name := "./newfiles/" + file
 		content, err2 := ioutil.ReadFile(name)
 		if err2 != nil {
 			fmt.Println("dont exist: ", err2)
@@ -288,7 +288,7 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 }
 
 func onDirectory(kademlia *d7024e.Kademlia, reader *bufio.Reader){
-	path := "./files"
+	path := "./newfiles"
 	files, err := ioutil.ReadDir(path)
   if err != nil {
       log.Fatal(err)
