@@ -125,7 +125,6 @@ func tips(){
 	fmt.Println("FIND_NODE, search for closest nodes to specified ID.")
 	fmt.Println("STORE, store a file with a given name")
 	fmt.Println("FIND_VALUE, find a file by its name")
-//		fmt.Println("LES, see Directory of files")
 }
 func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Please write a port to send to e.g. 65002.")
@@ -158,21 +157,6 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Number of contacts found:", len(contacts))
 }
 
-/* Old function
-func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
-	fmt.Println("Please write the path/name of the file you want to store.")
-	rid, _ := reader.ReadString('\n')
-	f, _ := os.Open(rid[:len(rid)-1])
-	content, _ := ioutil.ReadAll(f)
-	content = []byte(content)
-	fmt.Println("You wish to store \n", string(content), "\nUnder which name?")
-	name, _ := reader.ReadString('\n')
-	name = name[:len(name)-1]
-	kademlia.SendStoreMessage(&name, &content)
-	fmt.Println("Store Sent!", name)
-}
-*/
-
 func new(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 	fmt.Println("Write the name of the new file")
 	filename, _ := reader.ReadString('\n')
@@ -195,22 +179,8 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 	}
 
 	valueID := kademlia.SendStoreMessage(&filename, &content)
-	//valueID := kademlia.SendStoreMessage(&filename, &data)
 	if valueID != nil{
-		//fmt.Println("Store successful and returned filename (type) : ", reflect.TypeOf(valueID),"\n",  valueID)
 		fmt.Println("Storemessage successful!")
-		//-- direct search on the stored file --//
-/*		fmt.Println("\nWrite the name again to see content.\n")
-		text, _ := reader.ReadString('\n')
-		text = text[:len(text)-1]
-		fmt.Println("Name : ", text, reflect.TypeOf(text))
-		find := kademlia.SendFindValueMessage(&text)
-		if find == nil {
-			fmt.Println("Not found!")
-		}else{
-			file := string(find)
-			fmt.Println("Returned file content : ", string(file), "type : ", reflect.TypeOf(file))
-		}*/
 	}else{ //-- The storeMessage failed --//
 		fmt.Println("Storemessage unsuccessful!")
 	}
@@ -236,20 +206,7 @@ func old(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 
 		valueID := kademlia.SendStoreMessage(&file, &content)
 		if valueID != nil{
-			//fmt.Println("Store successful and returned filename (type) : ", reflect.TypeOf(valueID),"\n",  valueID)
 			fmt.Println("Storemessage successful!")
-	/*
-			fmt.Println("\nWrite the name again to see content.\n")
-			text, _ := reader.ReadString('\n')
-			text = text[:len(text)-1]
-			fmt.Println("Name : ", text, reflect.TypeOf(text))
-			find := kademlia.SendFindValueMessage(&text)
-			if find == nil {
-				fmt.Println("Not found!")
-			}else{
-				file := string(find)
-				fmt.Println("Returned file content : ", string(file), "type : ", reflect.TypeOf(file))
-			}*/
 		}else{
 			fmt.Println("Storemessage unsuccessful!")
 		}
@@ -276,7 +233,6 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 	fmt.Println("\nWrite the name of the file you wish to see content off.\n")
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
-	//fmt.Println("Name : ", text, reflect.TypeOf(text))
 	find := kademlia.SendFindValueMessage(&text)
 	if find == nil {
 		fmt.Println("Not found!")
