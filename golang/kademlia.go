@@ -183,8 +183,8 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 		}
 	}
 	data := ch2.ReadData()
-	fmt.Println("SendFindValueMessage: After ReadData", string(data))
 	ch2.CloseData()
+	fmt.Println("SendFindValueMessage return : ", string(data))
 	return data
 }
 
