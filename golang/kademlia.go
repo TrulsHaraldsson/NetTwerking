@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"time"
 	"os"
+	"time"
 )
 
 var Information []Item
@@ -16,9 +16,9 @@ type Item struct {
 }
 
 type Kademlia struct {
-	RT  *RoutingTable
-	K   int
-	net *Network
+	RT      *RoutingTable
+	K       int
+	net     *Network
 	storage *Storage
 }
 
@@ -111,7 +111,7 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	tempTable := NewContactStateList(targetID, kademlia.K) // Creates the temp table
 	tempTable.AppendUniqueSorted(closestContacts)
 	tempTable.MarkReceived(*kademlia.RT.me)
-	ch := CreateChannel()                     // Creates a channel that can only be written to once.
+	ch := CreateChannel() // Creates a channel that can only be written to once.
 
 	for i := 0; i < kademlia.net.alpha; i++ { // Start with alpha RPC's
 		c := tempTable.GetNextToQuery()
@@ -152,22 +152,24 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 
 /*
  * Request to find a value over the network.
+ * TODO: Fix all todo's
  */
 //func (kademlia *Kademlia) SendFindValueMessage(kademliaID *KademliaID) []byte {
 func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	kademliaID := NewValueID(filename)
-//	fmt.Println("filename : ", kademliaID, reflect.TypeOf(kademliaID),"\n")
+	//	fmt.Println("filename : ", kademliaID, reflect.TypeOf(kademliaID),"\n")
 	myself := kademlia.RT.me
-	closestContacts := kademlia.LookupContact(myself) //BackHere
+	closestContacts := kademlia.LookupContact(myself) //BackHere //TODO: Should search for filename id.
 	//if closestContacts[0].ID.Equals(myself.ID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
-	if !closestContacts[0].ID.Equals(myself.ID) {
-		return []byte("")
+	if !closestContacts[0].ID.Equals(myself.ID) { // TODO: this should be done first, and should check if file is found locally.
+		return []byte("") //TODO: should return file searched for if found
 	}
-	message := NewFindValueMessage(myself, kademliaID) //FindValueMessage
-	tempTable := NewContactStateList(myself.ID, kademlia.K) // Creates the temp table
+	message := NewFindValueMessage(myself, kademliaID)      //FindValueMessage
+	tempTable := NewContactStateList(myself.ID, kademlia.K) // Creates the temp table //TODO: list should be sorted on filename id
 	tempTable.AppendUniqueSorted(closestContacts)
+	//TODO: mark self as already received in temptable
 
-	ch1 := CreateChannel()                    //Fix and see if ch2 is required.
+	ch1 := CreateChannel()                    //Fix and see if ch2 is required. //TODO: contactchannel is not necessary i think...
 	ch2 := CreateDataChannel()                // Creates a channel that can only be written to once.
 	for i := 0; i < kademlia.net.alpha; i++ { // Start with alpha RPC's
 		c := tempTable.GetNextToQuery()
@@ -187,13 +189,13 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 	rMessage, ackMessage, err :=
 		kademlia.net.sendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 
-	if ackMessage.Value != nil {
+	if ackMessage.Value != nil { //TODO: Value might never become nil according to OnFindValueMessageReceived
 		//fmt.Println("FindValueHelper: Found Value!")
 		ch2.WriteData(ackMessage.Value) // Can only be written to once.
 		return
 	}
 
-	if err != nil {
+	if err != nil { // TODO: Should be checked before ackMessage.value != nil, otherwise crash could occur.
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
@@ -202,7 +204,7 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
 
-	if tempTable.Finished() { // If finished,
+	if tempTable.Finished() { // If finished, //TODO: writing to ch1 has no effect, if file is not found, deadlock will occur, should write something like "not found to ch2"
 		ch1.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
 	} else {
 		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
@@ -217,14 +219,14 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 /*
 * Sending a store message to neighbors.
 * filename - Filename in plain text e.g. MyFile.txt
-*/
+ */
 func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *KademliaID {
 	valueID := NewValueID(filename)
 
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
 	contacts := kademlia.SendFindContactMessage(valueID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
-	for _, v:= range contacts {
+	for _, v := range contacts {
 		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
@@ -234,13 +236,12 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 	//4: Done.
 }
 
-
 func (kademlia *Kademlia) Search(filename *string) *string {
 	name := []byte(*filename)
 	found := kademlia.storage.Search(name)
 	//fmt.Println("Searched for filename : ", filename, "Got : ", string(found.Text), "with type : ", reflect.TypeOf(found.Text))
 	text := string(found.Text)
-//	fmt.Println("Text to return : ", string(text), "type : ", reflect.TypeOf(string(text)))
+	//	fmt.Println("Text to return : ", string(text), "type : ", reflect.TypeOf(string(text)))
 	strtext := string(text)
 	return &strtext
 	//return &found.Text
@@ -255,7 +256,7 @@ func (kademlia *Kademlia) Search(filename *string) *string {
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	name := []byte(m.Name)
 	kademlia.storage.RAM(name, m.Data)
-//	fmt.Println("Storing into RAM")
+	//	fmt.Println("Storing into RAM")
 	return
 }
 
@@ -271,9 +272,9 @@ func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr)
  * This method is called by the network module when a FIND_VALUE message is received.
  */
 
-func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr){
+func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr) {
 	filename := fvMessage.Name.String()
-	foundFile := kademlia.Search( &filename )
+	foundFile := kademlia.Search(&filename)
 	var ackFile []byte
 	var ackNodes []Contact
 	if foundFile == nil {
