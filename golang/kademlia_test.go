@@ -5,6 +5,7 @@ package d7024e
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -80,6 +81,7 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 	filename := "filenameX300"
 	data := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename, &data)
+	fmt.Println("Should be error printed here.")
 
 }
 

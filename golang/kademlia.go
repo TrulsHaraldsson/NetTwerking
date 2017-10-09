@@ -128,8 +128,6 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 		kademlia.net.sendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 	if err != nil {
 		fmt.Println(err)
-		fmt.Println("contact error:", ContactToSendTo.String())
-		fmt.Println("me:", kademlia.RT.me.String())
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
