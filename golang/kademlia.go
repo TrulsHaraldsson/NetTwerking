@@ -160,9 +160,9 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	if fileContent != nil {
 		fileJson, err := json.Marshal(fileContent)
 		if err != nil {
-			return fileJson
+			return nil
 		}
-		return nil
+		return fileJson
 	}
 	kademliaID := NewValueID(filename)
 	myself := kademlia.RT.me
@@ -183,8 +183,7 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 		}
 	}
 	data := ch2.ReadData()
-	//fmt.Println("SendFindValueMessage: After ReadData")
-
+	fmt.Println("SendFindValueMessage: After ReadData", string(data))
 	ch2.CloseData()
 	return data
 }

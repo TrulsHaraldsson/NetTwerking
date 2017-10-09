@@ -1,10 +1,11 @@
 package main
 
 import (
-	//"fmt"
+	"fmt"
 	//"strings"
 	"testing"
 	"time"
+	"os"
 	"io/ioutil"
 	//"reflect"
 	"../golang"
@@ -38,22 +39,39 @@ func TestFindValue(t *testing.T) {
 	//Create file first
 	filename2 := "filename2"
 	data2 := []byte("Testing a fucking shit send.")
-	filename3 := "./../newfiles/" + string(filename2)
-	err2 := ioutil.WriteFile(filename3, text, 0644)
+	filename3 := "../newfiles/" + string(filename2)
+	fmt.Println("Path : ", filename3)
+	err2 := ioutil.WriteFile(filename3, data2, 0644)
 	if err2 != nil {
 		panic(err2)
 	}
-
 	//Read file
-	searchName := "./../newfiles/filename2"
-	content, err2 := ioutil.ReadFile(searchName)
+	content, err2 := ioutil.ReadFile(filename3)
 	if err2 != nil {
+		fmt.Println("error when reading!")
 		panic(err2)
 	}
+	fmt.Println("Name : ", filename2, "\nContent : ", string(content))
 	A.SendStoreMessage(&filename2, &content)
 	time.Sleep(50 * time.Millisecond)
 
+	//TEST B,C,D
+/*	byteName := []byte(filename2)
+	A.storage.MoveToMemory(byteName)
+	pathA := "../newfiles/"+filename2
+	os.Remove(pathA)
+*/	strA := A.Search(&filename2)
+	fmt.Println("strA : ", *strA)
+	strB := B.Search(&filename2)
+	fmt.Println("strB : ", *strB)
+	strC := C.Search(&filename2)
+	fmt.Println("strC : ", *strC)
+	strD := D.Search(&filename2)
+	fmt.Println("strD : ", *strD)
+
 	find := A.SendFindValueMessage(&filename2)
+
+	fmt.Println("find", find)
 	if find == nil {
 		t.Error("Not found!")
 	}

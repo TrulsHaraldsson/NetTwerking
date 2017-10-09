@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"testing"
 	"time"
-	"fmt"
 )
 
 func initKademliaAndNetwork(rt *RoutingTable, port int) (*Kademlia, *Network) {
@@ -17,7 +16,6 @@ func initKademliaAndNetwork(rt *RoutingTable, port int) (*Kademlia, *Network) {
 }
 
 func TestNetworkSendMessage(t *testing.T) {
-	fmt.Println("Running go test fails because something weird in network_test, however running go test -run Network works... wtf?")
 	go EchoServer(7999)
 	time.Sleep(50 * time.Millisecond) //To assure server is up before sending data
 	c := NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "adress")
