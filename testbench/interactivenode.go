@@ -5,12 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"log"
+	"os"
 	"strconv"
 	"time"
 	//"reflect"
 	"net"
+
 	"../golang"
 )
 
@@ -82,7 +83,7 @@ func main() {
 			if input == "QUIT" {
 				break
 			}
-			if input == "TIPS"{
+			if input == "TIPS" {
 				tips()
 			}
 			switch input {
@@ -95,6 +96,8 @@ func main() {
 			case d7024e.STORE:
 				fmt.Println("Need help to fix with /app but everything works, just cant see stored files in the folder files.")
 				onStore(kademlia, reader)
+			case "dir":
+				onDirectory(kademlia, reader)
 			case "ls": //shows 20 closest contacts to a random id.
 				c := d7024e.NewContact(d7024e.NewKademliaID(kID), "lol")
 				fmt.Println(kademlia.LookupContact(&c))
@@ -118,13 +121,14 @@ func main() {
 	}
 
 }
-func tips(){
+func tips() {
 	fmt.Println("\nFollowing options are valid:")
 	fmt.Println("QUIT, quits the program.")
 	fmt.Println("PING, send ping message to a given port on localhost.")
 	fmt.Println("FIND_NODE, search for closest nodes to specified ID.")
 	fmt.Println("STORE, store a file with a given name")
 	fmt.Println("FIND_VALUE, find a file by its name")
+	fmt.Println("dir, list all files")
 }
 func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Please write a port to send to e.g. 65002.")
@@ -157,7 +161,7 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Number of contacts found:", len(contacts))
 }
 
-func new(kademlia *d7024e.Kademlia, reader *bufio.Reader){
+func new(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Write the name of the new file")
 	filename, _ := reader.ReadString('\n')
 	filename = filename[:len(filename)-1]
@@ -166,10 +170,10 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 	text = text[:len(text)-1]
 	data := []byte(text)
 
-	file := "./newfiles/" + filename
+	file := "../newfiles/" + filename
 
 	err := ioutil.WriteFile(file, data, 0644)
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 
@@ -179,14 +183,14 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 	}
 
 	valueID := kademlia.SendStoreMessage(&filename, &content)
-	if valueID != nil{
+	if valueID != nil {
 		fmt.Println("Storemessage successful!")
-	}else{ //-- The storeMessage failed --//
+	} else { //-- The storeMessage failed --//
 		fmt.Println("Storemessage unsuccessful!")
 	}
 }
 
-func old(kademlia *d7024e.Kademlia, reader *bufio.Reader){
+func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Write the name of the old loaded file or see files by typing 'ls'")
 	filename, _ := reader.ReadString('\n')
 	filename = filename[:len(filename)-1]
@@ -195,62 +199,62 @@ func old(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 
 		//-- Read the old file --//
 
-		name := "./newfiles/" + file
+		name := "../newfiles/" + file
 		content, err2 := ioutil.ReadFile(name)
 		if err2 != nil {
 			fmt.Println("dont exist: ", err2)
 		}
-		fmt.Println("File contents: ", string(content),"\n")
+		fmt.Println("File contents: ", string(content), "\n")
 
 		//-- send the file and get it --//
 
 		valueID := kademlia.SendStoreMessage(&file, &content)
-		if valueID != nil{
+		if valueID != nil {
 			fmt.Println("Storemessage successful!")
-		}else{
+		} else {
 			fmt.Println("Storemessage unsuccessful!")
 		}
-	}else{
+	} else {
 		onDirectory(kademlia, reader)
 	}
 }
 
-func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader){
+func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Want to store a new file or load an already existing one?\n new or old")
 	choice, _ := reader.ReadString('\n')
 	choice = choice[:len(choice)-1]
 	if choice == "new" {
 		//-- User creates new file that will be sent out to network --//
 		new(kademlia, reader)
-	}else{
+	} else {
 		//-- When a user wants to load in an old file --//
 		old(kademlia, reader)
 	}
 	fmt.Println("Done\n")
 }
 
-func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader){
+func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("\nWrite the name of the file you wish to see content off.\n")
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
 	find := kademlia.SendFindValueMessage(&text)
 	if find == nil {
 		fmt.Println("Not found!")
-	}else{
+	} else {
 		file := string(find)
 		fmt.Println("Returned File content : ", string(file))
 	}
 	fmt.Println("Done\n")
 }
 
-func onDirectory(kademlia *d7024e.Kademlia, reader *bufio.Reader){
-	path := "./newfiles"
+func onDirectory(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	path := "../newfiles"
 	files, err := ioutil.ReadDir(path)
-  if err != nil {
-      log.Fatal(err)
-  }
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("\n")
-  for _, f := range files {
-          fmt.Println(f.Name())
+	for _, f := range files {
+		fmt.Println(f.Name())
 	}
 }

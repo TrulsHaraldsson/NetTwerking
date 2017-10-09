@@ -1,9 +1,9 @@
 FROM golang
 
-WORKDIR /app
+WORKDIR /app/testbench
 
 ADD . /app
 
 EXPOSE 7999
 
-CMD ["go", "run", "testbench/interactivenode.go", "--port", "7999", "--interactive", "false", "--id", "abcdef1234abcdef1234abcdef1234abcdef1234", "--addr", "172.17.0.2:7999"]
+CMD ["go", "run", "interactivenode.go", "--port", "7999", "--interactive", "false", "--id", "abcdef1234abcdef1234abcdef1234abcdef1234", "--addr", "172.17.0.2:7999"]
