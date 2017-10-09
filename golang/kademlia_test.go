@@ -8,6 +8,7 @@ import (
 	"time"
 	"bytes"
 	"os"
+//	"fmt"
 )
 
 func TestKademliaBootstrap(t *testing.T) {
@@ -159,8 +160,8 @@ func TestKademliaMemorySearch(t *testing.T) {
 	data := []byte("This is the content of file filenameXY!")
 	kademlia := Kademlia{}
 	storage := Storage{}
-	storage.Memory(filename, data)
-	file := kademlia.Search(&name)
+	storage.Memory(filename, data) //local
+	file := kademlia.Search(&name) //local
 	if *file == ""{
 		bText := []byte(*file)
 		bool := bytes.EqualFold(bText, data)
@@ -171,3 +172,40 @@ func TestKademliaMemorySearch(t *testing.T) {
 	path := "./../newfiles/" + name
 	os.Remove(path)
 }
+/*
+func TestKademliaSendFindValueMemory(t *testing.T){
+	filename := "findvaluemessage"
+	filenameB := []byte(filename)
+	data := []byte("This is content of findvaluemessage!")
+	storage := Storage{}
+	fmt.Println("Before Memory")
+	storage.Memory(filenameB, data)
+	kademlia := Kademlia{}
+	fmt.Println("Before Send Store Message")
+	err := kademlia.SendStoreMessage(&filename, &data)
+	if err != nil{
+		t.Error("Unsuccessful SendStoreMessage!")
+	}
+	fmt.Println("Before Send Find value Message")
+	file := kademlia.SendFindValueMessage(&filename)
+	if file != nil{
+		t.Error("File not found!")
+	}
+/*	if file == ""{
+		bText := []byte(*file)
+		bool := bytes.EqualFold(bText, data)
+		if bool == false {
+			t.Error("File content do not match!\n")
+		}
+	}*/
+//	path := "./../newfiles/" + filename //<-- check if true.
+//	os.Remove(path)
+//}
+
+/*
+func TestKademliaSendFindValue(t *testing.T){
+	filename := "findvaluemessage"
+	data := []byte("This is content of findvaluemessage!")
+	kademlia := Kademlia{}
+	kademlia.SendFindValueMessage(&filename)
+}*/

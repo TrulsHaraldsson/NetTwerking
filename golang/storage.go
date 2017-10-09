@@ -1,7 +1,5 @@
 package d7024e
 
-//Self comment : All tests pass.
-
 import(
   "crypto/sha1"
   "reflect"
@@ -63,8 +61,6 @@ func (storage *Storage) ReadRAM(name []byte) *file{
 /*
 * Look if the RAM storage include a certain file, if so return file, else
 check Memory if it's there and return.
-* TODO: Files that are requested within a timer, are refreshed in main Memory, rest are stored somewhere else.
-* TODO: Include timers for each file within main Memory such that they are discarded from main Memory when the timer runs out. Then purge files that are not used for "very long" time.
 */
 func (storage *Storage) Search(name []byte) *file{
   returnedFile := storage.ReadRAM(name)
@@ -80,23 +76,11 @@ func (storage *Storage) Search(name []byte) *file{
 and return it.
 */
 func (storage *Storage) ReadMemory(name []byte) *file {
-  /*
-  path := "./../newfiles"
-  files, err := ioutil.ReadDir(path)
-  if err != nil {
-    fmt.Println(err)
-  }
-  fmt.Println("\n")
-  for _, f := range files {
-    fmt.Println(f.Name())
-  }
-*/
   filename := "./../newfiles/" + string(name)
   content, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil
 	}
-  //fmt.Printf("File contents: %s", content,"\n")
   returnedFile := &file{name, []byte(content)}
 
   /*
@@ -112,7 +96,6 @@ func (storage *Storage) ReadMemory(name []byte) *file {
 * Store a file into RAM, does not return anything.
 */
 func (storage *Storage) RAM(name []byte, text []byte){
-  //fileName := storage.HashFile(name)
   newFile := file{name, text}
   Files = append(Files, newFile)
   return
