@@ -9,7 +9,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-	//"reflect"
 	"net"
 
 	"../golang"
@@ -75,33 +74,32 @@ func main() {
 		kID := "abcdef1234abcdef1234abcdef1234abcdef1234"
 		kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), kID, nil)
 		//kademlia := d7024e.CreateAndStartNode(addrs[0]+":"+strconv.Itoa(*port), "none", "none")
-		fmt.Println("You can always type TIPS, to see different commands!")
-		tips()
+		fmt.Println("You can always type HELP, to see different commands!")
+		help()
 		input, _ := reader.ReadString('\n')
 		input = input[:len(input)-1]
 		for {
 			if input == "QUIT" {
 				break
 			}
-			if input == "TIPS" {
-				tips()
+			if input == "HELP" || input == "help" {
+				help()
 			}
 			switch input {
 			case d7024e.PING: //TODO: Dont assume localhost
-				onPing2(kademlia, reader)
+				onPing(kademlia, reader)
 			case d7024e.FIND_NODE:
 				onFindNode(kademlia, reader)
 			case d7024e.FIND_VALUE:
 				onFindValue(kademlia, reader)
 			case d7024e.STORE:
 				onStore(kademlia, reader)
-			case "delete":
+			case "DELETE":
 				onDelete(kademlia, reader)
 			case "dir":
 				onDirectory(kademlia, reader)
-			case "ls": //shows 20 closest contacts to a random id.
-				c := d7024e.NewContact(d7024e.NewKademliaID(kID), "lol")
-				fmt.Println(kademlia.LookupContact(&c))
+			case "rt": //shows 20 closest contacts to a random id.
+				fmt.Println(kademlia.RT.Contacts())
 			default:
 				fmt.Println("Wrong syntax in message, ignoring it...")
 			}
@@ -122,27 +120,26 @@ func main() {
 	}
 
 }
-func tips() {
+func help() {
 	fmt.Println("\nFollowing options are valid:")
 	fmt.Println("QUIT, quits the program.")
 	fmt.Println("PING, send ping message to a given port on localhost.")
 	fmt.Println("FIND_NODE, search for closest nodes to specified ID.")
 	fmt.Println("STORE, store a file with a given name")
 	fmt.Println("FIND_VALUE, find a file by its name")
+	fmt.Println("DELETE, delete a file form node")
 	fmt.Println("dir, list all files")
-	fmt.Println("ls, list closest neighbors")
-}
-func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
-	fmt.Println("Please write a port to send to e.g. 65002.")
-	rport, _ := reader.ReadString('\n')
-	rport = rport[:len(rport)-1]
-	rp, _ := strconv.Atoi(rport)
-	ok := kademlia.Ping(d7024e.CreateAddr("127.0.0.1", rp))
-	fmt.Println("ping status:", ok)
+	fmt.Println("rt, show how many contacts in routing table")
 }
 
-func onPing2(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
-	fmt.Println("Please write a address to send to e.g. 'localhost:65002'.")
+func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	fmt.Println("Please write a address to ping, below are some choices.")
+	newContact := d7024e.NewContact(d7024e.NewRandomKademliaID(), "no address")
+	contacts := kademlia.LookupContact(&newContact)
+	for i := 0 ; i < 10 ; i ++ {
+		fmt.Println("Contact : ", contacts[i].Address)
+	}
+
 	raddr, _ := reader.ReadString('\n')
 	raddr = raddr[:len(raddr)-1]
 	ok := kademlia.Ping(raddr)
