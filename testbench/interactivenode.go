@@ -238,7 +238,7 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader){
 		fmt.Println("Not found!")
 	}else{
 		file := string(find)
-		fmt.Println("Returned File content : ", string(file))//, "type : ", reflect.TypeOf(file))
+		fmt.Println("Returned File content : ", string(file))
 	}
 	fmt.Println("Done\n")
 }

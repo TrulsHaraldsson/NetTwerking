@@ -158,7 +158,6 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 //func (kademlia *Kademlia) SendFindValueMessage(kademliaID *KademliaID) []byte {
 func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	kademliaID := NewValueID(filename)
-//	fmt.Println("filename : ", kademliaID, reflect.TypeOf(kademliaID),"\n")
 	myself := kademlia.RT.me
 	closestContacts := kademlia.LookupContact(myself) //BackHere
 	//if closestContacts[0].ID.Equals(myself.ID) && !closestContacts[0].Equals(*kademlia.RT.me) { //If found locally, and not itself.
@@ -177,9 +176,8 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 			go kademlia.FindValueHelper(*c, message, &ch1, &ch2, &tempTable)
 		}
 	}
-	//fmt.Println("SendFindValueMessage: Before ReadData")
 	data := ch2.ReadData()
-	//fmt.Println("SendFindValueMessage: After ReadData")
+	fmt.Println(string(data))
 	ch1.Close()
 	ch2.CloseData()
 	return data
@@ -190,7 +188,6 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		kademlia.net.sendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 
 	if ackMessage.Value != nil {
-		//fmt.Println("FindValueHelper: Found Value!")
 		ch2.WriteData(ackMessage.Value) // Can only be written to once.
 		return
 	}
@@ -198,7 +195,6 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 	if err != nil {
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
-		//fmt.Println(ackMessage.Nodes)
 		kademlia.RT.update(rMessage.Sender)            // Updating routingtable with
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
@@ -236,32 +232,20 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 	//4: Done.
 }
 
-
 func (kademlia *Kademlia) Search(filename *string) *string {
 	name := []byte(*filename)
 	found := kademlia.storage.Search(name)
 	if found == nil{
-		nilText := "not found"
-		return &nilText
+		return nil
 	}
-	//fmt.Println("Searched for filename : ", filename, "Got : ", string(found.Text), "with type : ", reflect.TypeOf(found.Text))
 	text := string(found.Text)
-//	fmt.Println("Text to return : ", string(text), "type : ", reflect.TypeOf(string(text)))
 	strtext := string(text)
 	return &strtext
-	//return &found.Text
-
 }
 
-/*
- * Stores an item of type Item in a list called Information.
- * TODO: Change to the use of Storage.
- * TODO: Update every store/retreive with Storage.
- */
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	name := []byte(m.Name)
 	kademlia.storage.RAM(name, m.Data)
-//	fmt.Println("Storing into RAM")
 	return
 }
 
@@ -276,7 +260,6 @@ func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr)
 /*
  * This method is called by the network module when a FIND_VALUE message is received.
  */
-
 func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr){
 	filename := fvMessage.Name.String()
 	foundFile := kademlia.Search( &filename )
@@ -311,7 +294,6 @@ func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindN
 	contacts := kademlia.LookupContact(&target)
 	returnMessage := NewFindNodeAckMessage(kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
-	//fmt.Println("Sending FIND_NODE acknowledge back to ", addr.String(), " with ", rMsgJson)
 	kademlia.net.connectAndWrite(addr.String(), rMsgJson)
 }
 
