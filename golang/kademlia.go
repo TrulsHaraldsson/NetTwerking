@@ -33,7 +33,7 @@ type Kademlia struct {
  */
 func NewKademlia(addr string, kID string) *Kademlia {
 
-	os.Mkdir("./../newfiles/", 0700)
+	os.Mkdir("./../newfiles/", 0700) //Allow permission to read files in folder.
 
 	var kademliaID *KademliaID
 	if kID != "none" {
@@ -240,6 +240,10 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 func (kademlia *Kademlia) Search(filename *string) *string {
 	name := []byte(*filename)
 	found := kademlia.storage.Search(name)
+	if found == nil{
+		nilText := "not found"
+		return &nilText
+	}
 	//fmt.Println("Searched for filename : ", filename, "Got : ", string(found.Text), "with type : ", reflect.TypeOf(found.Text))
 	text := string(found.Text)
 //	fmt.Println("Text to return : ", string(text), "type : ", reflect.TypeOf(string(text)))
