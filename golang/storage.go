@@ -1,6 +1,5 @@
 package d7024e
 
-//Self comment : All tests pass.
 
 import (
 	"crypto/sha1"
@@ -78,8 +77,6 @@ func (storage *Storage) ReadRAM(name []byte) *file {
 /*
 * Look if the RAM storage include a certain file, if so return file, else
 check Memory if it's there and return.
-* TODO: Files that are requested within a timer, are refreshed in main Memory, rest are stored somewhere else.
-* TODO: Include timers for each file within main Memory such that they are discarded from main Memory when the timer runs out. Then purge files that are not used for "very long" time.
 */
 func (storage *Storage) Search(name []byte) *file {
 	returnedFile := storage.ReadRAM(name)
@@ -112,12 +109,14 @@ func (storage *Storage) ReadMemory(name []byte) *file {
 
 /*
 * Store a file into RAM, does not return anything.
+
  */
 func (storage *Storage) RAM(name []byte, text []byte) {
 	//fileName := storage.HashFile(name)
 	newFile := file{name, text}
 	storage.Files = append(storage.Files, newFile)
 	return
+
 }
 
 /*

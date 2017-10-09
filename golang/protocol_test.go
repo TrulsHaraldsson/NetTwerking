@@ -2,12 +2,11 @@ package d7024e
 
 import (
 	"errors"
-	"fmt"
 	"testing"
+	"fmt"
 )
 
 func TestProtocolMarshall(t *testing.T) {
-	//fmt.Println("Testing TestProtocolMarshall\n")
 	msgData1 := NewKademliaID("fffffffffffffffffffffffffffffffffffffff0")
 	c := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 	msg1 := NewFindNodeMessage(&c, msgData1)
@@ -75,7 +74,6 @@ func marshallTestHelper(msg Message, msgData interface{}) error {
 }
 
 func TestProtocolNewPingMessage(t *testing.T) {
-	//fmt.Println("Testing TestProtocolNewPingMessage\n")
 	sender := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 	var msg = NewPingMessage(&sender)
 
@@ -88,9 +86,7 @@ func TestProtocolNewPingMessage(t *testing.T) {
 }
 
 func TestProtocolNewStoreMessage(t *testing.T) {
-	//fmt.Println("Testing TestProtocolNewStoreMessage\n")
 	sender := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
-	//	var key = NewKademliaID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 	var filename = "filenameY250"
 	var data = []byte("Data to be stored")
 	var msg = NewStoreMessage(&sender, &filename, &data)
@@ -105,7 +101,6 @@ func TestProtocolNewStoreMessage(t *testing.T) {
 }
 
 func TestProtocolNewFindNodeMessage(t *testing.T) {
-	//fmt.Println("Testing TestProtocolNewFindNodeMessage \n")
 	sender := NewContact(NewKademliaID("ffffffffffffffffffffffffffffffffffffffff"), "address")
 	var nodeID = NewKademliaID("aaaaaaaa00000000000000000000000000000000")
 	var msg = NewFindNodeMessage(&sender, nodeID)

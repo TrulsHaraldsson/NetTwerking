@@ -5,16 +5,18 @@ package d7024e
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 	"time"
+	"fmt"
 )
 
 func TestKademliaBootstrap(t *testing.T) {
 	k1 := CreateAndStartNode("localhost:11000", "none", nil)
+	time.Sleep(time.Millisecond * 50)
 	k2 := CreateAndStartNode("localhost:12000", "none", k1.RT.me)
 	if k1.RT.Contacts() != 2 || k2.RT.Contacts() != 2 {
+		fmt.Println("Contacts : ", k1.RT.Contacts())
 		t.Error("Wrong amount of contacts in rt after bootstrap...")
 	}
 }
@@ -170,4 +172,32 @@ func TestKademliaMemorySearch(t *testing.T) {
 	}
 	path := "./../newfiles/" + name
 	os.Remove(path)
+}
+
+func TestKademliaSendFindValue(t *testing.T){
+	A := CreateAndStartNode("localhost:5001", "none", nil)
+	B := CreateAndStartNode("localhost:5002", "none", A.RT.me)
+
+	filename := "findvaluemessage"
+	data := []byte("This is content of findvaluemessage!")
+	err := A.SendStoreMessage(&filename, &data)
+	if err != nil{
+		t.Error("Unsuccessful SendStoreMessage!")
+	}
+	C := CreateAndStartNode("localhost:5003", "none", B.RT.me)
+	file := C.SendFindValueMessage(&filename)
+	if file == nil{
+		t.Error("File not found!")
+	}
+	var ffile string
+	err3 := json.Unmarshal(file, &ffile)
+	if err3 != nil{
+		t.Error("unmarshalling failure in find-value test.")
+	}
+	if (ffile != string(data)) {
+		t.Error("Strings of content dont match!")
+	}
+	path := "./../newfiles/" + filename //<-- check if true.
+	os.Remove(path)
+	//fmt.Println("Done with Find-Value Test!")
 }

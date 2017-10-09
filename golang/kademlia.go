@@ -22,8 +22,6 @@ type Kademlia struct {
 	storage *Storage
 }
 
-//var storage Storage
-
 /*
  * Creates a new Kademlia instance. Initiate a routing table and
  * links the kademlia instance to a network instance.
@@ -150,16 +148,16 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 
 /*
  * Request to find a value over the network.
- * TODO: Fix all todo's
  */
-//func (kademlia *Kademlia) SendFindValueMessage(kademliaID *KademliaID) []byte {
 func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	fileContent := kademlia.Search(filename)
 	if fileContent != nil {
 		fileJson, err := json.Marshal(fileContent)
 		if err != nil {
+//			fmt.Println("SendFindValueMessage: Nil")
 			return nil
 		}
+//		fmt.Println("SendFindValueMessage: fileJson")
 		return fileJson
 	}
 	kademliaID := NewValueID(filename)
@@ -182,7 +180,6 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	}
 	data := ch2.ReadData()
 	ch2.CloseData()
-	fmt.Println("SendFindValueMessage return : ", string(data))
 	return data
 }
 
@@ -220,9 +217,8 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 * Sending a store message to neighbors.
 * filename - Filename in plain text e.g. MyFile.txt
  */
-func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *KademliaID {
+func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) error {
 	valueID := NewValueID(filename)
-
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
 	contacts := kademlia.SendFindContactMessage(valueID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
@@ -235,12 +231,10 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
 		_, err := kademlia.net.sendStoreMessage(v.Address, &message)
 		if err != nil {
-			fmt.Println(v.Address)
-			fmt.Println("this is where the error is")
-			fmt.Println(err) //TODO: shuld return error
+			return err
 		}
 	}
-	return valueID
+	return nil
 	//4: Done.
 }
 
