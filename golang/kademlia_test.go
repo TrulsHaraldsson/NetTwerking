@@ -3,18 +3,20 @@ package d7024e
 // According to : (go test -cover -tags KademliaNode) gives 89.6% test coverage atm.
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
 	"testing"
 	"time"
-	"bytes"
-	"os"
-//	"fmt"
+	"fmt"
 )
 
 func TestKademliaBootstrap(t *testing.T) {
 	k1 := CreateAndStartNode("localhost:11000", "none", nil)
+	time.Sleep(time.Millisecond * 50)
 	k2 := CreateAndStartNode("localhost:12000", "none", k1.RT.me)
 	if k1.RT.Contacts() != 2 || k2.RT.Contacts() != 2 {
+		fmt.Println("Contacts : ", k1.RT.Contacts())
 		t.Error("Wrong amount of contacts in rt after bootstrap...")
 	}
 }
@@ -78,15 +80,10 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 	_, rt2 := CreateTestRT9()
 	_, network2 := initKademliaAndNetwork(rt2, 4)
 
-	contact := network2.kademlia.SendFindContactMessage(
-		NewKademliaID("1111111200000000000000000000000000000000"))
-	if !contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000")) {
-		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
-	} else {
-		filename := "filenameX300"
-		data := []byte("Testing a fucking shit send.")
-		network2.kademlia.SendStoreMessage(&filename, &data)
-	}
+	filename := "filenameX300"
+	data := []byte("Testing a fucking shit send.")
+	network2.kademlia.SendStoreMessage(&filename, &data)
+
 }
 
 /*
@@ -94,20 +91,20 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 * closest contact found is not the one searched for, since it is offline.
  */
 func TestKademliaSendFindContactMessage(t *testing.T) {
-	_, rt := CreateTestRT8()
+	_, rt := CreateTestRT18()
 	_, network := initKademliaAndNetwork(rt, 9102)
 	go network.Listen()
 
 	time.Sleep(50 * time.Millisecond)
 
-	_, rt2 := CreateTestRT9()
+	_, rt2 := CreateTestRT19()
 	_, network2 := initKademliaAndNetwork(rt2, 5)
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111100000000000000000000000000000000"))
 
 	if (len(contact) < 1) || (!contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000"))) {
-		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
+		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111100000000000000000000000000000000"))
 	}
 }
 
@@ -145,7 +142,7 @@ func TestKademliaRAMSearch(t *testing.T) {
 	json.Unmarshal(message.Data, &storeMessage)
 	kademlia.Store(storeMessage)
 	file := kademlia.Search(&filename)
-	if *file == ""{
+	if *file == "" {
 		bText := []byte(*file)
 		bool := bytes.EqualFold(bText, data)
 		if bool == false {
@@ -160,9 +157,9 @@ func TestKademliaMemorySearch(t *testing.T) {
 	data := []byte("This is the content of file filenameXY!")
 	kademlia := Kademlia{}
 	storage := Storage{}
-	storage.Memory(filename, data) //local
-	file := kademlia.Search(&name) //local
-	if *file == ""{
+	storage.Memory(filename, data)
+	file := kademlia.Search(&name)
+	if *file == "" {
 		bText := []byte(*file)
 		bool := bytes.EqualFold(bText, data)
 		if bool == false {
@@ -172,40 +169,31 @@ func TestKademliaMemorySearch(t *testing.T) {
 	path := "./../newfiles/" + name
 	os.Remove(path)
 }
-/*
-func TestKademliaSendFindValueMemory(t *testing.T){
+
+func TestKademliaSendFindValue(t *testing.T){
+	A := CreateAndStartNode("localhost:5001", "none", nil)
+	B := CreateAndStartNode("localhost:5002", "none", A.RT.me)
+
 	filename := "findvaluemessage"
-	filenameB := []byte(filename)
 	data := []byte("This is content of findvaluemessage!")
-	storage := Storage{}
-	fmt.Println("Before Memory")
-	storage.Memory(filenameB, data)
-	kademlia := Kademlia{}
-	fmt.Println("Before Send Store Message")
-	err := kademlia.SendStoreMessage(&filename, &data)
+	err := A.SendStoreMessage(&filename, &data)
 	if err != nil{
 		t.Error("Unsuccessful SendStoreMessage!")
 	}
-	fmt.Println("Before Send Find value Message")
-	file := kademlia.SendFindValueMessage(&filename)
-	if file != nil{
+	C := CreateAndStartNode("localhost:5003", "none", B.RT.me)
+	file := C.SendFindValueMessage(&filename)
+	if file == nil{
 		t.Error("File not found!")
 	}
-/*	if file == ""{
-		bText := []byte(*file)
-		bool := bytes.EqualFold(bText, data)
-		if bool == false {
-			t.Error("File content do not match!\n")
-		}
-	}*/
-//	path := "./../newfiles/" + filename //<-- check if true.
-//	os.Remove(path)
-//}
-
-/*
-func TestKademliaSendFindValue(t *testing.T){
-	filename := "findvaluemessage"
-	data := []byte("This is content of findvaluemessage!")
-	kademlia := Kademlia{}
-	kademlia.SendFindValueMessage(&filename)
-}*/
+	var ffile string
+	err3 := json.Unmarshal(file, &ffile)
+	if err3 != nil{
+		t.Error("unmarshalling failure in find-value test.")
+	}
+	if (ffile != string(data)) {
+		t.Error("Strings of content dont match!")
+	}
+	path := "./../newfiles/" + filename //<-- check if true.
+	os.Remove(path)
+	//fmt.Println("Done with Find-Value Test!")
+}

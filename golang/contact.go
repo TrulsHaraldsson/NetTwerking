@@ -168,7 +168,7 @@ func (list *ContactStateList) GetNextToQuery() *Contact {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	for i := 0; i < len(list.contacts); i++ {
-		if list.contacts[i].queried == false && list.contacts[i].counter < list.maxQueries {
+		if list.contacts[i].queried == false && list.contacts[i].counter < list.maxQueries && list.contacts[i].received == false {
 			list.contacts[i].queried = true
 			return &list.contacts[i].contact
 		}

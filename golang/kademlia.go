@@ -73,10 +73,8 @@ func (kademlia *Kademlia) JoinNetwork() {
 		// fmt.Println("routingtable contacts:", kademlia.LookupContact(&c))
 		contacts := kademlia.SendFindContactMessage(kademlia.RT.me.ID)
 		if len(contacts) > 1 {
-			fmt.Println("breaking, len is:", len(contacts))
 			break
 		}
-		fmt.Println("not breaking, len is:", len(contacts))
 		time.Sleep(2 * time.Second)
 	}
 	for i := 1; i < kademlia.RT.Size()-2; i++ {
@@ -156,10 +154,10 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	if fileContent != nil {
 		fileJson, err := json.Marshal(fileContent)
 		if err != nil {
-			fmt.Println("SendFindValueMessage: Nil")
+//			fmt.Println("SendFindValueMessage: Nil")
 			return nil
 		}
-		fmt.Println("SendFindValueMessage: fileJson")
+//		fmt.Println("SendFindValueMessage: fileJson")
 		return fileJson
 	}
 	kademliaID := NewValueID(filename)
@@ -182,7 +180,6 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	}
 	data := ch2.ReadData()
 	ch2.CloseData()
-	fmt.Println("SendFindValueMessage return : ", string(data))
 	return data
 }
 
@@ -222,22 +219,21 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
  */
 func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) error {
 	valueID := NewValueID(filename)
-	fmt.Println(*filename, "\n", *data, "\n", valueID)
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
-//	thisContact := NewContact(valueID, "no address")
 	contacts := kademlia.SendFindContactMessage(valueID)
-	fmt.Println("Contacts : \n", contacts)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
 	for _, v := range contacts {
 		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
+		if v.Equals(*kademlia.RT.me) {
+			continue
+		}
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
 		_, err := kademlia.net.sendStoreMessage(v.Address, &message)
 		if err != nil {
 			return err
 		}
 	}
-	fmt.Println("Returing from sendStoreMessage")
 	return nil
 	//4: Done.
 }

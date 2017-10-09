@@ -28,9 +28,31 @@ func CreateTestRT8() ([]Contact, *RoutingTable) {
 		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(
-		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
-	contacts = append(contacts, NewContact(
 		NewKademliaID("1111111200000000000000000000000000000000"), "localhost:8003"))
+	contacts = append(contacts, NewContact(
+		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
+
+	for _, contact := range contacts {
+		rt.update(contact)
+	}
+	return contacts, rt
+}
+
+func CreateTestRT19() ([]Contact, *RoutingTable) {
+	rt := newRoutingTable(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
+	contacts := []Contact{}
+	contacts = append(contacts, NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:9102"))
+
+	for _, contact := range contacts {
+		rt.update(contact)
+	}
+	return contacts, rt
+}
+
+func CreateTestRT18() ([]Contact, *RoutingTable) {
+	rt := newRoutingTable(NewContact(
+		NewKademliaID("1111111100000000000000000000000000000000"), "localhost:9102"))
+	contacts := []Contact{}
 	contacts = append(contacts, NewContact(
 		NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:8000"))
 
@@ -148,7 +170,6 @@ func CreateTestRT10() ([]Contact, *RoutingTable) {
 	rt := newRoutingTable(NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:9500"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:9501"))
-	contacts = append(contacts, NewContact(NewKademliaID("1111111200000000000000000000000000000000"), "localhost:9502"))
 
 	for _, contact := range contacts {
 		rt.update(contact)
@@ -160,7 +181,6 @@ func CreateTestRT11() ([]Contact, *RoutingTable) {
 	rt := newRoutingTable(NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:9501"))
 	contacts := []Contact{}
 	contacts = append(contacts, NewContact(NewKademliaID("FFFFFFFF00000000000000000000000000000000"), "localhost:9500"))
-	contacts = append(contacts, NewContact(NewKademliaID("1111111200000000000000000000000000000000"), "localhost:9502"))
 
 	for _, contact := range contacts {
 		rt.update(contact)
