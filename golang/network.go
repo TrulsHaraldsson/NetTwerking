@@ -1,5 +1,7 @@
 package d7024e
 
+//Control that all functions are tested! Not all are atm!
+
 import (
 	"errors"
 	"fmt"
