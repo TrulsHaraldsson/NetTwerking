@@ -232,7 +232,10 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
-		kademlia.net.sendStoreMessage(v.Address, &message)
+		_, err := kademlia.net.sendStoreMessage(v.Address, &message)
+		if err != nil {
+			fmt.Println(err) //TODO: shuld return error
+		}
 	}
 	return valueID
 	//4: Done.
