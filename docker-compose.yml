@@ -7,7 +7,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["go", "run", "testbench/interactivenode.go", "--port", "7999", "--interactive", "true"]
+    command: ["go", "run", "interactivenode.go", "--port", "7999", "--interactive", "true"]
     deploy:
       replicas: 1
   kademlia-follower:
@@ -15,7 +15,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["go", "run", "testbench/interactivenode.go", "--port", "7999",
+    command: ["go", "run", "interactivenode.go", "--port", "7999",
       "--interactive", "false", "--id", "abcdef1234abcdef1234abcdef1234abcdef1234", "--addr", "10.0.0.2:7999"] # "10.0.0.2:7999" when using docker swarm
     depends_on:
       - kademlia-interactive

@@ -68,6 +68,7 @@ func TestKademliaSendStoreMessage2(t *testing.T) {
 	filename2 := "filenameX100"
 	data2 := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename2, &data2)
+
 }
 
 func TestKademliaSendStoreMessage(t *testing.T) {
@@ -83,7 +84,6 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 	filename := "filenameX300"
 	data := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename, &data)
-
 }
 
 /*
@@ -195,5 +195,4 @@ func TestKademliaSendFindValue(t *testing.T){
 	}
 	path := "./../newfiles/" + filename //<-- check if true.
 	os.Remove(path)
-	//fmt.Println("Done with Find-Value Test!")
 }

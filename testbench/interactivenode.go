@@ -94,7 +94,6 @@ func main() {
 			case d7024e.FIND_VALUE:
 				onFindValue(kademlia, reader)
 			case d7024e.STORE:
-				fmt.Println("Need help to fix with /app but everything works, just cant see stored files in the folder files.")
 				onStore(kademlia, reader)
 			case "dir":
 				onDirectory(kademlia, reader)
@@ -129,6 +128,7 @@ func tips() {
 	fmt.Println("STORE, store a file with a given name")
 	fmt.Println("FIND_VALUE, find a file by its name")
 	fmt.Println("dir, list all files")
+	fmt.Println("ls, list closest neighbors")
 }
 func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Please write a port to send to e.g. 65002.")
@@ -176,14 +176,13 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	if err != nil {
 		panic(err)
 	}
-
 	content, err2 := ioutil.ReadFile(file)
 	if err2 != nil {
 		fmt.Println("dont exist: ", err2)
 	}
 
 	valueID := kademlia.SendStoreMessage(&filename, &content)
-	if valueID != nil {
+	if valueID == nil {
 		fmt.Println("Storemessage successful!")
 	} else { //-- The storeMessage failed --//
 		fmt.Println("Storemessage unsuccessful!")
@@ -191,11 +190,11 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 }
 
 func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
-	fmt.Println("Write the name of the old loaded file or see files by typing 'ls'")
+	fmt.Println("Write the name of the old loaded file or see files by typing 'dir'")
 	filename, _ := reader.ReadString('\n')
 	filename = filename[:len(filename)-1]
 	file := string(filename)
-	if file != "ls" {
+	if file != "dir" {
 
 		//-- Read the old file --//
 
@@ -209,7 +208,7 @@ func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 		//-- send the file and get it --//
 
 		valueID := kademlia.SendStoreMessage(&file, &content)
-		if valueID != nil {
+		if valueID == nil {
 			fmt.Println("Storemessage successful!")
 		} else {
 			fmt.Println("Storemessage unsuccessful!")
@@ -230,7 +229,6 @@ func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 		//-- When a user wants to load in an old file --//
 		old(kademlia, reader)
 	}
-	fmt.Println("Done\n")
 }
 
 func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
