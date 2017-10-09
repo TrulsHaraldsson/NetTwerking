@@ -1,15 +1,11 @@
 package main
 
 import (
-	"fmt"
-	//"strings"
 	"testing"
 	"time"
-	//"os"
 	"io/ioutil"
-	//"reflect"
 	"../golang"
-
+	"encoding/json"
 )
 
 /*
@@ -36,11 +32,11 @@ func TestFindValue(t *testing.T) {
 	D.Ping("localhost:8500")
 	time.Sleep(50 * time.Millisecond)
 
+
 	//Create file first
 	filename2 := "filename2"
 	data2 := []byte("Testing a fucking shit send.")
 	filename3 := "../newfiles/" + string(filename2)
-	fmt.Println("Path : ", filename3)
 	err2 := ioutil.WriteFile(filename3, data2, 0644)
 	if err2 != nil {
 		panic(err2)
@@ -48,28 +44,44 @@ func TestFindValue(t *testing.T) {
 	//Read file
 	content, err2 := ioutil.ReadFile(filename3)
 	if err2 != nil {
-		fmt.Println("error when reading!")
-		panic(err2)
+		t.Error("Error when reading!")
 	}
-	fmt.Println("Name : ", filename2, "\nContent : ", string(content))
 	A.SendStoreMessage(&filename2, &content)
 	time.Sleep(50 * time.Millisecond)
 
-	//TEST B,C,D
+
 	strA := A.Search(&filename2)
-	fmt.Println("strA : ", *strA)
+	if *strA != string(content) {
+		t.Error("Strings of content dont match!")
+	}
 	strB := B.Search(&filename2)
-	fmt.Println("strB : ", *strB)
+	if *strB != string(content) {
+		t.Error("Strings of content dont match!")
+	}
 	strC := C.Search(&filename2)
-	fmt.Println("strC : ", *strC)
+	if *strC != string(content) {
+		t.Error("Strings of content dont match!")
+	}
 	strD := D.Search(&filename2)
-	fmt.Println("strD : ", *strD)
+	if *strD != string(content) {
+		t.Error("Strings of content dont match!")
+	}
 
-	find := A.SendFindValueMessage(&filename2)
-
-	fmt.Println("find", find)
+	E := d7024e.NewKademlia("localhost:8504", "5111111700000000000000000000000000000004")
+	E.Start()
+	E.Ping("localhost:8500")
+	time.Sleep(50 * time.Millisecond)
+	find := E.SendFindValueMessage(&filename2)
 	if find == nil {
 		t.Error("Not found!")
+	}
+	var ffile string
+	err3 := json.Unmarshal(find, &ffile)
+	if err3 != nil{
+		t.Error("unmarshalling failure in find-value test.")
+	}
+	if (ffile != string(content)) {
+		t.Error("Strings of content dont match!")
 	}
 	time.Sleep(50 * time.Millisecond)
 }
