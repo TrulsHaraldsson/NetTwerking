@@ -1,11 +1,11 @@
 package d7024e
 
+//Self comment : All tests pass.
+
 import(
   "crypto/sha1"
-  //"log"
   "reflect"
-  //"os"
-  //"fmt"
+  "os"
   "io/ioutil"
 )
 
@@ -90,11 +90,6 @@ func (storage *Storage) ReadMemory(name []byte) *file {
   for _, f := range files {
     fmt.Println(f.Name())
   }
-  filename := "./../files/" + string(name)
-  err = os.Chmod(filename, 0666)
-  if err != nil {
-     fmt.Println(err)
-  }
 */
   filename := "./../newfiles/" + string(name)
   content, err := ioutil.ReadFile(filename)
@@ -108,8 +103,8 @@ func (storage *Storage) ReadMemory(name []byte) *file {
   * When a file is retrieved from Memory, move it from Memory to RAM.
   */
   storage.RAM(name,[]byte(content))
-//  path := "./files/" + string(name)
-//  os.Remove(path) // clean up
+  path := "./../newfiles/" + string(name)
+  os.Remove(path) // clean up
   return returnedFile
 }
 
@@ -127,8 +122,15 @@ func (storage *Storage) RAM(name []byte, text []byte){
 * Store a file into Memory, does not return anything.
 */
 func (storage *Storage) Memory(name []byte, text []byte) {
-/*  path := "./../newfiles"
-  files, err := ioutil.ReadDir(path)
+  filename := "./../newfiles/" + string(name)
+	err2 := ioutil.WriteFile(filename, text, 0644)
+	if err2 != nil {
+		panic(err2)
+	}
+  // Check dir after creation to confirm correctness!
+/*
+  path = "./../newfiles"
+  files, err = ioutil.ReadDir(path)
   if err != nil {
     fmt.Println(err)
   }
@@ -136,19 +138,8 @@ func (storage *Storage) Memory(name []byte, text []byte) {
   for _, f := range files {
     fmt.Println(f.Name())
   }
-
-  filename := "./../files/" + string(name)
-  err = os.Create(filename, 0666)
-  if err != nil {
-     fmt.Println(err)
-  }
+  fmt.Println("After new file !")
 */
-
-  filename := "./../newfiles/" + string(name)
-	err2 := ioutil.WriteFile(filename, text, 0644)
-	if err2 != nil {
-		panic(err2)
-	}
 }
 
 /*
