@@ -10,7 +10,8 @@ import (
 
 func initKademliaAndNetwork(rt *RoutingTable, port int) (*Kademlia, *Network) {
 	network := NewNetwork(3, "localhost:"+strconv.Itoa(port))
-	kademlia := Kademlia{rt, 20, &network, nil}
+	storage := NewStorage()
+	kademlia := Kademlia{rt, 20, &network, &storage}
 	network.kademlia = &kademlia
 	return &kademlia, &network
 }

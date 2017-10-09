@@ -38,7 +38,8 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	contactsCorrect = append(contactsCorrect,
 		NewContact(NewKademliaID("1111111100000000000000000000000000000000"), "localhost:8002"))
 
-	kademlia := Kademlia{RT: rt, K: 20}
+	storage := NewStorage()
+	kademlia := Kademlia{RT: rt, K: 20, storage: &storage}
 	contacts := kademlia.LookupContact(&contactsCorrect[0])
 	//fmt.Println(contacts)
 	for i, contact := range contacts {
@@ -68,6 +69,7 @@ func TestKademliaSendStoreMessage2(t *testing.T) {
 	filename2 := "filenameX100"
 	data2 := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename2, &data2)
+	network2.kademlia.DeleteFile(filename2)
 }
 
 func TestKademliaSendStoreMessage(t *testing.T) {
@@ -83,6 +85,8 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 	filename := "filenameX300"
 	data := []byte("Testing a fucking shit send.")
 	network2.kademlia.SendStoreMessage(&filename, &data)
+	fmt.Println("Should be error printed here.")
+	network2.kademlia.DeleteFile(filename)
 
 }
 
@@ -135,7 +139,7 @@ func TestKademliaSendPingMessage(t *testing.T) {
 func TestKademliaRAMSearch(t *testing.T) {
 	filename := "filenameXY"
 	data := []byte("This is the content of file filenameXY!")
-	kademlia := Kademlia{}
+	kademlia, _ := initKademliaAndNetwork(&RoutingTable{}, 12345)
 	kID := NewContact(NewRandomKademliaID(), "adress")
 	message := NewStoreMessage(&kID, &filename, &data)
 	storeMessage := StoreMessage{}
@@ -155,7 +159,7 @@ func TestKademliaMemorySearch(t *testing.T) {
 	name := "filenameXY"
 	filename := []byte(name)
 	data := []byte("This is the content of file filenameXY!")
-	kademlia := Kademlia{}
+	kademlia, _ := initKademliaAndNetwork(&RoutingTable{}, 12345)
 	storage := Storage{}
 	storage.Memory(filename, data)
 	file := kademlia.Search(&name)
