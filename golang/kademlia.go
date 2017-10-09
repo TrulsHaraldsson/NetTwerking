@@ -75,10 +75,8 @@ func (kademlia *Kademlia) JoinNetwork() {
 		// fmt.Println("routingtable contacts:", kademlia.LookupContact(&c))
 		contacts := kademlia.SendFindContactMessage(kademlia.RT.me.ID)
 		if len(contacts) > 1 {
-			fmt.Println("breaking, len is:", len(contacts))
 			break
 		}
-		fmt.Println("not breaking, len is:", len(contacts))
 		time.Sleep(2 * time.Second)
 	}
 	for i := 1; i < kademlia.RT.Size()-2; i++ {
@@ -130,6 +128,8 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 		kademlia.net.sendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 	if err != nil {
 		fmt.Println(err)
+		fmt.Println("contact error:", ContactToSendTo.String())
+		fmt.Println("me:", kademlia.RT.me.String())
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//fmt.Println(ackMessage.Nodes)
@@ -231,9 +231,14 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 	for _, v := range contacts {
 		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
+		if v.Equals(*kademlia.RT.me) {
+			continue
+		}
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
 		_, err := kademlia.net.sendStoreMessage(v.Address, &message)
 		if err != nil {
+			fmt.Println(v.Address)
+			fmt.Println("this is where the error is")
 			fmt.Println(err) //TODO: shuld return error
 		}
 	}

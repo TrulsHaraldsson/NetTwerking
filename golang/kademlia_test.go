@@ -3,11 +3,11 @@ package d7024e
 // According to : (go test -cover -tags KademliaNode) gives 89.6% test coverage atm.
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
 	"testing"
 	"time"
-	"bytes"
-	"os"
 )
 
 func TestKademliaBootstrap(t *testing.T) {
@@ -77,15 +77,10 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 	_, rt2 := CreateTestRT9()
 	_, network2 := initKademliaAndNetwork(rt2, 4)
 
-	contact := network2.kademlia.SendFindContactMessage(
-		NewKademliaID("1111111200000000000000000000000000000000"))
-	if !contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000")) {
-		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
-	} else {
-		filename := "filenameX300"
-		data := []byte("Testing a fucking shit send.")
-		network2.kademlia.SendStoreMessage(&filename, &data)
-	}
+	filename := "filenameX300"
+	data := []byte("Testing a fucking shit send.")
+	network2.kademlia.SendStoreMessage(&filename, &data)
+
 }
 
 /*
@@ -93,20 +88,20 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 * closest contact found is not the one searched for, since it is offline.
  */
 func TestKademliaSendFindContactMessage(t *testing.T) {
-	_, rt := CreateTestRT8()
+	_, rt := CreateTestRT18()
 	_, network := initKademliaAndNetwork(rt, 9102)
 	go network.Listen()
 
 	time.Sleep(50 * time.Millisecond)
 
-	_, rt2 := CreateTestRT9()
+	_, rt2 := CreateTestRT19()
 	_, network2 := initKademliaAndNetwork(rt2, 5)
 
 	contact := network2.kademlia.SendFindContactMessage(
 		NewKademliaID("1111111100000000000000000000000000000000"))
 
 	if (len(contact) < 1) || (!contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000"))) {
-		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111200000000000000000000000000000000"))
+		t.Error("contacts are not equal", contact[0].ID, NewKademliaID("1111111100000000000000000000000000000000"))
 	}
 }
 
@@ -144,7 +139,7 @@ func TestKademliaRAMSearch(t *testing.T) {
 	json.Unmarshal(message.Data, &storeMessage)
 	kademlia.Store(storeMessage)
 	file := kademlia.Search(&filename)
-	if *file == ""{
+	if *file == "" {
 		bText := []byte(*file)
 		bool := bytes.EqualFold(bText, data)
 		if bool == false {
@@ -161,7 +156,7 @@ func TestKademliaMemorySearch(t *testing.T) {
 	storage := Storage{}
 	storage.Memory(filename, data)
 	file := kademlia.Search(&name)
-	if *file == ""{
+	if *file == "" {
 		bText := []byte(*file)
 		bool := bytes.EqualFold(bText, data)
 		if bool == false {
