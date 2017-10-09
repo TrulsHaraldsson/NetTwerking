@@ -5,7 +5,7 @@ import (
 	//"strings"
 	"testing"
 	"time"
-	"os"
+	//"os"
 	"io/ioutil"
 	//"reflect"
 	"../golang"
@@ -56,11 +56,7 @@ func TestFindValue(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	//TEST B,C,D
-/*	byteName := []byte(filename2)
-	A.storage.MoveToMemory(byteName)
-	pathA := "../newfiles/"+filename2
-	os.Remove(pathA)
-*/	strA := A.Search(&filename2)
+	strA := A.Search(&filename2)
 	fmt.Println("strA : ", *strA)
 	strB := B.Search(&filename2)
 	fmt.Println("strB : ", *strB)
