@@ -160,9 +160,9 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	if fileContent != nil {
 		fileJson, err := json.Marshal(fileContent)
 		if err != nil {
-			return fileJson
+			return nil
 		}
-		return nil
+		return fileJson
 	}
 	kademliaID := NewValueID(filename)
 	myself := kademlia.RT.me
@@ -233,7 +233,10 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) *Kade
 		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
 		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
-		kademlia.net.sendStoreMessage(v.Address, &message)
+		_, err := kademlia.net.sendStoreMessage(v.Address, &message)
+		if err != nil {
+			fmt.Println(err) //TODO: shuld return error
+		}
 	}
 	return valueID
 	//4: Done.
