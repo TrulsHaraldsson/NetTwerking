@@ -96,6 +96,8 @@ func main() {
 			case d7024e.STORE:
 				fmt.Println("Need help to fix with /app but everything works, just cant see stored files in the folder files.")
 				onStore(kademlia, reader)
+			case "delete":
+				onDelete(kademlia, reader)
 			case "dir":
 				onDirectory(kademlia, reader)
 			case "ls": //shows 20 closest contacts to a random id.
@@ -243,6 +245,10 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	} else {
 		file := string(find)
 		fmt.Println("Returned File content : ", string(file))
+		err := ioutil.WriteFile("../newfiles/"+text, find, 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 	fmt.Println("Done\n")
 }
@@ -257,4 +263,11 @@ func onDirectory(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	for _, f := range files {
 		fmt.Println(f.Name())
 	}
+}
+
+func onDelete(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	fmt.Println("\nWrite the name of the file you wish to delete.\n")
+	name, _ := reader.ReadString('\n')
+	name = name[:len(name)-1]
+	kademlia.DeleteFile("../newfiles/" + name)
 }
