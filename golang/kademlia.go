@@ -29,7 +29,7 @@ type Kademlia struct {
  */
 func NewKademlia(addr string, kID string) *Kademlia {
 
-	os.Mkdir("./../newfiles/", 0700)
+	os.Mkdir("../newfiles/", 0700)
 
 	var kademliaID *KademliaID
 	if kID != "none" {
@@ -39,7 +39,7 @@ func NewKademlia(addr string, kID string) *Kademlia {
 	}
 	me := NewContact(kademliaID, addr)
 	rt := newRoutingTable(me)
-	storage := Storage{}
+	storage := NewStorage()
 
 	// These three rows link kademlia to network and vice versa
 	network := NewNetwork(3, addr)
@@ -252,7 +252,15 @@ func (kademlia *Kademlia) Search(filename *string) *string {
 func (kademlia *Kademlia) Store(m StoreMessage) {
 	name := []byte(m.Name)
 	kademlia.storage.RAM(name, m.Data)
+	kademlia.storage.Memory(name, m.Data)
 	return
+}
+
+/*
+* Deletes a file from
+ */
+func (kademlia *Kademlia) DeleteFile(name string) {
+	kademlia.storage.DeleteFile(name)
 }
 
 /*

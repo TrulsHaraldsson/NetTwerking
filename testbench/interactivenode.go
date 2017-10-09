@@ -95,6 +95,8 @@ func main() {
 				onFindValue(kademlia, reader)
 			case d7024e.STORE:
 				onStore(kademlia, reader)
+			case "delete":
+				onDelete(kademlia, reader)
 			case "dir":
 				onDirectory(kademlia, reader)
 			case "ls": //shows 20 closest contacts to a random id.
@@ -202,18 +204,19 @@ func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 		content, err2 := ioutil.ReadFile(name)
 		if err2 != nil {
 			fmt.Println("dont exist: ", err2)
-		}
-		fmt.Println("File contents: ", string(content), "\n")
+		}else{
+			fmt.Println("File contents: ", string(content), "\n")
 
-		//-- send the file and get it --//
+			//-- send the file and get it --//
 
-		valueID := kademlia.SendStoreMessage(&file, &content)
-		if valueID == nil {
-			fmt.Println("Storemessage successful!")
-		} else {
-			fmt.Println("Storemessage unsuccessful!")
+			valueID := kademlia.SendStoreMessage(&file, &content)
+			if valueID == nil {
+				fmt.Println("Storemessage successful!")
+			}else{
+					fmt.Println("Storemessage unsuccessful!")
+			}
 		}
-	} else {
+	}else{
 		onDirectory(kademlia, reader)
 	}
 }
@@ -223,9 +226,11 @@ func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	choice, _ := reader.ReadString('\n')
 	choice = choice[:len(choice)-1]
 	if choice == "new" {
+
 		//-- User creates new file that will be sent out to network --//
 		new(kademlia, reader)
-	} else {
+	}else{
+
 		//-- When a user wants to load in an old file --//
 		old(kademlia, reader)
 	}
@@ -238,9 +243,13 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	find := kademlia.SendFindValueMessage(&text)
 	if find == nil {
 		fmt.Println("Not found!")
-	} else {
+	}else{
 		file := string(find)
 		fmt.Println("Returned File content : ", string(file))
+		err := ioutil.WriteFile("../newfiles/"+text, find, 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 	fmt.Println("Done\n")
 }
@@ -255,4 +264,11 @@ func onDirectory(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	for _, f := range files {
 		fmt.Println(f.Name())
 	}
+}
+
+func onDelete(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	fmt.Println("\nWrite the name of the file you wish to delete.\n")
+	name, _ := reader.ReadString('\n')
+	name = name[:len(name)-1]
+	kademlia.DeleteFile("../newfiles/" + name)
 }
