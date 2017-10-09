@@ -154,10 +154,10 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	if fileContent != nil {
 		fileJson, err := json.Marshal(fileContent)
 		if err != nil {
-//			fmt.Println("SendFindValueMessage: Nil")
+			//			fmt.Println("SendFindValueMessage: Nil")
 			return nil
 		}
-//		fmt.Println("SendFindValueMessage: fileJson")
+		//		fmt.Println("SendFindValueMessage: fileJson")
 		return fileJson
 	}
 	kademliaID := NewValueID(filename)
@@ -222,13 +222,16 @@ func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) error
 	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
 	contacts := kademlia.SendFindContactMessage(valueID)
 	//2: Filter out the alpha closest out of those 'k' neighbors.
+	strValueID := valueID.String()
+	message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
+	name := []byte(valueID.String())
+	kademlia.storage.RAM(name, *data)
+	kademlia.storage.Memory(name, *data)
 	for _, v := range contacts {
-		strValueID := valueID.String()
 		//3: Send out async messages to each of the neighbors without caring about response.
 		if v.Equals(*kademlia.RT.me) {
 			continue
 		}
-		message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
 		_, err := kademlia.net.sendStoreMessage(v.Address, &message)
 		if err != nil {
 			return err
@@ -260,7 +263,8 @@ func (kademlia *Kademlia) Store(m StoreMessage) {
 * Deletes a file from
  */
 func (kademlia *Kademlia) DeleteFile(name string) {
-	kademlia.storage.DeleteFile(name)
+	valueID := NewValueID(&name)
+	kademlia.storage.DeleteFile(valueID.String())
 }
 
 /*
