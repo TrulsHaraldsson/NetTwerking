@@ -2,19 +2,16 @@ package d7024e
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"time"
 )
 
-var Information []Item
-
-type Item struct {
-	Value string
-	Key   KademliaID
-}
-
+/*
+* Kademlia is the main object. It is the API seen from outside.
+ */
 type Kademlia struct {
 	RT      *RoutingTable
 	K       int
@@ -28,9 +25,7 @@ type Kademlia struct {
  * NOTE: This function wont start listening.
  */
 func NewKademlia(addr string, kID string) *Kademlia {
-
-	os.Mkdir("../newfiles/", 0700)
-
+	os.Mkdir("../newfiles/", 0700) //create dir for files.
 	var kademliaID *KademliaID
 	if kID != "none" {
 		kademliaID = NewKademliaID(kID)
@@ -49,9 +44,14 @@ func NewKademlia(addr string, kID string) *Kademlia {
 	return &kademlia
 }
 
+/*
+* called when joining a network. A.k.a bootstrap.
+* Creates a kademlia instance, starts listening and
+* connects to network if initContact is not nil.
+ */
 func CreateAndStartNode(address string, kID string, initContact *Contact) *Kademlia {
 	kademlia := NewKademlia(address, kID)
-	kademlia.Start()
+	kademlia.StartListening()
 	if initContact != nil {
 		kademlia.RT.update(*initContact)
 		kademlia.JoinNetwork()
@@ -62,31 +62,40 @@ func CreateAndStartNode(address string, kID string, initContact *Contact) *Kadem
 /*
  * Start listening to the given port
  */
-func (kademlia *Kademlia) Start() {
+func (kademlia *Kademlia) StartListening() {
 	go kademlia.net.Listen()
 }
 
+/*
+* Tries to connect to network using its current routingtable.
+* Max 3 tries, otherwise panic.
+* If success, fill up buckets that needs it.
+ */
 func (kademlia *Kademlia) JoinNetwork() {
-	for {
-		// fmt.Println("routingtable size:", kademlia.RT.Contacts())
-		// c := NewContact(NewRandomKademliaID(), "address:123")
-		// fmt.Println("routingtable contacts:", kademlia.LookupContact(&c))
-		contacts := kademlia.SendFindContactMessage(kademlia.RT.me.ID)
-		if len(contacts) > 1 {
+	count := 3
+	pass := false
+	for i := 0; i < count; i++ {
+		contacts := kademlia.FindContact(kademlia.RT.me.ID)
+		if len(contacts) > 1 { // for success, amount of contacts should be atleast 2 (self and one asked node).
+			pass = true
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(2 * time.Second) // sleep 2 seconds and try again.
 	}
-	for i := 1; i < kademlia.RT.Size()-2; i++ {
-		id := kademlia.RT.getRandomIDForBucket(i)
-		go kademlia.SendFindContactMessage(id)
+	if pass {
+		for i := 1; i < kademlia.RT.Size()-2; i++ { // -2 since the two buckets at bottom will already be filled to max.
+			id := kademlia.RT.getRandomIDForBucket(i)
+			go kademlia.FindContact(id)
+		}
+	} else {
+		panic(errors.New("Could not connect to network..."))
 	}
 }
 
 /*
  * Returns the kademlia.K closest contacts to target.
  */
-func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
+func (kademlia *Kademlia) LookupContactLocal(target *Contact) []Contact {
 	contacts := kademlia.RT.findClosestContacts(target.ID, kademlia.K)
 	return contacts
 }
@@ -95,13 +104,11 @@ func (kademlia *Kademlia) LookupContact(target *Contact) []Contact {
  * Sends out FindNode RPC's to find the node in the network with id = kademliaID.
  * Finishes when the k closest nodes are found, and has responded.
  * Returns the K closest contacts found. Closest first in list
- * TODO: When no closer node is found, should it send out more RPC's ?
- * TODO: Setup a network to test more of its functionality
  */
-func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Contact {
+func (kademlia *Kademlia) FindContact(kademliaID *KademliaID) []Contact {
 	targetID := kademliaID
 	target := NewContact(targetID, "DummyAdress")
-	closestContacts := kademlia.LookupContact(&target)
+	closestContacts := kademlia.LookupContactLocal(&target)
 	message := NewFindNodeMessage(kademlia.RT.me, targetID) // Create message to be sent.
 
 	tempTable := NewContactStateList(targetID, kademlia.K) // Creates the temp table
@@ -120,23 +127,27 @@ func (kademlia *Kademlia) SendFindContactMessage(kademliaID *KademliaID) []Conta
 	return contacts
 }
 
+/*
+* Helper function for find contact. the function that is called recursively.
+* Sends the actual find contact RPC's
+ */
 func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Message,
 	ch *ContactChannel, tempTable *ContactStateList) {
 	rMessage, ackMessage, err :=
 		kademlia.net.sendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 	if err != nil {
+		//If error in message
 		fmt.Println(err)
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
-		//fmt.Println(ackMessage.Nodes)
+		//If message received correctly
 		kademlia.RT.update(rMessage.Sender)            // Updating routingtable with new contact seen.
 		tempTable.AppendUniqueSorted(ackMessage.Nodes) // Appends new nodes into tempTable
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
-	//fmt.Println(tempTable.contacts)
-	if tempTable.Finished() { // If finished,
+	if tempTable.Finished() {
 		ch.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
-	} else {
+	} else { // If not finished, keep sending out RPC's
 		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
 			c := tempTable.GetNextToQuery()
 			if c != nil {
@@ -149,22 +160,22 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 /*
  * Request to find a value over the network.
  */
-func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
+func (kademlia *Kademlia) FindValue(filename *string) []byte {
 	kademliaID := NewValueID(filename) //SHA1 hash
 	fileString := kademliaID.String()
-	fileContent := kademlia.Search(&fileString)
+	fileContent := kademlia.SearchFileLocal(&fileString)
 	if fileContent != nil {
 		fileJson, err := json.Marshal(fileContent)
 		if err != nil {
-			//			fmt.Println("SendFindValueMessage: Nil")
+			//			fmt.Println("FindValue: Nil")
 			return nil
 		}
-		//		fmt.Println("SendFindValueMessage: fileJson")
+		//		fmt.Println("FindValue: fileJson")
 		return fileJson
 	}
 	myself := kademlia.RT.me
 	cSearch := NewContact(kademliaID, "no address")
-	closestContacts := kademlia.LookupContact(&cSearch) //BackHere //TODO: Should search for filename id.
+	closestContacts := kademlia.LookupContactLocal(&cSearch) //BackHere //TODO: Should search for filename id.
 
 	message := NewFindValueMessage(myself, kademliaID)       //FindValueMessage
 	tempTable := NewContactStateList(kademliaID, kademlia.K) // Creates the temp table //TODO: list should be sorted on filename id
@@ -184,11 +195,15 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 	return data
 }
 
+/*
+* Helper function for find value. the function that is called recursively.
+* Sends the actual find value RPC's
+ */
 func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Message, ch2 *DataChannel, tempTable *ContactStateList) {
 	rMessage, ackMessage, err :=
 		kademlia.net.sendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 
-	if err != nil { // TODO: Should be checked before ackMessage.value != nil, otherwise crash could occur.
+	if err != nil {
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		if ackMessage.Value != nil {
@@ -202,7 +217,7 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		tempTable.MarkReceived(ContactToSendTo)        // Mark this contact received.
 	}
 
-	if tempTable.Finished() { // If finished, //TODO: writing to ch1 has no effect, if file is not found, deadlock will occur, should write something like "not found to ch2"
+	if tempTable.Finished() { // If finished
 		ch2.WriteData(nil) // Can only be written to once.
 	} else {
 		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
@@ -215,34 +230,32 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 }
 
 /*
-* Sending a store message to neighbors.
+* Sending a store message to k closest contacts to the 160 bit hash of filename.
 * filename - Filename in plain text e.g. MyFile.txt
  */
-func (kademlia *Kademlia) SendStoreMessage(filename *string, data *[]byte) error {
+func (kademlia *Kademlia) Store(filename *string, data *[]byte) {
 	valueID := NewValueID(filename)
-	//1: Use SendFindContactMessage to get list of 'k' closest neighbors.
-	contacts := kademlia.SendFindContactMessage(valueID)
-	//2: Filter out the alpha closest out of those 'k' neighbors.
+	//1: Use FindContact to get list of 'k' closest neighbors.
+	contacts := kademlia.FindContact(valueID)
 	strValueID := valueID.String()
 	message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
-	name := []byte(valueID.String())
-	kademlia.storage.RAM(name, *data)
-	kademlia.storage.Memory(name, *data)
+	//2: Store it locally before sending out RPC's
+	kademlia.StoreFileLocal(valueID.String(), *data)
 	for _, v := range contacts {
 		//3: Send out async messages to each of the neighbors without caring about response.
 		if v.Equals(*kademlia.RT.me) {
 			continue
 		}
-		_, err := kademlia.net.sendStoreMessage(v.Address, &message)
-		if err != nil {
-			return err
-		}
+		go kademlia.net.sendStoreMessage(v.Address, &message)
 	}
-	return nil
-	//4: Done.
 }
 
-func (kademlia *Kademlia) Search(filename *string) *string {
+/*
+* Searches Ram and Mem for the file specified.
+* Returns a *string with the content of file.
+* NOTE: Assumes filename is the hash of the real filename.
+ */
+func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 	name := []byte(*filename)
 	found := kademlia.storage.Search(name)
 	if found == nil {
@@ -253,23 +266,27 @@ func (kademlia *Kademlia) Search(filename *string) *string {
 	return &strtext
 }
 
-func (kademlia *Kademlia) Store(m StoreMessage) {
-	name := []byte(m.Name)
-	kademlia.storage.RAM(name, m.Data)
-	kademlia.storage.Memory(name, m.Data)
-	return
+/*
+* Stores a file locally in ram and mem.
+* NOTE: Assumes filename is the hash of the real filename.
+ */
+func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
+	name := []byte(filename)
+	kademlia.storage.RAM(name, data)
+	kademlia.storage.Memory(name, data)
 }
 
 /*
-* Deletes a file from
+* Deletes a file from local storage.
  */
-func (kademlia *Kademlia) DeleteFile(name string) {
+func (kademlia *Kademlia) DeleteFileLocal(name string) bool {
 	valueID := NewValueID(&name)
-	kademlia.storage.DeleteFile(valueID.String())
+	return kademlia.storage.DeleteFile(valueID.String())
 }
 
 /*
  * This method is called by the network module when a PING message is received.
+ * Sends back a ping ack.
  */
 func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr) {
 	msgJson := NewPingAckMessage(kademlia.RT.me, &message.RPC_ID)
@@ -278,16 +295,16 @@ func (kademlia *Kademlia) OnPingMessageReceived(message *Message, addr net.Addr)
 
 /*
  * This method is called by the network module when a FIND_VALUE message is received.
+ * Sends back a Findvalue ack.
  */
-
 func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage FindValueMessage, addr net.Addr) {
 	filename := fvMessage.Name.String()
-	foundFile := kademlia.Search(&filename)
+	foundFile := kademlia.SearchFileLocal(&filename)
 	var ackFile []byte
 	var ackNodes []Contact
 	if foundFile == nil {
 		target := NewContact(&fvMessage.Name, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
-		ackNodes = kademlia.LookupContact(&target)
+		ackNodes = kademlia.LookupContactLocal(&target)
 	} else {
 		ackFile, _ = json.Marshal(foundFile)
 	}
@@ -298,9 +315,10 @@ func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage
 
 /*
  * This method is called by the network module when a STORE message is received.
+ * Sends back a Store ack.
  */
 func (kademlia *Kademlia) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
-	kademlia.Store(data)
+	kademlia.StoreFileLocal(data.Name, data.Data)
 	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 	newAck, _ := MarshallMessage(ack)
 	kademlia.net.connectAndWrite(addr.String(), newAck)
@@ -308,10 +326,11 @@ func (kademlia *Kademlia) OnStoreMessageReceived(message *Message, data StoreMes
 
 /*
  * This method is called by the network module when a FIND_NODE message is received.
+ * Sends back a find_node ack.
  */
 func (kademlia *Kademlia) OnFindNodeMessageReceived(message *Message, data FindNodeMessage, addr net.Addr) {
 	target := NewContact(&data.NodeID, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
-	contacts := kademlia.LookupContact(&target)
+	contacts := kademlia.LookupContactLocal(&target)
 	returnMessage := NewFindNodeAckMessage(kademlia.RT.me, &message.RPC_ID, &contacts) //TODO: Fix real sender id
 	rMsgJson, _ := MarshallMessage(returnMessage)
 	kademlia.net.connectAndWrite(addr.String(), rMsgJson)

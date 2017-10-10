@@ -12,29 +12,29 @@ import (
 func TestFindNode1(t *testing.T) {
 	// Node B
 	B := d7024e.NewKademlia("localhost:8100", "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
-	B.Start()
+	B.StartListening()
 	time.Sleep(10 * time.Millisecond)
 
 	// Node A
 	A := d7024e.NewKademlia("localhost:8101", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-	A.Start()
+	A.StartListening()
 	A.Ping("localhost:8100")
 	time.Sleep(10 * time.Millisecond)
 
 	// Node C
 	C := d7024e.NewKademlia("localhost:8102", "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-	C.Start()
+	C.StartListening()
 	C.Ping("localhost:8100")
 	time.Sleep(10 * time.Millisecond)
 
 	// NODE D
 	D := d7024e.NewKademlia("localhost:8103", "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-	D.Start()
+	D.StartListening()
 	D.Ping("localhost:8102")
 	time.Sleep(10 * time.Millisecond)
 
 	//fmt.Println("All nodes connected", A)
-	contacts := A.SendFindContactMessage(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
+	contacts := A.FindContact(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
 	//fmt.Println("Closest contact returned:", contacts[0])
 	if !contacts[0].ID.Equals(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")) {
 		t.Error("Not correct contact returned", contacts[0])
@@ -44,7 +44,7 @@ func TestFindNode1(t *testing.T) {
 func TestFindNode2(t *testing.T) {
 	// Node B
 	B := d7024e.NewKademlia("localhost:8105", "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
-	B.Start()
+	B.StartListening()
 	time.Sleep(10 * time.Millisecond)
 
 	count := 30
@@ -52,13 +52,13 @@ func TestFindNode2(t *testing.T) {
 	var Node *d7024e.Kademlia
 	for i := 0; i < count; i++ {
 		Node = d7024e.NewKademlia("localhost:"+strconv.Itoa(port+i+1), "none")
-		Node.Start()
+		Node.StartListening()
 		connectAddr := d7024e.CreateAddr("localhost", port+i)
 		Node.Ping(connectAddr)
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	contacts := Node.SendFindContactMessage(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
+	contacts := Node.FindContact(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"))
 	//fmt.Println(contacts)
 	//fmt.Println("length:", len(contacts))
 	if contacts[0].ID.Equals(d7024e.NewKademliaID("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")) {
