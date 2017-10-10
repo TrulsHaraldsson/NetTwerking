@@ -2,7 +2,7 @@
 How to create a distributed system 101
 
 ## Docker START
-1. Make sure all docker related stuff is installed (docker, docker-compose).
+1. Make sure docker is installed.
 2. Go to root directory of project.
 3. Run the script "startdocker.sh" (in the script, alter the amount of nodes to be started if you like).
 4. The images will now be built, and the specified amount of containers will be started.
