@@ -8,3 +8,4 @@ for (( i = 0; i < 10; i++ )); do
   docker run -d follower
 done
 screen -r
+docker stop $(docker ps -a -q)

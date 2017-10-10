@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -74,13 +73,8 @@ func TestFindValue(t *testing.T) {
 	if find == nil {
 		t.Error("Not found!")
 	}
-	var ffile string
-	err3 := json.Unmarshal(find, &ffile)
-	if err3 != nil {
-		t.Error("unmarshalling failure in find-value test.")
-	}
-	if ffile != string(content) {
+	contentReceived := string(find)
+	if contentReceived != string(content) {
 		t.Error("Strings of content dont match!")
 	}
-	time.Sleep(50 * time.Millisecond)
 }
