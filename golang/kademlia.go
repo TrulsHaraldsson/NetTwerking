@@ -165,13 +165,7 @@ func (kademlia *Kademlia) FindValue(filename *string) []byte {
 	fileString := kademliaID.String()
 	fileContent := kademlia.SearchFileLocal(&fileString)
 	if fileContent != nil {
-		fileJson, err := json.Marshal(fileContent)
-		if err != nil {
-			//			fmt.Println("FindValue: Nil")
-			return nil
-		}
-		//		fmt.Println("FindValue: fileJson")
-		return fileJson
+		return []byte(*fileContent)
 	}
 	myself := kademlia.RT.me
 	cSearch := NewContact(kademliaID, "no address")

@@ -218,15 +218,10 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	if find == nil {
 		fmt.Println("Not found!")
 	} else {
-		file := string(find)
-		fmt.Println("Returned File content : ", string(file))
+		fmt.Println("Returned File content : ", string(find))
 		fileID := d7024e.NewValueID(&text).String()
-		err := ioutil.WriteFile("../newfiles/"+fileID, find, 0644)
-		if err != nil {
-			panic(err)
-		}
+		kademlia.StoreFileLocal(fileID, find)
 	}
-	fmt.Println("Done\n")
 }
 
 func onDirectory(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
