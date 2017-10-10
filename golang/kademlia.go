@@ -150,7 +150,9 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
  * Request to find a value over the network.
  */
 func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
-	fileContent := kademlia.Search(filename)
+	kademliaID := NewValueID(filename) //SHA1 hash
+	fileString := kademliaID.String()
+	fileContent := kademlia.Search(&fileString)
 	if fileContent != nil {
 		fileJson, err := json.Marshal(fileContent)
 		if err != nil {
@@ -160,7 +162,6 @@ func (kademlia *Kademlia) SendFindValueMessage(filename *string) []byte {
 		//		fmt.Println("SendFindValueMessage: fileJson")
 		return fileJson
 	}
-	kademliaID := NewValueID(filename)
 	myself := kademlia.RT.me
 	cSearch := NewContact(kademliaID, "no address")
 	closestContacts := kademlia.LookupContact(&cSearch) //BackHere //TODO: Should search for filename id.
