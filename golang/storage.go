@@ -1,6 +1,5 @@
 package d7024e
 
-
 import (
 	"crypto/sha1"
 	"io/ioutil"
@@ -47,9 +46,12 @@ func (storage *Storage) MoveToMemory(name []byte) {
 	}
 }
 
+/*
+* Deletes a file from ram. returns true if it existed, false otherwise.
+ */
 func (storage *Storage) deleteFromRam(name string) bool {
 	for i, v := range storage.Files {
-		if reflect.DeepEqual(v.Name, name) {
+		if reflect.DeepEqual(v.Name, []byte(name)) {
 			//Delete file in Files
 			storage.Files = append(storage.Files[:i], storage.Files[i+1:]...)
 			return true
@@ -128,19 +130,6 @@ func (storage *Storage) Memory(name []byte, text []byte) {
 	if err2 != nil {
 		panic(err2)
 	}
-	// Check dir after creation to confirm correctness!
-	/*
-	   path = "./../newfiles"
-	   files, err = ioutil.ReadDir(path)
-	   if err != nil {
-	     fmt.Println(err)
-	   }
-	   fmt.Println("\n")
-	   for _, f := range files {
-	     fmt.Println(f.Name())
-	   }
-	   fmt.Println("After new file !")
-	*/
 }
 
 /*
@@ -151,8 +140,12 @@ func (storage *Storage) HashFile(name []byte) []uint8 {
 	return hashing.Sum(name)
 }
 
-func (storage *Storage) DeleteFile(name string) {
-	storage.deleteFromRam(name)
-	path := "../newfiles/" + string(name)
+/*
+* TODO: Dont always return true, check if file on memory exists.
+ */
+func (storage *Storage) DeleteFile(name string) bool {
+	ramOK := storage.deleteFromRam(name)
+	path := "../newfiles/" + name
 	os.Remove(path) // clean up
+	return (ramOK || true)
 }

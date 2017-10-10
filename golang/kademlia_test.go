@@ -5,10 +5,10 @@ package d7024e
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
-	"fmt"
 )
 
 func TestKademliaBootstrap(t *testing.T) {
@@ -21,7 +21,7 @@ func TestKademliaBootstrap(t *testing.T) {
 	}
 }
 
-func TestKademliaNodeLookupContact(t *testing.T) {
+func TestKademliaNodeLookupContactLocal(t *testing.T) {
 	_, rt := CreateTestRT()
 
 	contactsCorrect := []Contact{}
@@ -40,7 +40,7 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 
 	storage := NewStorage()
 	kademlia := Kademlia{RT: rt, K: 20, storage: &storage}
-	contacts := kademlia.LookupContact(&contactsCorrect[0])
+	contacts := kademlia.LookupContactLocal(&contactsCorrect[0])
 	//fmt.Println(contacts)
 	for i, contact := range contacts {
 		//fmt.Println(" i : ", i, "contact : ", contact)
@@ -56,7 +56,7 @@ func TestKademliaNodeLookupContact(t *testing.T) {
 	}
 }
 
-func TestKademliaSendStoreMessage2(t *testing.T) {
+func TestKademliaStore2(t *testing.T) {
 	_, rt := CreateTestRT10()
 	_, network := initKademliaAndNetwork(rt, 9500)
 
@@ -68,11 +68,11 @@ func TestKademliaSendStoreMessage2(t *testing.T) {
 	_, network2 := initKademliaAndNetwork(rt2, 3)
 	filename2 := "filenameX100"
 	data2 := []byte("Testing a fucking shit send.")
-	network2.kademlia.SendStoreMessage(&filename2, &data2)
-	network2.kademlia.DeleteFile(filename2)
+	network2.kademlia.Store(&filename2, &data2)
+	network2.kademlia.DeleteFileLocal(filename2)
 }
 
-func TestKademliaSendStoreMessage(t *testing.T) {
+func TestKademliaStore(t *testing.T) {
 	_, rt := CreateTestRT8()
 	_, network := initKademliaAndNetwork(rt, 8002)
 	go network.Listen()
@@ -84,9 +84,9 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 
 	filename := "filenameX300"
 	data := []byte("Testing a fucking shit send.")
-	network2.kademlia.SendStoreMessage(&filename, &data)
+	network2.kademlia.Store(&filename, &data)
 	fmt.Println("Should be error printed here.")
-	network2.kademlia.DeleteFile(filename)
+	network2.kademlia.DeleteFileLocal(filename)
 
 }
 
@@ -94,7 +94,7 @@ func TestKademliaSendStoreMessage(t *testing.T) {
 * contact searched for is offline, so timeout will occur...
 * closest contact found is not the one searched for, since it is offline.
  */
-func TestKademliaSendFindContactMessage(t *testing.T) {
+func TestKademliaFindContact(t *testing.T) {
 	_, rt := CreateTestRT18()
 	_, network := initKademliaAndNetwork(rt, 9102)
 	go network.Listen()
@@ -104,7 +104,7 @@ func TestKademliaSendFindContactMessage(t *testing.T) {
 	_, rt2 := CreateTestRT19()
 	_, network2 := initKademliaAndNetwork(rt2, 5)
 
-	contact := network2.kademlia.SendFindContactMessage(
+	contact := network2.kademlia.FindContact(
 		NewKademliaID("1111111100000000000000000000000000000000"))
 
 	if (len(contact) < 1) || (!contact[0].ID.Equals(NewKademliaID("1111111100000000000000000000000000000000"))) {
@@ -120,49 +120,43 @@ func TestKademliaSendPingMessage(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT()
-	kademlia2, network2 := initKademliaAndNetwork(rt2, 6)
+	kademlia2, _ := initKademliaAndNetwork(rt2, 6)
 
-	pingMsg := NewPingMessage(kademlia2.RT.me)
-	msg, err := network2.SendPingMessage("localhost:8003", &pingMsg)
-	if err != nil {
-		t.Error(err)
-	}
-	if msg.MsgType != PING_ACK {
-		t.Error("Did not receive an ack for the ping message...")
+	ok := kademlia2.Ping("localhost:8003")
+	if !ok {
+		t.Error("Ping ack was not received correctly")
 	}
 }
 
 /*
 * Store a file by name and content and then search for it.
-* Two in One test (Store, Search).
+* Two in One test (Store, SearchFileLocal).
  */
-func TestKademliaRAMSearch(t *testing.T) {
+func TestKademliaRAMSearchFileLocal(t *testing.T) {
 	filename := "filenameXY"
 	data := []byte("This is the content of file filenameXY!")
 	kademlia, _ := initKademliaAndNetwork(&RoutingTable{}, 12345)
-	kID := NewContact(NewRandomKademliaID(), "adress")
-	message := NewStoreMessage(&kID, &filename, &data)
-	storeMessage := StoreMessage{}
-	json.Unmarshal(message.Data, &storeMessage)
-	kademlia.Store(storeMessage)
-	file := kademlia.Search(&filename)
-	if *file == "" {
+	kademlia.StoreFileLocal(filename, data)
+	file := kademlia.SearchFileLocal(&filename)
+	if file != nil {
 		bText := []byte(*file)
 		bool := bytes.EqualFold(bText, data)
 		if bool == false {
 			t.Error("File content do not match!\n")
 		}
+	} else {
+		t.Error("No file found...")
 	}
 }
 
-func TestKademliaMemorySearch(t *testing.T) {
+func TestKademliaMemorySearchFileLocal(t *testing.T) {
 	name := "filenameXY"
 	filename := []byte(name)
 	data := []byte("This is the content of file filenameXY!")
 	kademlia, _ := initKademliaAndNetwork(&RoutingTable{}, 12345)
 	storage := Storage{}
 	storage.Memory(filename, data)
-	file := kademlia.Search(&name)
+	file := kademlia.SearchFileLocal(&name)
 	if *file == "" {
 		bText := []byte(*file)
 		bool := bytes.EqualFold(bText, data)
@@ -174,27 +168,26 @@ func TestKademliaMemorySearch(t *testing.T) {
 	os.Remove(path)
 }
 
-func TestKademliaSendFindValue(t *testing.T){
+func TestKademliaSendFindValue(t *testing.T) {
 	A := CreateAndStartNode("localhost:5001", "none", nil)
 	B := CreateAndStartNode("localhost:5002", "none", A.RT.me)
 
 	filename := "findvaluemessage"
 	data := []byte("This is content of findvaluemessage!")
-	err := A.SendStoreMessage(&filename, &data)
-	if err != nil{
-		t.Error("Unsuccessful SendStoreMessage!")
-	}
+	A.Store(&filename, &data)
+	time.Sleep(50 * time.Millisecond)
 	C := CreateAndStartNode("localhost:5003", "none", B.RT.me)
-	file := C.SendFindValueMessage(&filename)
-	if file == nil{
+	C.DeleteFileLocal(filename) //Needed to test "not locally found" since items are stored in RAM and Disk, and disk is shared.
+	file := C.FindValue(&filename)
+	if file == nil {
 		t.Error("File not found!")
 	}
 	var ffile string
 	err3 := json.Unmarshal(file, &ffile)
-	if err3 != nil{
+	if err3 != nil {
 		t.Error("unmarshalling failure in find-value test.")
 	}
-	if (ffile != string(data)) {
+	if ffile != string(data) {
 		t.Error("Strings of content dont match!")
 	}
 	path := "./../newfiles/" + filename //<-- check if true.

@@ -135,7 +135,7 @@ func help() {
 func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Please write a address to ping, below are some choices.")
 	newContact := d7024e.NewContact(d7024e.NewRandomKademliaID(), "no address")
-	contacts := kademlia.LookupContact(&newContact)
+	contacts := kademlia.LookupContactLocal(&newContact)
 	for i := 0; i < 10; i++ {
 		fmt.Println("Contact : ", contacts[i].Address)
 	}
@@ -156,7 +156,7 @@ func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	} else {
 		kID = d7024e.NewKademliaID(rid)
 	}
-	contacts := kademlia.SendFindContactMessage(kID)
+	contacts := kademlia.FindContact(kID)
 	fmt.Println("Number of contacts found:", len(contacts))
 }
 
@@ -168,24 +168,8 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
 	data := []byte(text)
-	/*
-		file := "../newfiles/" + filename
-
-		err := ioutil.WriteFile(file, data, 0644)
-		if err != nil {
-			panic(err)
-		}
-		content, err2 := ioutil.ReadFile(file)
-		if err2 != nil {
-			fmt.Println("dont exist: ", err2)
-		}
-	*/
-	valueID := kademlia.SendStoreMessage(&filename, &data)
-	if valueID == nil {
-		fmt.Println("Storemessage successful!")
-	} else { //-- The storeMessage failed --//
-		fmt.Println("Storemessage unsuccessful!")
-	}
+	kademlia.Store(&filename, &data)
+	fmt.Println("StoreMessages Sent...")
 }
 
 func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
@@ -196,22 +180,15 @@ func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	if file != "dir" {
 
 		//-- Read the old file --//
-
-		name := "../newfiles/" + file
-		content, err2 := ioutil.ReadFile(name)
-		if err2 != nil {
-			fmt.Println("dont exist: ", err2)
+		fileID := d7024e.NewValueID(&file).String()
+		content := kademlia.SearchFileLocal(&fileID)
+		if content == nil {
+			fmt.Println("Old file doesn't exist locally.")
 		} else {
-			fmt.Println("File contents: ", string(content), "\n")
-
-			//-- send the file and get it --//
-
-			valueID := kademlia.SendStoreMessage(&file, &content)
-			if valueID == nil {
-				fmt.Println("Storemessage successful!")
-			} else {
-				fmt.Println("Storemessage unsuccessful!")
-			}
+			fmt.Println("File contents: ", *content, "\n")
+			byteContent := []byte(*content)
+			kademlia.Store(&file, &byteContent)
+			fmt.Println("Storemessages Sent...")
 		}
 	} else {
 		onDirectory(kademlia, reader)
@@ -237,13 +214,14 @@ func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("\nWrite the name of the file you wish to see content off.\n")
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
-	find := kademlia.SendFindValueMessage(&text)
+	find := kademlia.FindValue(&text)
 	if find == nil {
 		fmt.Println("Not found!")
 	} else {
 		file := string(find)
 		fmt.Println("Returned File content : ", string(file))
-		err := ioutil.WriteFile("../newfiles/"+text, find, 0644)
+		fileID := d7024e.NewValueID(&text).String()
+		err := ioutil.WriteFile("../newfiles/"+fileID, find, 0644)
 		if err != nil {
 			panic(err)
 		}
@@ -267,5 +245,10 @@ func onDelete(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("\nWrite the name of the file you wish to delete.\n")
 	name, _ := reader.ReadString('\n')
 	name = name[:len(name)-1]
-	kademlia.DeleteFile(name)
+	ok := kademlia.DeleteFileLocal(name)
+	if ok {
+		fmt.Println("File was deleted.")
+	} else {
+		fmt.Println("File could not be found to delete.")
+	}
 }
