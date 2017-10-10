@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	//"fmt"
 )
 
 /*
@@ -59,22 +60,6 @@ func (storage *Storage) deleteFromRam(name string) bool {
 }
 
 /*
-* Check if file is in RAM
- */
-func (storage *Storage) ReadRAM(name []byte) *file {
-	file := file{}
-	//compareName := storage.HashFile(name)
-	for _, v := range storage.Files {
-		if reflect.DeepEqual(v.Name, name) {
-			file.Name = v.Name
-			file.Text = v.Text
-			return &file
-		}
-	}
-	return nil
-}
-
-/*
 * Look if the RAM storage include a certain file, if so return file, else
 check Memory if it's there and return.
 */
@@ -85,6 +70,23 @@ func (storage *Storage) Search(name []byte) *file {
 		returnedFile = storage.ReadMemory(name)
 	}
 	return returnedFile
+}
+
+/*
+* Check if file is in RAM
+ */
+func (storage *Storage) ReadRAM(name []byte) *file {
+	file := file{}
+	//compareName := storage.HashFile(name)
+	for _, v := range storage.Files {
+		//fmt.Println("\n",string(v.Name),"\n", string(name),"\n")
+		if reflect.DeepEqual(v.Name, name) {
+			file.Name = v.Name
+			file.Text = v.Text
+			return &file
+		}
+	}
+	return nil
 }
 
 /*
@@ -114,9 +116,10 @@ func (storage *Storage) ReadMemory(name []byte) *file {
 func (storage *Storage) RAM(name []byte, text []byte) {
 	//fileName := storage.HashFile(name)
 	newFile := file{name, text}
+	//fmt.Println("Name : ", name, "\nString(Name)", string(name))
 	storage.Files = append(storage.Files, newFile)
+	//fmt.Println("Files : \n",storage.Files,"\n")
 	return
-
 }
 
 /*

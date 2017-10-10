@@ -200,3 +200,18 @@ func TestKademliaSendFindValue(t *testing.T){
 	path := "./../newfiles/" + filename //<-- check if true.
 	os.Remove(path)
 }
+
+func TestKademliaReplenish(t *testing.T){
+	A := CreateAndStartNode("localhost:1500", "1111111100000000000000000000000000000000", nil)
+	B := CreateAndStartNode("localhost:1501", "1111111100000000000000000000000000000001", A.RT.me)
+	C := CreateAndStartNode("localhost:1502", "1111111100000000000000000000000000000002", nil)
+	C.Ping(B.RT.me.Address)
+	name := "replenish"
+	nameB := []byte(name)
+	kName := NewValueID(&name)
+	kNameStr := []byte("7265706c656e697368da39a3ee5e6b4b0d3255bf")
+	fmt.Println(name,"\n",nameB,"\n",kName)
+	content := []byte("replenish Content")
+	C.storage.RAM(kNameStr, content)
+	//A.SendFindValue(string(kNameStr))
+}

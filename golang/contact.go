@@ -104,7 +104,31 @@ type ContactStateList struct {
 	target     *KademliaID
 	k          int
 	maxQueries int
+	replenishTarget *Contact
 }
+
+func (list *ContactStateList) setReplenishTarget(contact Contact){
+	//fmt.Println("1")
+	list.mutex.Lock()
+	defer list.mutex.Unlock()
+	if list.replenishTarget == nil {
+		//fmt.Println("2")
+		list.replenishTarget = &contact
+	}else{
+		//fmt.Println("Contact in set : ", contact, "\n", list.replenishTarget)
+		//if &contact != nil{
+		if list.replenishTarget.Less(&contact){
+			list.replenishTarget = &contact
+		}
+	}
+	//fmt.Println("3")
+}
+
+func (list *ContactStateList) getReplenishTarget() *Contact {
+	//fmt.Println("get : ", list.replenishTarget)
+	return list.replenishTarget
+}
+
 
 func NewContactStateList(target *KademliaID, k int) ContactStateList {
 	return ContactStateList{contacts: []ContactStateItem{}, mutex: sync.Mutex{}, target: target, k: k, maxQueries: 1}
