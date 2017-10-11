@@ -2,27 +2,70 @@ package d7024e
 
 import (
 	"crypto/sha1"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"sync"
+	"time"
 )
 
 /*
 * A list of stored files, change accordingly later.
  */
 type Storage struct {
-	Files []file
-	mutex sync.Mutex
+	Files  []file
+	mutex  sync.Mutex
+	timers []timerHolder
 }
 
 func NewStorage() Storage {
-	return Storage{Files: []file{}, mutex: sync.Mutex{}}
+	return Storage{Files: []file{}, mutex: sync.Mutex{}, timers: []timerHolder{}}
 }
 
 type file struct {
 	Name []uint8
 	Text []byte
+}
+
+type timerHolder struct {
+	timer  *time.Timer
+	fileID string
+}
+
+func (storage *Storage) deleteTimer(filename string) {
+	for i, item := range storage.timers {
+		if item.fileID == filename {
+			storage.timers = append(storage.timers[:i], storage.timers[i+1:]...)
+			return
+		}
+	}
+}
+
+func (storage *Storage) updateTimer(time time.Duration, filename string) {
+	fmt.Println("amount of timers:", len(storage.timers))
+	for _, item := range storage.timers {
+		if item.fileID == filename {
+			fmt.Println("updating timer")
+			if !item.timer.Stop() {
+				<-item.timer.C
+			}
+			item.timer.Reset(time)
+			return
+		}
+	}
+}
+
+func (storage *Storage) addTimer(timer *time.Timer, filename string) {
+	for _, item := range storage.timers {
+		if item.fileID == filename {
+			fmt.Println("Updating when should be adding....")
+			item.timer.Stop()
+			item.timer = timer
+			return
+		}
+	}
+	storage.timers = append(storage.timers, timerHolder{timer, filename})
 }
 
 /*

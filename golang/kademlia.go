@@ -275,14 +275,19 @@ func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
 	fmt.Println("Storing file locally!", filename)
 	name := []byte(filename)
 	ok := kademlia.storage.Store(name, data)
+	//kademlia.storage.Store(name, data)
 	//TODO: Start purge/republish timer
+	ranInt := rand.Intn(20000)
+	ranTime := time.Second * (time.Duration(ranInt) / 1000)
 	if ok {
-		ranInt := rand.Intn(20000)
-		ranTime := time.Second * (time.Duration(ranInt) / 1000)
 		fmt.Println("Republishing in:", ranInt/1000+20, "sec.")
-		time.AfterFunc(ranTime+time.Second*20, func() { //TODO: dynamic value
+		timer := time.AfterFunc(ranTime+time.Second*20, func() { //TODO: dynamic value
+			kademlia.storage.deleteTimer(filename)
 			kademlia.PurgeAndRepublish(filename)
 		})
+		kademlia.storage.addTimer(timer, filename)
+	} else {
+		kademlia.storage.updateTimer(ranTime+time.Second*20, filename)
 	}
 
 }
