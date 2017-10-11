@@ -115,10 +115,13 @@ func (storage *Storage) ReadMemory(name []byte) *file {
  */
 func (storage *Storage) RAM(name []byte, text []byte) {
 	//fileName := storage.HashFile(name)
+	for _, v := range storage.Files {
+		if reflect.DeepEqual(v.Name, name) {
+			return
+		}
+	}
 	newFile := file{name, text}
 	storage.Files = append(storage.Files, newFile)
-	return
-
 }
 
 /*

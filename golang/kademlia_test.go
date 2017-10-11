@@ -4,7 +4,6 @@ package d7024e
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -67,8 +66,9 @@ func TestKademliaStore2(t *testing.T) {
 	_, rt2 := CreateTestRT11()
 	_, network2 := initKademliaAndNetwork(rt2, 3)
 	filename2 := "filenameX100"
-	data2 := []byte("Testing a fucking shit send.")
+	data2 := []byte("Testing a send2.")
 	network2.kademlia.Store(&filename2, &data2)
+	time.Sleep(time.Millisecond * 20)
 	network2.kademlia.DeleteFileLocal(filename2)
 }
 
@@ -80,12 +80,18 @@ func TestKademliaStore(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	_, rt2 := CreateTestRT9()
-	_, network2 := initKademliaAndNetwork(rt2, 4)
+	k, network2 := initKademliaAndNetwork(rt2, 4)
 
 	filename := "filenameX300"
-	data := []byte("Testing a fucking shit send.")
+	fileID := NewValueID(&filename).String()
+	data := []byte("Testing a send5.")
 	network2.kademlia.Store(&filename, &data)
+	file := k.SearchFileLocal(&fileID)
+	if string(*file) != string(data) {
+		t.Error("wrong content!")
+	}
 	fmt.Println("Should be error printed here.")
+	time.Sleep(time.Millisecond * 20)
 	network2.kademlia.DeleteFileLocal(filename)
 
 }
@@ -182,14 +188,12 @@ func TestKademliaSendFindValue(t *testing.T) {
 	if file == nil {
 		t.Error("File not found!")
 	}
-	var ffile string
-	err3 := json.Unmarshal(file, &ffile)
-	if err3 != nil {
-		t.Error("unmarshalling failure in find-value test.")
-	}
+	ffile := string(file)
 	if ffile != string(data) {
 		t.Error("Strings of content dont match!")
 	}
-	path := "./../newfiles/" + filename //<-- check if true.
+	time.Sleep(time.Millisecond * 20)
+	fileID := NewValueID(&filename)
+	path := "../newfiles/" + fileID.String()
 	os.Remove(path)
 }

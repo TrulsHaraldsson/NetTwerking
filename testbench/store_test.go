@@ -33,10 +33,16 @@ func TestStoreToAll(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	//fmt.Println("All nodes connected")
-	filename := "filenameShit"
-	data := []byte("Testing a fucking shit send.")
+	filename := "filename3"
+	fileID := d7024e.NewValueID(&filename).String()
+	data := []byte("Testing a send3.")
 	A.Store(&filename, &data)
 	time.Sleep(50 * time.Millisecond)
+	file := D.SearchFileLocal(&fileID)
+	if string(*file) != string(data) {
+		t.Error("Wrong file content")
+	}
+	A.DeleteFileLocal(filename)
 }
 
 /*
@@ -55,7 +61,13 @@ func TestStoreToOne(t *testing.T) {
 
 	//fmt.Println("All nodes connected")
 	filename1 := "failname"
-	data1 := []byte("Testing a fucking shit send 1 time.")
+	fileID := d7024e.NewValueID(&filename1).String()
+	data1 := []byte("Testing a send4.")
 	A.Store(&filename1, &data1)
 	time.Sleep(50 * time.Millisecond)
+	file := B.SearchFileLocal(&fileID)
+	if string(*file) != string(data1) {
+		t.Error("Wrong file content")
+	}
+	A.DeleteFileLocal(filename1)
 }

@@ -1,7 +1,6 @@
 package d7024e
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -167,6 +166,7 @@ func (kademlia *Kademlia) FindValue(filename *string) []byte {
 	if fileContent != nil {
 		return []byte(*fileContent)
 	}
+	fmt.Println("(Not found local, print for demo purpose..)")
 	myself := kademlia.RT.me
 	cSearch := NewContact(kademliaID, "no address")
 	closestContacts := kademlia.LookupContactLocal(&cSearch) //BackHere //TODO: Should search for filename id.
@@ -300,7 +300,7 @@ func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage
 		target := NewContact(&fvMessage.Name, "DUMMY ADRESS") // TODO Check if another than dummy adress is needed
 		ackNodes = kademlia.LookupContactLocal(&target)
 	} else {
-		ackFile, _ = json.Marshal(foundFile)
+		ackFile = []byte(*foundFile)
 	}
 	ack := NewFindValueAckMessage(&message.Sender, &message.RPC_ID, &ackFile, &ackNodes)
 	newAck, _ := MarshallMessage(ack)

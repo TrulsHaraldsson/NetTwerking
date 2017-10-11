@@ -46,7 +46,7 @@ func TestBootstrap2(t *testing.T) {
 		addr := d7024e.CreateAddr("localhost", 8611+i)
 		k := d7024e.CreateAndStartNode(addr, "none", &c1)
 		nodes[i] = *k
-		//time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
 	for _, val := range nodes {
 		if val.RT.Contacts() < 20 {

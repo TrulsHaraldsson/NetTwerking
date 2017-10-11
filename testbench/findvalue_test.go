@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"testing"
 	"time"
 
@@ -34,34 +33,25 @@ func TestFindValue(t *testing.T) {
 
 	//Create file first
 	filename2 := "filename2"
-	data2 := []byte("Testing a fucking shit send.")
-	filename3 := "../newfiles/" + string(filename2)
-	err2 := ioutil.WriteFile(filename3, data2, 0644)
-	if err2 != nil {
-		panic(err2)
-	}
-	//Read file
-	content, err2 := ioutil.ReadFile(filename3)
-	if err2 != nil {
-		t.Error("Error when reading!")
-	}
-	A.Store(&filename2, &content)
+	fileID := d7024e.NewValueID(&filename2).String()
+	data2 := []byte("Testing a send.")
+	A.Store(&filename2, &data2)
 	time.Sleep(50 * time.Millisecond)
 
-	strA := A.SearchFileLocal(&filename2)
-	if *strA != string(content) {
+	strA := A.SearchFileLocal(&fileID)
+	if *strA != string(data2) {
 		t.Error("Strings of content dont match!")
 	}
-	strB := B.SearchFileLocal(&filename2)
-	if *strB != string(content) {
+	strB := B.SearchFileLocal(&fileID)
+	if *strB != string(data2) {
 		t.Error("Strings of content dont match!")
 	}
-	strC := C.SearchFileLocal(&filename2)
-	if *strC != string(content) {
+	strC := C.SearchFileLocal(&fileID)
+	if *strC != string(data2) {
 		t.Error("Strings of content dont match!")
 	}
-	strD := D.SearchFileLocal(&filename2)
-	if *strD != string(content) {
+	strD := D.SearchFileLocal(&fileID)
+	if *strD != string(data2) {
 		t.Error("Strings of content dont match!")
 	}
 
@@ -74,7 +64,9 @@ func TestFindValue(t *testing.T) {
 		t.Error("Not found!")
 	}
 	contentReceived := string(find)
-	if contentReceived != string(content) {
+	if contentReceived != string(data2) {
 		t.Error("Strings of content dont match!")
 	}
+	time.Sleep(time.Millisecond * 20)
+	E.DeleteFileLocal(filename2)
 }
