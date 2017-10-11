@@ -2,8 +2,9 @@
 docker build -t interactive .
 docker build -t follower -f Dockerfile-follower .
 screen -d -m bash -c "docker run -it interactive"
-sleep 2
-for (( i = 0; i < 49; i++ )); do
+
+for (( i = 0; i < 99; i++ )); do
+  sleep 1
   docker run -d follower
 done
 screen -r

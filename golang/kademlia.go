@@ -3,6 +3,7 @@ package d7024e
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"time"
@@ -25,6 +26,7 @@ type Kademlia struct {
  */
 func NewKademlia(addr string, kID string) *Kademlia {
 	os.Mkdir("../newfiles/", 0700) //create dir for files.
+	rand.Seed(int64(time.Now().Unix()))
 	var kademliaID *KademliaID
 	if kID != "none" {
 		kademliaID = NewKademliaID(kID)
@@ -270,12 +272,15 @@ func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 * NOTE: Assumes filename is the hash of the real filename.
  */
 func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
-	fmt.Println("Storing file locally!")
+	fmt.Println("Storing file locally!", filename)
 	name := []byte(filename)
 	ok := kademlia.storage.Store(name, data)
 	//TODO: Start purge/republish timer
 	if ok {
-		time.AfterFunc(time.Second*20, func() { //TODO: dynamic value
+		ranInt := rand.Intn(20000)
+		ranTime := time.Second * (time.Duration(ranInt) / 1000)
+		fmt.Println("Republishing in:", ranInt/1000+20, "sec.")
+		time.AfterFunc(ranTime+time.Second*20, func() { //TODO: dynamic value
 			kademlia.PurgeAndRepublish(filename)
 		})
 	}
@@ -353,6 +358,7 @@ func (kademlia *Kademlia) Ping(addr string) bool {
 		kademlia.RT.update(response.Sender)
 		return true
 	}
+	fmt.Println(error)
 	return false
 }
 

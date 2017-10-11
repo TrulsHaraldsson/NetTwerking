@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
+	"time"
+
+	"../golang"
 )
 
 func main() {
@@ -10,6 +11,14 @@ func main() {
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
 	*/
-	content, err := ioutil.ReadFile("dahdkefsfke")
-	fmt.Println("content:", content, "err:", err)
+	d7024e.CreateAndStartNode("localhost:8003", "none", nil)
+
+	k2 := d7024e.CreateAndStartNode("localhost:8004", "none", nil)
+
+	time.Sleep(40 * time.Millisecond)
+	k2.Ping("localhost:8003")
+	time.Sleep(40 * time.Millisecond)
+	for i := 0; i < 1000; i++ {
+		k2.FindContact(d7024e.NewRandomKademliaID())
+	}
 }
