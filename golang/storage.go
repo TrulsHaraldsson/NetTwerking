@@ -2,7 +2,6 @@ package d7024e
 
 import (
 	"crypto/sha1"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -43,10 +42,8 @@ func (storage *Storage) deleteTimer(filename string) {
 }
 
 func (storage *Storage) updateTimer(time time.Duration, filename string) {
-	fmt.Println("amount of timers:", len(storage.timers))
 	for _, item := range storage.timers {
 		if item.fileID == filename {
-			fmt.Println("updating timer")
 			if !item.timer.Stop() {
 				<-item.timer.C
 			}
@@ -57,12 +54,12 @@ func (storage *Storage) updateTimer(time time.Duration, filename string) {
 }
 
 func (storage *Storage) addTimer(timer *time.Timer, filename string) {
-	for _, item := range storage.timers {
+	for i, item := range storage.timers {
 		if item.fileID == filename {
-			fmt.Println("Updating when should be adding....")
-			item.timer.Stop()
-			item.timer = timer
-			return
+			if !item.timer.Stop() {
+				<-item.timer.C
+			}
+			storage.timers = append(storage.timers[:i], storage.timers[i+1:]...)
 		}
 	}
 	storage.timers = append(storage.timers, timerHolder{timer, filename})

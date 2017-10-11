@@ -242,7 +242,6 @@ func (kademlia *Kademlia) Store(filename *KademliaID, data *[]byte) {
 	for _, v := range contacts {
 		//3: Send out async messages to each of the neighbors without caring about response.
 		if v.Equals(*kademlia.RT.me) {
-			fmt.Println("Store self. ")
 			kademlia.StoreFileLocal(valueID.String(), *data)
 		} else {
 			go kademlia.net.sendStoreMessage(v.Address, &message)
@@ -259,7 +258,6 @@ func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 	name := []byte(*filename)
 	found := kademlia.storage.Search(name)
 	if found == nil {
-		fmt.Println("Can be nil in searchfile local")
 		return nil
 	}
 	text := string(found.Text)
@@ -272,7 +270,6 @@ func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 * NOTE: Assumes filename is the hash of the real filename.
  */
 func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
-	fmt.Println("Storing file locally!", filename)
 	name := []byte(filename)
 	ok := kademlia.storage.Store(name, data)
 	//kademlia.storage.Store(name, data)
@@ -280,13 +277,14 @@ func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
 	ranInt := rand.Intn(20000)
 	ranTime := time.Second * (time.Duration(ranInt) / 1000)
 	if ok {
-		fmt.Println("Republishing in:", ranInt/1000+20, "sec.")
+		fmt.Println("File received. Purgin and Republishing in:", ranInt/1000+20, "sec.")
 		timer := time.AfterFunc(ranTime+time.Second*20, func() { //TODO: dynamic value
 			kademlia.storage.deleteTimer(filename)
 			kademlia.PurgeAndRepublish(filename)
 		})
 		kademlia.storage.addTimer(timer, filename)
 	} else {
+		fmt.Println("Updating timer for:", filename, "New time:", ranInt/1000+20, "sec.")
 		kademlia.storage.updateTimer(ranTime+time.Second*20, filename)
 	}
 
@@ -333,7 +331,6 @@ func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage
  * Sends back a Store ack.
  */
 func (kademlia *Kademlia) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
-	fmt.Println("Storemessage received...")
 	kademlia.StoreFileLocal(data.Name, data.Data)
 	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 	newAck, _ := MarshallMessage(ack)
@@ -377,15 +374,11 @@ func (kademlia *Kademlia) PurgeAndRepublish(filename string) {
 func (kademlia *Kademlia) Purge(filename string) *string {
 	fileContent := kademlia.SearchFileLocal(&filename)
 	kademlia.DeleteFileLocal(filename)
-	fileContent2 := kademlia.SearchFileLocal(&filename)
-	if fileContent2 != nil {
-		fmt.Println("File not deleted correctly")
-	}
 	return fileContent
 }
 
 func (kademlia *Kademlia) Republish(filename string, content []byte) {
-	fmt.Println("Republishing: ", filename)
+	fmt.Println("Purging and Republishing: ", filename)
 	valueID := NewKademliaID(filename)
 	kademlia.Store(valueID, &content)
 }
