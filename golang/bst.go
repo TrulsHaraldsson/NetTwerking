@@ -63,7 +63,7 @@ func (this *RoutingTable) update(contact Contact) {
  * the contact will simply be discarded.
  */
 func (this *RoutingTable) updateHelper(contact Contact) {
-	if contact.Equals(*this.me) {
+	if contact.ID.Equals(this.me.ID) {
 		return
 	}
 	bucket, node, i := this.root.findBucket(0, contact.ID)

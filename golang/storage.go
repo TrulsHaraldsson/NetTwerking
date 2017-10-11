@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"sync"
 )
 
 /*
@@ -12,10 +13,11 @@ import (
  */
 type Storage struct {
 	Files []file
+	mutex sync.Mutex
 }
 
 func NewStorage() Storage {
-	return Storage{Files: []file{}}
+	return Storage{Files: []file{}, mutex: sync.Mutex{}}
 }
 
 type file struct {
@@ -28,6 +30,8 @@ type file struct {
 * moved to Memory from RAM.
  */
 func (storage *Storage) MoveToMemory(name []byte) {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
 	file := file{}
 	//compareName := storage.HashFile(name)
 	for i, v := range storage.Files {
@@ -81,6 +85,8 @@ func (storage *Storage) ReadRAM(name []byte) *file {
 check Memory if it's there and return.
 */
 func (storage *Storage) Search(name []byte) *file {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
 	returnedFile := storage.ReadRAM(name)
 	if returnedFile == nil {
 		// Check if memory has file.
@@ -109,36 +115,52 @@ func (storage *Storage) ReadMemory(name []byte) *file {
 	return returnedFile
 }
 
+func (storage *Storage) Store(name []byte, text []byte) bool {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
+	okRam := storage.RAM(name, text)
+	okMem := storage.Memory(name, text)
+	return (okRam && okMem)
+}
+
 /*
 * Store a file into RAM, does not return anything.
 
  */
-func (storage *Storage) RAM(name []byte, text []byte) {
-	//fileName := storage.HashFile(name)
+func (storage *Storage) RAM(name []byte, text []byte) bool {
 	for _, v := range storage.Files {
 		if reflect.DeepEqual(v.Name, name) {
-			return
+			return false
 		}
 	}
 	newFile := file{name, text}
 	storage.Files = append(storage.Files, newFile)
+	return true
 }
 
 /*
 * Store a file into Memory, does not return anything.
  */
-func (storage *Storage) Memory(name []byte, text []byte) {
+func (storage *Storage) Memory(name []byte, text []byte) bool {
 	filename := "../newfiles/" + string(name)
+	ok := false
+	file := storage.ReadMemory(name)
+	if file == nil {
+		ok = true
+	}
 	err2 := ioutil.WriteFile(filename, text, 0644)
 	if err2 != nil {
 		panic(err2)
 	}
+	return ok
 }
 
 /*
 * Convert a file name of type []byte into []uint8 (SHA-1)!
  */
 func (storage *Storage) HashFile(name []byte) []uint8 {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
 	hashing := sha1.New()
 	return hashing.Sum(name)
 }
@@ -147,6 +169,8 @@ func (storage *Storage) HashFile(name []byte) []uint8 {
 * TODO: Dont always return true, check if file on memory exists.
  */
 func (storage *Storage) DeleteFile(name string) bool {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
 	ramOK := storage.deleteFromRam(name)
 	path := "../newfiles/" + name
 	os.Remove(path) // clean up

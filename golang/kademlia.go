@@ -136,7 +136,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 		kademlia.net.sendFindContactMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 	if err != nil {
 		//If error in message
-		fmt.Println(err)
+		fmt.Println("FIND_CONTACT_HELPER:", err)
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		//If message received correctly
@@ -198,6 +198,7 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 		kademlia.net.sendFindValueMessage(ContactToSendTo.Address, &message) // Sending RPC, and waiting for response
 
 	if err != nil {
+		fmt.Println("FIND_VALUE_HELPER:", err)
 		tempTable.SetNotQueried(ContactToSendTo) // Set not queried, so others can try again
 	} else {
 		if ackMessage.Value != nil {
@@ -227,20 +228,23 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 * Sending a store message to k closest contacts to the 160 bit hash of filename.
 * filename - Filename in plain text e.g. MyFile.txt
  */
-func (kademlia *Kademlia) Store(filename *string, data *[]byte) {
-	valueID := NewValueID(filename)
+func (kademlia *Kademlia) Store(filename *KademliaID, data *[]byte) {
+	//valueID := NewValueID(filename)
+	valueID := filename
 	//1: Use FindContact to get list of 'k' closest neighbors.
 	contacts := kademlia.FindContact(valueID)
 	strValueID := valueID.String()
 	message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
 	//2: Store it locally before sending out RPC's
-	kademlia.StoreFileLocal(valueID.String(), *data)
+	//kademlia.StoreFileLocal(valueID.String(), *data)
 	for _, v := range contacts {
 		//3: Send out async messages to each of the neighbors without caring about response.
 		if v.Equals(*kademlia.RT.me) {
-			continue
+			fmt.Println("Store self. ")
+			kademlia.StoreFileLocal(valueID.String(), *data)
+		} else {
+			go kademlia.net.sendStoreMessage(v.Address, &message)
 		}
-		go kademlia.net.sendStoreMessage(v.Address, &message)
 	}
 }
 
@@ -253,6 +257,7 @@ func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 	name := []byte(*filename)
 	found := kademlia.storage.Search(name)
 	if found == nil {
+		fmt.Println("Can be nil in searchfile local")
 		return nil
 	}
 	text := string(found.Text)
@@ -265,17 +270,23 @@ func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 * NOTE: Assumes filename is the hash of the real filename.
  */
 func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
+	fmt.Println("Storing file locally!")
 	name := []byte(filename)
-	kademlia.storage.RAM(name, data)
-	kademlia.storage.Memory(name, data)
+	ok := kademlia.storage.Store(name, data)
+	//TODO: Start purge/republish timer
+	if ok {
+		time.AfterFunc(time.Second*20, func() { //TODO: dynamic value
+			kademlia.PurgeAndRepublish(filename)
+		})
+	}
+
 }
 
 /*
 * Deletes a file from local storage.
  */
 func (kademlia *Kademlia) DeleteFileLocal(name string) bool {
-	valueID := NewValueID(&name)
-	return kademlia.storage.DeleteFile(valueID.String())
+	return kademlia.storage.DeleteFile(name)
 }
 
 /*
@@ -312,6 +323,7 @@ func (kademlia *Kademlia) OnFindValueMessageReceived(message *Message, fvMessage
  * Sends back a Store ack.
  */
 func (kademlia *Kademlia) OnStoreMessageReceived(message *Message, data StoreMessage, addr net.Addr) {
+	fmt.Println("Storemessage received...")
 	kademlia.StoreFileLocal(data.Name, data.Data)
 	ack := NewStoreAckMessage(&message.Sender, &message.RPC_ID)
 	newAck, _ := MarshallMessage(ack)
@@ -342,4 +354,27 @@ func (kademlia *Kademlia) Ping(addr string) bool {
 		return true
 	}
 	return false
+}
+
+func (kademlia *Kademlia) PurgeAndRepublish(filename string) {
+	content := kademlia.Purge(filename)
+	if content != nil {
+		kademlia.Republish(filename, []byte(*content))
+	}
+}
+
+func (kademlia *Kademlia) Purge(filename string) *string {
+	fileContent := kademlia.SearchFileLocal(&filename)
+	kademlia.DeleteFileLocal(filename)
+	fileContent2 := kademlia.SearchFileLocal(&filename)
+	if fileContent2 != nil {
+		fmt.Println("File not deleted correctly")
+	}
+	return fileContent
+}
+
+func (kademlia *Kademlia) Republish(filename string, content []byte) {
+	fmt.Println("Republishing: ", filename)
+	valueID := NewKademliaID(filename)
+	kademlia.Store(valueID, &content)
 }

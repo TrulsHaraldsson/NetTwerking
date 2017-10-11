@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 )
 
 func main() {
@@ -9,11 +10,6 @@ func main() {
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
 	*/
-	text := "hej"
-	byteArray := []byte(text)
-	stringFromByte := string(byteArray)
-	byteAgain := []byte(stringFromByte)
-
-	fmt.Println("string:", text, "byte:", byteArray, "String from byte:", stringFromByte)
-	fmt.Println("byte2:", byteAgain)
+	content, err := ioutil.ReadFile("dahdkefsfke")
+	fmt.Println("content:", content, "err:", err)
 }
