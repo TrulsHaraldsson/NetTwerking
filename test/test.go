@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"../golang"
 )
 
 func main() {
@@ -9,11 +11,9 @@ func main() {
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
 	*/
-	text := "hej"
-	byteArray := []byte(text)
-	stringFromByte := string(byteArray)
-	byteAgain := []byte(stringFromByte)
-
-	fmt.Println("string:", text, "byte:", byteArray, "String from byte:", stringFromByte)
-	fmt.Println("byte2:", byteAgain)
+	s1 := "lol"
+	s2 := "lol2"
+	a := d7024e.NewValueID(&s1).String()
+	b := d7024e.NewValueID(&s2).String()
+	fmt.Println(a, "\n"+b)
 }

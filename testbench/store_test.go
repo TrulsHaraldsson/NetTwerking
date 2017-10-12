@@ -34,15 +34,16 @@ func TestStoreToAll(t *testing.T) {
 
 	//fmt.Println("All nodes connected")
 	filename := "filename3"
-	fileID := d7024e.NewValueID(&filename).String()
+	fileKID := d7024e.NewValueID(&filename)
+	fileID := fileKID.String()
 	data := []byte("Testing a send3.")
-	A.Store(&filename, &data)
+	A.Store(fileKID, &data)
 	time.Sleep(50 * time.Millisecond)
 	file := D.SearchFileLocal(&fileID)
 	if string(*file) != string(data) {
 		t.Error("Wrong file content")
 	}
-	A.DeleteFileLocal(filename)
+	A.DeleteFileLocal(fileID)
 }
 
 /*
@@ -61,13 +62,14 @@ func TestStoreToOne(t *testing.T) {
 
 	//fmt.Println("All nodes connected")
 	filename1 := "failname"
-	fileID := d7024e.NewValueID(&filename1).String()
+	fileKID := d7024e.NewValueID(&filename1)
+	fileID := fileKID.String()
 	data1 := []byte("Testing a send4.")
-	A.Store(&filename1, &data1)
+	A.Store(fileKID, &data1)
 	time.Sleep(50 * time.Millisecond)
 	file := B.SearchFileLocal(&fileID)
 	if string(*file) != string(data1) {
 		t.Error("Wrong file content")
 	}
-	A.DeleteFileLocal(filename1)
+	A.DeleteFileLocal(fileID)
 }

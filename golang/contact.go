@@ -107,7 +107,7 @@ type ContactStateList struct {
 }
 
 func NewContactStateList(target *KademliaID, k int) ContactStateList {
-	return ContactStateList{contacts: []ContactStateItem{}, mutex: sync.Mutex{}, target: target, k: k, maxQueries: 1}
+	return ContactStateList{contacts: []ContactStateItem{}, mutex: sync.Mutex{}, target: target, k: k, maxQueries: 3}
 }
 
 /*

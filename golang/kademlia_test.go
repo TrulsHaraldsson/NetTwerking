@@ -66,10 +66,11 @@ func TestKademliaStore2(t *testing.T) {
 	_, rt2 := CreateTestRT11()
 	_, network2 := initKademliaAndNetwork(rt2, 3)
 	filename2 := "filenameX100"
+	valueID := NewValueID(&filename2)
 	data2 := []byte("Testing a send2.")
-	network2.kademlia.Store(&filename2, &data2)
+	network2.kademlia.Store(valueID, &data2)
 	time.Sleep(time.Millisecond * 20)
-	network2.kademlia.DeleteFileLocal(filename2)
+	network2.kademlia.DeleteFileLocal(valueID.String())
 }
 
 func TestKademliaStore(t *testing.T) {
@@ -83,16 +84,17 @@ func TestKademliaStore(t *testing.T) {
 	k, network2 := initKademliaAndNetwork(rt2, 4)
 
 	filename := "filenameX300"
-	fileID := NewValueID(&filename).String()
+	valueID := NewValueID(&filename)
+	fileID := valueID.String()
 	data := []byte("Testing a send5.")
-	network2.kademlia.Store(&filename, &data)
+	network2.kademlia.Store(valueID, &data)
 	file := k.SearchFileLocal(&fileID)
 	if string(*file) != string(data) {
 		t.Error("wrong content!")
 	}
 	fmt.Println("Should be error printed here.")
 	time.Sleep(time.Millisecond * 20)
-	network2.kademlia.DeleteFileLocal(filename)
+	network2.kademlia.DeleteFileLocal(valueID.String())
 
 }
 
@@ -179,11 +181,12 @@ func TestKademliaSendFindValue(t *testing.T) {
 	B := CreateAndStartNode("localhost:5002", "none", A.RT.me)
 
 	filename := "findvaluemessage"
+	valueID := NewValueID(&filename)
 	data := []byte("This is content of findvaluemessage!")
-	A.Store(&filename, &data)
+	A.Store(valueID, &data)
 	time.Sleep(50 * time.Millisecond)
 	C := CreateAndStartNode("localhost:5003", "none", B.RT.me)
-	C.DeleteFileLocal(filename) //Needed to test "not locally found" since items are stored in RAM and Disk, and disk is shared.
+	C.DeleteFileLocal(valueID.String()) //Needed to test "not locally found" since items are stored in RAM and Disk, and disk is shared.
 	file := C.FindValue(&filename)
 	if file == nil {
 		t.Error("File not found!")

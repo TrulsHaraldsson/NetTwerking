@@ -1,10 +1,10 @@
 package d7024e
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"math/rand"
 	"time"
-	"crypto/sha1"
 )
 
 const IDLength = 20
@@ -26,13 +26,13 @@ func NewKademliaID(data string) *KademliaID {
 	return &newKademliaID
 }
 
-func NewValueID(filename *string) *KademliaID{
-	hash := sha1.New().Sum([]byte(*filename))
+func NewValueID(filename *string) *KademliaID {
+	hash := sha256.Sum256([]byte(*filename))
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = hash[i]
 	}
-	return &newKademliaID	
+	return &newKademliaID
 }
 
 /*func NewKademliaIDFromByteArray(id []byte) *KademliaID {

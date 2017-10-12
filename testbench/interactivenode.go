@@ -136,7 +136,7 @@ func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Please write a address to ping, below are some choices.")
 	newContact := d7024e.NewContact(d7024e.NewRandomKademliaID(), "no address")
 	contacts := kademlia.LookupContactLocal(&newContact)
-	for i := 0; i < 10; i++ {
+	for i := 0; i < len(contacts) && i < 10; i++ {
 		fmt.Println("Contact : ", contacts[i].Address)
 	}
 
@@ -164,14 +164,16 @@ func new(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Write the name of the new file")
 	filename, _ := reader.ReadString('\n')
 	filename = filename[:len(filename)-1]
+	valueID := d7024e.NewValueID(&filename)
 	fmt.Println("Write content of file")
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
 	data := []byte(text)
-	kademlia.Store(&filename, &data)
+	kademlia.Store(valueID, &data)
 	fmt.Println("StoreMessages Sent...")
 }
 
+/*
 func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("Write the name of the old loaded file or see files by typing 'dir'")
 	filename, _ := reader.ReadString('\n')
@@ -194,20 +196,9 @@ func old(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 		onDirectory(kademlia, reader)
 	}
 }
-
+*/
 func onStore(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
-	fmt.Println("Want to store a new file or load an already existing one?\n new or old")
-	choice, _ := reader.ReadString('\n')
-	choice = choice[:len(choice)-1]
-	if choice == "new" {
-
-		//-- User creates new file that will be sent out to network --//
-		new(kademlia, reader)
-	} else {
-
-		//-- When a user wants to load in an old file --//
-		old(kademlia, reader)
-	}
+	new(kademlia, reader)
 }
 
 func onFindValue(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
@@ -240,7 +231,8 @@ func onDelete(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	fmt.Println("\nWrite the name of the file you wish to delete.\n")
 	name, _ := reader.ReadString('\n')
 	name = name[:len(name)-1]
-	ok := kademlia.DeleteFileLocal(name)
+	valueID := d7024e.NewValueID(&name).String()
+	ok := kademlia.DeleteFileLocal(valueID)
 	if ok {
 		fmt.Println("File was deleted.")
 	} else {

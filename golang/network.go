@@ -8,6 +8,7 @@ import (
 	"net"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -29,7 +30,14 @@ func NewNetwork(alpha int, addr string) Network {
  */
 func (network Network) Listen() {
 	//addrServer := CreateAddr(ip, port)
-	udpConn, err := net.ListenPacket("udp", network.addr)
+	//udpConn, err := net.ListenPacket("udp", network.addr)
+	p, _ := strconv.Atoi(strings.Split(network.addr, ":")[1])
+	addr := net.UDPAddr{
+		Port: p,
+		IP:   net.ParseIP(strings.Split(network.addr, ":")[0]),
+	}
+	udpConn, err := net.ListenUDP("udp", &addr)
+	udpConn.SetReadBuffer(200 * 200 * 4096)
 	if err != nil {
 		panic(err)
 	} else {

@@ -63,7 +63,7 @@ func (this *RoutingTable) update(contact Contact) {
  * the contact will simply be discarded.
  */
 func (this *RoutingTable) updateHelper(contact Contact) {
-	if contact.Equals(*this.me) {
+	if contact.ID.Equals(this.me.ID) {
 		return
 	}
 	bucket, node, i := this.root.findBucket(0, contact.ID)
@@ -109,8 +109,8 @@ func (this *RoutingTable) updateHelper(contact Contact) {
 }
 
 func (this *RoutingTable) findClosestContacts(target *KademliaID, count int) []Contact {
-	this.mux.Lock()
-	defer this.mux.Unlock()
+	//this.mux.Lock()
+	//defer this.mux.Unlock()
 	var candidates ContactCandidates
 	bucket, node, _ := this.root.findBucket(0, target)
 
