@@ -10,6 +10,21 @@ import (
 	"time"
 )
 
+func TestKademliaPin(t *testing.T) {
+	A := CreateAndStartNode("localhost:1337", "none", nil)
+	A.StoreFileLocal("filenamepin", []byte("pinhead"))
+	A.SetImportant("filenamepin", true)
+	ok := A.DeleteFileLocal("filenamepin")
+	if ok {
+		t.Error("Deleted when not supposed to!")
+	}
+	A.SetImportant("filenamepin", false)
+	ok = A.DeleteFileLocal("filenamepin")
+	if !ok {
+		t.Error("Didnt Delete when supposed to!")
+	}
+}
+
 func TestKademliaBootstrap(t *testing.T) {
 	k1 := CreateAndStartNode("localhost:11000", "none", nil)
 	time.Sleep(time.Millisecond * 50)
