@@ -27,6 +27,10 @@ type file struct {
 	Text []byte
 }
 
+/*
+* Stores timers for each owned file.
+* timers should be updated when receiving the file.
+ */
 type timerHolder struct {
 	timer  *time.Timer
 	fileID string

@@ -231,7 +231,6 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 * filename - Filename in plain text e.g. MyFile.txt
  */
 func (kademlia *Kademlia) Store(filename *KademliaID, data *[]byte) {
-	//valueID := NewValueID(filename)
 	valueID := filename
 	//1: Use FindContact to get list of 'k' closest neighbors.
 	contacts := kademlia.FindContact(valueID)
@@ -283,7 +282,8 @@ func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
 			kademlia.PurgeAndRepublish(filename)
 		})
 		kademlia.storage.addTimer(timer, filename)
-	} else {
+
+	} else { // if file did alraedy exist. Update new time for purge/republish
 		fmt.Println("Updating timer for:", filename, "New time:", ranInt/1000+60, "sec.")
 		kademlia.storage.updateTimer(ranTime+time.Second*60, filename)
 	}
@@ -364,6 +364,9 @@ func (kademlia *Kademlia) Ping(addr string) bool {
 	return false
 }
 
+/*
+* Deletes file locally, and sends store RPC's to the k closest of it.
+ */
 func (kademlia *Kademlia) PurgeAndRepublish(filename string) {
 	content := kademlia.Purge(filename)
 	if content != nil {
