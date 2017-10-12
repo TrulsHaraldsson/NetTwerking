@@ -149,7 +149,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 	if tempTable.Finished() {
 		ch.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
 	} else { // If not finished, keep sending out RPC's
-		for i := 0; i < 1 /*kademlia.net.alpha*/; i++ { // alpha recursive calls to the closest nodes.
+		for i := 0; i < 1; /*kademlia.net.alpha*/ i++ { // alpha recursive calls to the closest nodes.
 			c := tempTable.GetNextToQuery()
 			if c != nil {
 				go kademlia.FindContactHelper(*c, message, ch, tempTable)
