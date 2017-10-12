@@ -23,8 +23,9 @@ func NewStorage() Storage {
 }
 
 type file struct {
-	Name []uint8
-	Text []byte
+	Name      []uint8
+	Text      []byte
+	important bool
 }
 
 /*
@@ -95,6 +96,21 @@ func (storage *Storage) MoveToMemory(name []byte) {
 }
 
 /*
+* Set important , true or false. if file is important it will not be deleted.
+ */
+func (storage *Storage) SetImportant(filename string, important bool) {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
+	for i, v := range storage.Files {
+		if reflect.DeepEqual(string(v.Name), filename) {
+			v.important = important
+			storage.Files[i] = v
+			return
+		}
+	}
+}
+
+/*
 * Deletes a file from ram. returns true if it existed, false otherwise.
  */
 func (storage *Storage) deleteFromRam(name string) bool {
@@ -118,6 +134,7 @@ func (storage *Storage) ReadRAM(name []byte) *file {
 		if reflect.DeepEqual(v.Name, name) {
 			file.Name = v.Name
 			file.Text = v.Text
+			file.important = v.important
 			return &file
 		}
 	}
@@ -150,7 +167,7 @@ func (storage *Storage) ReadMemory(name []byte) *file {
 		return nil
 	}
 	//fmt.Printf("File contents: %s", content,"\n")
-	returnedFile := &file{name, []byte(content)}
+	returnedFile := &file{Name: name, Text: []byte(content), important: false}
 
 	/*
 	 * When a file is retrieved from Memory, add it from Memory to RAM for "caching"
@@ -177,7 +194,7 @@ func (storage *Storage) RAM(name []byte, text []byte) bool {
 			return false
 		}
 	}
-	newFile := file{name, text}
+	newFile := file{Name: name, Text: text, important: false}
 	storage.Files = append(storage.Files, newFile)
 	return true
 }
@@ -215,8 +232,17 @@ func (storage *Storage) HashFile(name []byte) []uint8 {
 func (storage *Storage) DeleteFile(name string) bool {
 	storage.mutex.Lock()
 	defer storage.mutex.Unlock()
+	for _, v := range storage.Files {
+		if reflect.DeepEqual(string(v.Name), name) {
+			if v.important {
+				return false
+			} else {
+				break
+			}
+		}
+	}
 	ramOK := storage.deleteFromRam(name)
 	path := "../newfiles/" + name
-	os.Remove(path) // clean up
-	return (ramOK || true)
+	os.Remove(path)        // clean up
+	return (ramOK || true) // not checking if deleted from Mem currently. just assumes it.
 }

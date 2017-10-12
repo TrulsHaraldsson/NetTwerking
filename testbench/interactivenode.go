@@ -100,6 +100,8 @@ func main() {
 				onDirectory(kademlia, reader)
 			case "rt": //shows 20 closest contacts to a random id.
 				fmt.Println(kademlia.RT.Contacts())
+			case "PIN":
+				onPin(kademlia, reader)
 			default:
 				fmt.Println("Wrong syntax in message, ignoring it...")
 			}
@@ -128,6 +130,7 @@ func help() {
 	fmt.Println("STORE, store a file with a given name")
 	fmt.Println("FIND_VALUE, find a file by its name")
 	fmt.Println("DELETE, delete a file form node")
+	fmt.Println("PIN, Set a file important or not.")
 	fmt.Println("dir, list all files")
 	fmt.Println("rt, show how many contacts in routing table")
 }
@@ -144,6 +147,27 @@ func onPing(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
 	raddr = raddr[:len(raddr)-1]
 	ok := kademlia.Ping(raddr)
 	fmt.Println("ping status:", ok)
+}
+
+func onPin(kademlia *d7024e.Kademlia, reader *bufio.Reader) {
+	fmt.Println("Please write the file you wish to pin")
+	filename, _ := reader.ReadString('\n')
+	filename = filename[:len(filename)-1]
+	fmt.Println("Write true for pinning it important, or false for not important.")
+	important, _ := reader.ReadString('\n')
+	important = important[:len(important)-1]
+	fileID := d7024e.NewValueID(&filename)
+	if important == "true" {
+		kademlia.SetImportant(fileID.String(), true)
+		fmt.Println("File pinned important.")
+	} else {
+		if important == "false" {
+			kademlia.SetImportant(fileID.String(), false)
+			fmt.Println("File pinned not important.")
+		} else {
+			fmt.Println("Wrong command given...")
+		}
+	}
 }
 
 func onFindNode(kademlia *d7024e.Kademlia, reader *bufio.Reader) {

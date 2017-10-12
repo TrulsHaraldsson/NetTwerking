@@ -160,6 +160,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 
 /*
  * Request to find a value over the network.
+ * Takes a filename, not the hash of a filename.
  */
 func (kademlia *Kademlia) FindValue(filename *string) []byte {
 	kademliaID := NewValueID(filename) //SHA1 hash
@@ -228,20 +229,17 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 
 /*
 * Sending a store message to k closest contacts to the 160 bit hash of filename.
-* filename - Filename in plain text e.g. MyFile.txt
+* filename - a kademliaID with the hash of the filename
  */
 func (kademlia *Kademlia) Store(filename *KademliaID, data *[]byte) {
-	valueID := filename
 	//1: Use FindContact to get list of 'k' closest neighbors.
-	contacts := kademlia.FindContact(valueID)
-	strValueID := valueID.String()
-	message := NewStoreMessage(kademlia.RT.me, &strValueID, data)
-	//2: Store it locally before sending out RPC's
-	//kademlia.StoreFileLocal(valueID.String(), *data)
+	contacts := kademlia.FindContact(filename)
+	strfilename := filename.String()
+	message := NewStoreMessage(kademlia.RT.me, &strfilename, data)
 	for _, v := range contacts {
-		//3: Send out async messages to each of the neighbors without caring about response.
+		//2: Send out async messages to each of the neighbors without caring about response.
 		if v.Equals(*kademlia.RT.me) {
-			kademlia.StoreFileLocal(valueID.String(), *data)
+			kademlia.StoreFileLocal(filename.String(), *data)
 		} else {
 			go kademlia.net.sendStoreMessage(v.Address, &message)
 		}
@@ -251,7 +249,7 @@ func (kademlia *Kademlia) Store(filename *KademliaID, data *[]byte) {
 /*
 * Searches Ram and Mem for the file specified.
 * Returns a *string with the content of file.
-* NOTE: Assumes filename is the hash of the real filename.
+* Assumes filename is the hash of the real filename.
  */
 func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 	name := []byte(*filename)
@@ -266,13 +264,11 @@ func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 
 /*
 * Stores a file locally in ram and mem.
-* NOTE: Assumes filename is the hash of the real filename.
+* Assumes filename is the hash of the real filename.
  */
 func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
 	name := []byte(filename)
 	ok := kademlia.storage.Store(name, data)
-	//kademlia.storage.Store(name, data)
-	//TODO: Start purge/republish timer
 	ranInt := rand.Intn(60000)
 	ranTime := time.Second * (time.Duration(ranInt) / 1000)
 	if ok {
@@ -285,7 +281,7 @@ func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
 
 	} else { // if file did alraedy exist. Update new time for purge/republish
 		fmt.Println("Updating timer for:", filename, "New time:", ranInt/1000+60, "sec.")
-		kademlia.storage.updateTimer(ranTime+time.Second*60, filename)
+		kademlia.storage.updateTimer(ranTime+time.Second*60, filename) //TODO: dynamic value
 	}
 
 }
@@ -295,6 +291,10 @@ func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
  */
 func (kademlia *Kademlia) DeleteFileLocal(name string) bool {
 	return kademlia.storage.DeleteFile(name)
+}
+
+func (kademlia *Kademlia) SetImportant(filename string, important bool) {
+	kademlia.storage.SetImportant(filename, important)
 }
 
 /*
@@ -376,12 +376,18 @@ func (kademlia *Kademlia) PurgeAndRepublish(filename string) {
 
 func (kademlia *Kademlia) Purge(filename string) *string {
 	fileContent := kademlia.SearchFileLocal(&filename)
-	kademlia.DeleteFileLocal(filename)
+	ok := kademlia.DeleteFileLocal(filename)
+	fmt.Println("Purge called, trying to delete:", filename)
+	if !ok {
+		fmt.Println(filename, "will no be deleted, since it is important.")
+	} else {
+		fmt.Println("Deleted...")
+	}
 	return fileContent
 }
 
 func (kademlia *Kademlia) Republish(filename string, content []byte) {
-	fmt.Println("Purging and Republishing: ", filename)
+	fmt.Println("Republishing: ", filename)
 	valueID := NewKademliaID(filename)
 	kademlia.Store(valueID, &content)
 }
