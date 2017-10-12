@@ -33,9 +33,10 @@ func TestFindValue(t *testing.T) {
 
 	//Create file first
 	filename2 := "filename2"
-	fileID := d7024e.NewValueID(&filename2).String()
+	fileKID := d7024e.NewValueID(&filename2)
+	fileID := fileKID.String()
 	data2 := []byte("Testing a send.")
-	A.Store(&filename2, &data2)
+	A.Store(fileKID, &data2)
 	time.Sleep(50 * time.Millisecond)
 
 	strA := A.SearchFileLocal(&fileID)
