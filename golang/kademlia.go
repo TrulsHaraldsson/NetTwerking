@@ -149,7 +149,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 	if tempTable.Finished() {
 		ch.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
 	} else { // If not finished, keep sending out RPC's
-		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
+		for i := 0; i < 1; i++ { // alpha recursive calls to the closest nodes. //kademlia.net.alpha
 			c := tempTable.GetNextToQuery()
 			if c != nil {
 				go kademlia.FindContactHelper(*c, message, ch, tempTable)
@@ -231,7 +231,6 @@ func (kademlia *Kademlia) FindValueHelper(ContactToSendTo Contact, message Messa
 * filename - Filename in plain text e.g. MyFile.txt
  */
 func (kademlia *Kademlia) Store(filename *KademliaID, data *[]byte) {
-	//valueID := NewValueID(filename)
 	valueID := filename
 	//1: Use FindContact to get list of 'k' closest neighbors.
 	contacts := kademlia.FindContact(valueID)
@@ -272,18 +271,16 @@ func (kademlia *Kademlia) SearchFileLocal(filename *string) *string {
 func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
 	name := []byte(filename)
 	ok := kademlia.storage.Store(name, data)
-	//kademlia.storage.Store(name, data)
-	//TODO: Start purge/republish timer
 	ranInt := rand.Intn(20000)
-	ranTime := time.Second * (time.Duration(ranInt) / 1000)
-	if ok {
+	ranTime := time.Second * (time.Duration(ranInt) / 1000) // Create a random time for purge/republish
+	if ok {                                                 // if file did not alraedy exist. Create new timer for purge/republish
 		fmt.Println("File received. Purgin and Republishing in:", ranInt/1000+20, "sec.")
 		timer := time.AfterFunc(ranTime+time.Second*20, func() { //TODO: dynamic value
 			kademlia.storage.deleteTimer(filename)
 			kademlia.PurgeAndRepublish(filename)
 		})
 		kademlia.storage.addTimer(timer, filename)
-	} else {
+	} else { // if file did alraedy exist. Update new time for purge/republish
 		fmt.Println("Updating timer for:", filename, "New time:", ranInt/1000+20, "sec.")
 		kademlia.storage.updateTimer(ranTime+time.Second*20, filename)
 	}
@@ -364,6 +361,9 @@ func (kademlia *Kademlia) Ping(addr string) bool {
 	return false
 }
 
+/*
+* Deletes file locally, and sends store RPC's to the k closest of it.
+ */
 func (kademlia *Kademlia) PurgeAndRepublish(filename string) {
 	content := kademlia.Purge(filename)
 	if content != nil {
