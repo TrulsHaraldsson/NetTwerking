@@ -149,7 +149,7 @@ func (kademlia *Kademlia) FindContactHelper(ContactToSendTo Contact, message Mes
 	if tempTable.Finished() {
 		ch.Write(tempTable.GetKClosestContacts()) // Can only be written to once.
 	} else { // If not finished, keep sending out RPC's
-		for i := 0; i < kademlia.net.alpha; i++ { // alpha recursive calls to the closest nodes.
+		for i := 0; i < 1 /*kademlia.net.alpha*/; i++ { // alpha recursive calls to the closest nodes.
 			c := tempTable.GetNextToQuery()
 			if c != nil {
 				go kademlia.FindContactHelper(*c, message, ch, tempTable)
@@ -274,18 +274,18 @@ func (kademlia *Kademlia) StoreFileLocal(filename string, data []byte) {
 	ok := kademlia.storage.Store(name, data)
 	//kademlia.storage.Store(name, data)
 	//TODO: Start purge/republish timer
-	ranInt := rand.Intn(20000)
+	ranInt := rand.Intn(60000)
 	ranTime := time.Second * (time.Duration(ranInt) / 1000)
 	if ok {
-		fmt.Println("File received. Purgin and Republishing in:", ranInt/1000+20, "sec.")
-		timer := time.AfterFunc(ranTime+time.Second*20, func() { //TODO: dynamic value
+		fmt.Println("File received. Purgin and Republishing in:", ranInt/1000+60, "sec.")
+		timer := time.AfterFunc(ranTime+time.Second*60, func() { //TODO: dynamic value
 			kademlia.storage.deleteTimer(filename)
 			kademlia.PurgeAndRepublish(filename)
 		})
 		kademlia.storage.addTimer(timer, filename)
 	} else {
-		fmt.Println("Updating timer for:", filename, "New time:", ranInt/1000+20, "sec.")
-		kademlia.storage.updateTimer(ranTime+time.Second*20, filename)
+		fmt.Println("Updating timer for:", filename, "New time:", ranInt/1000+60, "sec.")
+		kademlia.storage.updateTimer(ranTime+time.Second*60, filename)
 	}
 
 }

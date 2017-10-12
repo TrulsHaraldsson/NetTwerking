@@ -109,8 +109,8 @@ func (this *RoutingTable) updateHelper(contact Contact) {
 }
 
 func (this *RoutingTable) findClosestContacts(target *KademliaID, count int) []Contact {
-	this.mux.Lock()
-	defer this.mux.Unlock()
+	//this.mux.Lock()
+	//defer this.mux.Unlock()
 	var candidates ContactCandidates
 	bucket, node, _ := this.root.findBucket(0, target)
 
