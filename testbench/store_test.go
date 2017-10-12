@@ -43,7 +43,7 @@ func TestStoreToAll(t *testing.T) {
 	if string(*file) != string(data) {
 		t.Error("Wrong file content")
 	}
-	A.DeleteFileLocal(filename)
+	A.DeleteFileLocal(fileID)
 }
 
 /*
@@ -71,5 +71,5 @@ func TestStoreToOne(t *testing.T) {
 	if string(*file) != string(data1) {
 		t.Error("Wrong file content")
 	}
-	A.DeleteFileLocal(filename1)
+	A.DeleteFileLocal(fileID)
 }

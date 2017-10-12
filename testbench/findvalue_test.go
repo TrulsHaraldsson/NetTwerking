@@ -69,5 +69,5 @@ func TestFindValue(t *testing.T) {
 		t.Error("Strings of content dont match!")
 	}
 	time.Sleep(time.Millisecond * 20)
-	E.DeleteFileLocal(filename2)
+	E.DeleteFileLocal(fileID)
 }
